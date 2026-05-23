@@ -136,11 +136,9 @@ export default function DashboardLayout({
         <div className="flex flex-col min-h-0 flex-1">
           {/* Logo Brand Header */}
           <div className="flex h-16 items-center gap-3 px-6 border-b border-[#e2e8f0]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-brand-primary to-blue-600 shadow-md">
-              <Compass className="h-5 w-5 text-white stroke-[2.5]" />
-            </div>
-            <span className="font-sans text-xl font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent">
-              Aero<span className="text-brand-primary">TMS</span>
+            <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
+            <span className="font-sans text-lg font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent">
+              ESPL <span className="text-brand-primary">TMS</span>
             </span>
           </div>
 
@@ -245,8 +243,8 @@ export default function DashboardLayout({
           <div className="w-64 bg-white flex flex-col justify-between border-r border-[#e2e8f0] overflow-y-auto">
             <div>
               <div className="flex h-16 items-center gap-3 px-6 border-b border-[#e2e8f0]">
-                <Compass className="h-6 w-6 text-brand-primary" />
-                <span className="font-sans text-xl font-extrabold text-slate-800">AeroTMS</span>
+                <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
+                <span className="font-sans text-xl font-extrabold text-slate-800">ESPL TMS</span>
               </div>
               <nav className="mt-6 space-y-1.5 px-4">
                 {allNavItems.map((item) => {

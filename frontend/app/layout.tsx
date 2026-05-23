@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AeroTMS | Enterprise Bulk Movement Logistics',
+  title: 'ESPL TMS | Eastern Stevedores Private Limited',
   description: 'Production-grade enterprise Transportation Management System for high-throughput logistics, fleet compliance, digital gatepasses, and live dispatch tracking.',
 };
 

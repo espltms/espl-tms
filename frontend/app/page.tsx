@@ -94,21 +94,19 @@ export default function LoginPage() {
       {/* Left side: Premium Branding & Live Statistics */}
       <div className="relative hidden h-full w-1/2 flex-col justify-between p-16 md:flex">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-primary to-blue-600 shadow-glass-glow">
-            <Compass className="h-6 w-6 text-white stroke-[2.5]" />
-          </div>
+          <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-12 w-auto" />
           <span className="font-sans text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent">
-            Aero<span className="text-brand-primary">TMS</span>
+            ESPL <span className="text-brand-primary">TMS</span>
           </span>
         </div>
 
         <div className="my-auto space-y-8">
           <div className="space-y-4 max-w-lg">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-xs font-semibold text-brand-primary uppercase tracking-wide">
-              Bulk Movement Logistics Platform
+              Eastern Stevedores Private Limited
             </div>
             <h1 className="font-sans text-4xl font-extrabold leading-tight text-slate-800 lg:text-5xl">
-              Precision Freight, <br />
+              Honesty Integrity <br />
               <span className="bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent">Automated Finance.</span>
             </h1>
             <p className="text-slate-500 text-sm leading-relaxed">
@@ -134,7 +132,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-slate-400">
-          © 2026 AeroTMS Logistics Solutions, Inc. All rights reserved. Secure RSA-4096 Encrypted Session.
+          © 2026 Eastern Stevedores Private Limited. All rights reserved. Secure RSA-4096 Encrypted Session.
         </p>
       </div>
 
