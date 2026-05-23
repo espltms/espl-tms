@@ -29,29 +29,32 @@ import {
   getTrips 
 } from '@/app/data/dataHelper';
 
+import { useApiData } from '@/lib/useApiData';
+
 export default function DashboardPage() {
-  const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState(() => getDashboardStats());
-  const [poUsageData, setPoUsageData] = useState(() => getPoUsageData());
-  const [revenueHistory, setRevenueHistory] = useState(() => getRevenueHistory());
+  const { data: dashboardData, loading: dashboardLoading } = useApiData('/api/dashboard', null);
+  const { data: tripsData, loading: tripsLoading } = useApiData('/api/trips?limit=5&status=EN_ROUTE', { data: [] });
 
-  const [activeTrips, setActiveTrips] = useState(() => {
-    const rawTrips = getTrips().filter(t => t.status === 'EN_ROUTE' || t.status === 'LOADING');
-    return rawTrips.slice(0, 5).map(t => ({
-      id: t.id,
-      tripNumber: t.tripNumber,
-      origin: t.source.replace(' Plant (Mines Loading)', '').replace(' Hub (Mines Loading)', ''),
-      destination: t.destination.replace(' Stockyard (Unloading)', '').replace(' Terminal (Unloading)', ''),
-      driver: t.driver.fullName,
-      quantity: `${t.estimatedQuantityTons.toFixed(1)} Tons`,
-      status: t.status
-    }));
-  });
+  const loading = dashboardLoading || tripsLoading;
+  
+  // Safe defaults if API is loading
+  const stats = dashboardData || {
+    revenueKPI: 0, expenseKPI: 0, netMarginKPI: 0,
+    reconciliationQueueCount: 0, disputedQueueCount: 0,
+    fleetUtilization: 0
+  };
+  const poUsageData = dashboardData?.poUsage || [];
+  const revenueHistory = dashboardData?.revenueHistory || [];
 
-  useEffect(() => {
-    // Already populated from helpers on init
-    setLoading(false);
-  }, []);
+  const activeTrips = (tripsData?.data || []).map((t: any) => ({
+    id: t.id,
+    tripNumber: t.tripNumber,
+    origin: t.source?.replace(' Plant (Mines Loading)', '').replace(' Hub (Mines Loading)', ''),
+    destination: t.destination?.replace(' Stockyard (Unloading)', '').replace(' Terminal (Unloading)', ''),
+    driver: t.driver?.fullName || 'Unassigned',
+    quantity: `${Number(t.estimatedQuantityTons || 0).toFixed(1)} Tons`,
+    status: t.status
+  }));
 
 
   const formatCurrency = (val: number) => {

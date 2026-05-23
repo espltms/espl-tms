@@ -1,0 +1,194 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SYS_ADMIN
+  LOGISTICS_MANAGER
+  DISPATCHER
+  COMPLIANCE_OFFICER
+  FINANCE_OFFICER
+  GATE_OPERATOR
+  DRIVER_PARTNER
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  SUSPENDED
+  INACTIVE
+}
+
+enum TruckStatus {
+  AVAILABLE
+  ON_TRIP
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum TripStatus {
+  SCHEDULED
+  GATE_IN_LOADING
+  LOADING
+  DISPATCHED
+  GATE_OUT_LOADING
+  EN_ROUTE
+  GATE_IN_UNLOADING
+  UNLOADING
+  GATE_OUT_UNLOADING
+  COMPLETED
+  CANCELLED
+}
+
+enum POStatus {
+  DRAFT
+  ACTIVE
+  EXHAUSTED
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PENDING_RECONCILIATION
+  PAID
+  OVERDUE
+  DISPUTED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         UserRole  @default(DISPATCHER)
+  phone        String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Driver {
+  id                 String       @id @default(uuid())
+  fullName           String
+  licenseNumber      String       @unique
+  licenseExpiry      DateTime     @default(now())
+  status             DriverStatus @default(AVAILABLE)
+  phone              String       @unique
+  complianceVerified Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  trips Trip[]
+
+  @@index([licenseNumber])
+}
+
+model Truck {
+  id                 String      @id @default(uuid())
+  plateNumber        String      @unique
+  model              String
+  capacityTons       Decimal     @db.Decimal(10, 2)
+  type               String
+  fuelCard           String?
+  health             Int         @default(100)
+  status             TruckStatus @default(AVAILABLE)
+  complianceVerified Boolean     @default(false)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  trips Trip[]
+
+  @@index([plateNumber])
+}
+
+model PurchaseOrder {
+  id                    String   @id @default(uuid())
+  poNumber              String   @unique
+  clientName            String
+  commodity             String
+  totalQuantityTons     Decimal  @db.Decimal(12, 2)
+  allocatedQuantityTons Decimal  @db.Decimal(12, 2) @default(0.00)
+  ratePerTon            Decimal  @db.Decimal(10, 2)
+  status                POStatus @default(ACTIVE)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  trips Trip[]
+
+  @@index([poNumber])
+}
+
+model Trip {
+  id                    String     @id @default(uuid())
+  tripNumber            String     @unique
+  purchaseOrderId       String
+  purchaseOrder         PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  driverId              String
+  driver                Driver     @relation(fields: [driverId], references: [id])
+  truckId               String
+  truck                 Truck      @relation(fields: [truckId], references: [id])
+  source                String
+  destination           String
+  distanceKm            Decimal    @db.Decimal(10, 2)
+  estimatedQuantityTons Decimal    @db.Decimal(10, 2)
+  actualLoadedTons      Decimal?   @db.Decimal(10, 2)
+  actualDeliveredTons   Decimal?   @db.Decimal(10, 2)
+  status                TripStatus @default(SCHEDULED)
+  scheduledStartDate    DateTime
+  actualStartDate       DateTime?
+  actualEndDate         DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  weighTickets WeighTicket[]
+  invoices     Invoice[]
+
+  @@index([tripNumber])
+  @@index([status])
+}
+
+model WeighTicket {
+  id         String   @id @default(uuid())
+  ticketNo   String   @unique
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  truckPlate String
+  material   String
+  grossTons  Decimal  @db.Decimal(10, 2)
+  tareTons   Decimal  @db.Decimal(10, 2)
+  netTons    Decimal  @db.Decimal(10, 2)
+  sealNumber String?
+  status     String   @default("PENDING_GROSS")
+  timestamp  DateTime @default(now())
+
+  @@index([tripId])
+}
+
+model Invoice {
+  id                String        @id @default(uuid())
+  invoiceNumber     String        @unique
+  tripId            String
+  trip              Trip          @relation(fields: [tripId], references: [id])
+  type              String        @default("CLIENT_INVOICE")
+  subtotal          Decimal       @db.Decimal(12, 2)
+  taxAmount         Decimal       @db.Decimal(12, 2)
+  totalAmount       Decimal       @db.Decimal(12, 2)
+  status            InvoiceStatus @default(DRAFT)
+  dueDate           DateTime
+  vendorName        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([invoiceNumber])
+  @@index([status])
+}

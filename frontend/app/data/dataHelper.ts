@@ -1,5 +1,8 @@
 import tmsData from './tms_data.json';
 
+// NOTE: This file is kept for backwards compatibility or fallback during development.
+// In production, components should use the /api routes via the useApiData hook.
+
 export interface TruckData {
   id: string;
   plateNumber: string;

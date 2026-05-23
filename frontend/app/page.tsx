@@ -25,49 +25,24 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
     try {
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
+      const response = await fetch(`/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        throw new Error('Authentication failed. Check your credentials.');
+        const errData = await response.json();
+        throw new Error(errData.error || 'Authentication failed. Check your credentials.');
       }
 
       const data = await response.json();
-      login(data.user, data.accessToken);
+      login(data.user, data.token);
       router.push('/dashboard');
     } catch (err: any) {
-      console.warn('Backend API connection failed, falling back to seamless mock demo login.', err);
-      
-      // Seed roles fallback for premium evaluation out-of-the-box
-      let mockRole = 'DISPATCHER';
-      let mockName = 'Sarah Jenkins';
-
-      if (email.includes('admin')) {
-        mockRole = 'SYS_ADMIN';
-        mockName = 'Vikram Sharma';
-      } else if (email.includes('compliance')) {
-        mockRole = 'COMPLIANCE_OFFICER';
-        mockName = 'Arthur Dent';
-      } else if (email.includes('finance')) {
-        mockRole = 'FINANCE_OFFICER';
-        mockName = 'Elena Rostova';
-      }
-
-      if (password === 'TMSAdminPassword2026!') {
-        login(
-          { id: 'mock-uuid-1', email, fullName: mockName, role: mockRole },
-          'mock-jwt-token-2026'
-        );
-        router.push('/dashboard');
-      } else {
-        setError('Invalid credentials. Use password "TMSAdminPassword2026!"');
-      }
+      console.error('Login failed:', err);
+      setError(err.message || 'Invalid credentials. Use password "admin123" for admin.');
     } finally {
       setLoading(false);
     }
