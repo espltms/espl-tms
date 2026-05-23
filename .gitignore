@@ -1,6 +1,9 @@
 # dependencies
 node_modules
 .pnp
+
+# backend build output
+backend/dist
 .pnp.js
 
 # testing
