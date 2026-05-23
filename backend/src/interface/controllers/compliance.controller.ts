@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { JwtAuthGuard } from '../../../infrastructure/security/jwt-auth.guard';
-import { RolesGuard } from '../../../infrastructure/security/roles.guard';
-import { Roles } from '../../../infrastructure/security/roles.decorator';
+import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { JwtAuthGuard } from '../../infrastructure/security/jwt-auth.guard';
+import { RolesGuard } from '../../infrastructure/security/roles.guard';
+import { Roles } from '../../infrastructure/security/roles.decorator';
 import { UserRole, ComplianceStatus } from '@prisma/client';
 
 @Controller('compliance')

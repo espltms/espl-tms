@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Wrench, Plus, AlertOctagon, ShieldCheck, Clock, Tool, X, ArrowRight } from 'lucide-react';
+import { Wrench, Plus, AlertOctagon, ShieldCheck, Clock, X, ArrowRight } from 'lucide-react';
 
 interface Order {
   id: string;

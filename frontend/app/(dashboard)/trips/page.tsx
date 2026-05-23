@@ -42,8 +42,7 @@ interface Trip {
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
 }
 
-import { getTrips, getPurchaseOrders, getDrivers, getTrucks, Trip } from '@/app/data/dataHelper';
-
+import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
 export default function TripsPage() {
   const [loading, setLoading] = useState(false);
   const [trips, setTrips] = useState<Trip[]>(() => getTrips());

@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { JwtAuthGuard } from '../../../infrastructure/security/jwt-auth.guard';
+import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { JwtAuthGuard } from '../../infrastructure/security/jwt-auth.guard';
 import * as bcrypt from 'bcrypt';
 
 @Controller('auth')

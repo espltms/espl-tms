@@ -104,7 +104,7 @@ export default function YardPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Terminal Queue</span>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-amber-600">
-              {bays.filter(b => b.status === 'WAITING_AREA' && b.status === 'OCCUPIED').length} Trucks
+              {bays.filter(b => b.type === 'WAITING_AREA' && b.status === 'OCCUPIED').length} Trucks
             </span>
             <span className="text-[10px] text-slate-500">Waiting for docks</span>
           </div>

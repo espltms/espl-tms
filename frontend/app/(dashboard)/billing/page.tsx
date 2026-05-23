@@ -35,8 +35,7 @@ interface Invoice {
   };
   vendor?: { name: string };
 }
-
-import { getInvoices, Invoice } from '@/app/data/dataHelper';
+import { getInvoices } from '@/app/data/dataHelper';
 
 export default function BillingPage() {
   const [loading, setLoading] = useState(false);
