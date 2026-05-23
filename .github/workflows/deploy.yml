@@ -40,7 +40,7 @@ jobs:
       # Audit NestJS Backend
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: npm ci
+        run: npm install
 
       - name: Validate Prisma Client Compilation
         working-directory: ./backend
@@ -53,7 +53,7 @@ jobs:
       # Audit Next.js Frontend
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Compile Frontend Production Bundle
         working-directory: ./frontend
