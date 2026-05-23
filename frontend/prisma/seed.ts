@@ -7,21 +7,61 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Starting DB seed...');
 
-  // 1. Create admin user
-  const adminEmail = 'admin@espl.com';
-  let admin = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!admin) {
-    admin = await prisma.user.create({
-      data: {
-        email: adminEmail,
-        passwordHash: hashPassword('admin123'),
-        fullName: 'System Admin',
-        role: 'SYS_ADMIN',
-      },
-    });
-    console.log('Created admin user:', admin.email);
-  } else {
-    console.log('Admin user already exists.');
+  // 1. Create users
+  const users = [
+    {
+      email: 'admin@espl.com',
+      password: 'admin123',
+      fullName: 'System Admin',
+      role: 'SYS_ADMIN',
+    },
+    {
+      email: 'admin@logistics.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Vikram Sharma',
+      role: 'SYS_ADMIN',
+    },
+    {
+      email: 'dispatcher@logistics.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Rajesh Kumar',
+      role: 'DISPATCHER',
+    },
+    {
+      email: 'compliance@logistics.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Arjun Mehta',
+      role: 'COMPLIANCE_OFFICER',
+    },
+    {
+      email: 'finance@logistics.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Priya Iyer',
+      role: 'FINANCE_OFFICER',
+    },
+    {
+      email: 'gate@logistics.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Sanjay Singh',
+      role: 'GATE_OPERATOR',
+    },
+  ];
+
+  for (const u of users) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email } });
+    if (!existing) {
+      await prisma.user.create({
+        data: {
+          email: u.email,
+          passwordHash: hashPassword(u.password),
+          fullName: u.fullName,
+          role: u.role as any,
+        },
+      });
+      console.log('Created user:', u.email);
+    } else {
+      console.log('User already exists:', u.email);
+    }
   }
 
   // 2. Create Purchase Orders
