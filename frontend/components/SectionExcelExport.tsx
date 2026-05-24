@@ -127,16 +127,17 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-[0.98] md:flex"
+        className="flex min-h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-[0.98] sm:px-3.5"
+        title="Export Excel"
       >
         <FileSpreadsheet className="h-4 w-4" />
-        Export Excel
+        <span className="hidden sm:inline">Export Excel</span>
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="max-h-[92dvh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-xl sm:rounded-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
               <div>
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Export Section Data</h3>
                 <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{sectionName}</p>
@@ -146,7 +147,7 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
               </button>
             </div>
 
-            <div className="space-y-5 p-6">
+            <div className="space-y-5 p-4 sm:p-6">
               {tables.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-xs font-semibold text-slate-500">
                   No table data is visible in this section right now.
@@ -204,7 +205,7 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
+                  <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-semibold text-slate-500">
                       {filteredRows.length} of {selectedTable?.rows.length || 0} rows will be exported
                     </span>

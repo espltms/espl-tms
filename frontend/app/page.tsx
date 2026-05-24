@@ -112,14 +112,14 @@ export default function LoginPage() {
 
   if (isAuthenticated) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#f4f6f9]">
+      <div className="flex h-dvh w-full items-center justify-center bg-[#f4f6f9]">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <main className="relative flex min-h-screen w-screen flex-col items-center justify-center overflow-x-hidden bg-[#f4f6f9] px-4 py-6 md:flex-row md:px-0 md:py-0">
+    <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-x-hidden bg-[#f4f6f9] px-4 py-6 md:flex-row md:px-0 md:py-0">
       {/* Decorative background glow rings */}
       <div className="absolute -left-64 -top-64 h-[600px] w-[600px] rounded-full bg-brand-primary/5 blur-[120px] pointer-events-none" />
       <div className="absolute -right-64 -bottom-64 h-[600px] w-[600px] rounded-full bg-brand-secondary/5 blur-[120px] pointer-events-none" />
@@ -170,8 +170,8 @@ export default function LoginPage() {
       </div>
 
       {/* Right side: Login Panel */}
-      <div className="w-full max-w-md p-8 md:w-1/2 md:max-w-xl md:p-16 flex items-center justify-center">
-        <div className="glass-panel w-full max-w-md rounded-2xl p-8 shadow-glass shadow-glass-glow border border-slate-200 relative z-10">
+      <div className="flex w-full max-w-md items-center justify-center p-4 sm:p-6 md:w-1/2 md:max-w-xl md:p-16">
+        <div className="glass-panel relative z-10 w-full max-w-md rounded-2xl border border-slate-200 p-5 shadow-glass shadow-glass-glow sm:p-8">
           <div className="mb-6 text-center md:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">Enterprise Portal Access</h2>
             <p className="text-xs text-slate-500 mt-1">Choose your role before login or registration</p>
@@ -182,7 +182,7 @@ export default function LoginPage() {
               <Shield className="h-3.5 w-3.5 text-brand-primary" />
               <span>Select Portal Role</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="grid grid-cols-1 gap-2 text-[11px] xs:grid-cols-2 sm:grid-cols-2">
               {portalRoles.map((role) => {
                 const Icon = role.icon;
                 const active = selectedRole.value === role.value;
@@ -226,7 +226,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-5">
+          <form onSubmit={handleAuth} className="space-y-4 sm:space-y-5">
             {mode === 'register' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Full Name</label>

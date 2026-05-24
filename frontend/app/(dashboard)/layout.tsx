@@ -129,8 +129,10 @@ export default function DashboardLayout({
     }
   };
 
+  const currentSectionName = allNavItems.find((n) => n.path === pathname)?.label || 'Current Section';
+
   return (
-    <div className="flex h-screen w-screen bg-[#f4f6f9] text-slate-700 overflow-hidden">
+    <div className="flex h-dvh min-h-dvh w-full bg-[#f4f6f9] text-slate-700 overflow-hidden">
       
       {/* 1. Sidebar Panel for Desktop */}
       <aside className="hidden w-64 border-r border-[#e2e8f0] bg-white flex-col justify-between md:flex shrink-0">
@@ -201,24 +203,24 @@ export default function DashboardLayout({
       </aside>
 
       {/* 2. Main Dashboard Panel Viewport */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-y-auto h-screen bg-[#f4f6f9]">
+      <div className="flex h-dvh flex-1 flex-col min-w-0 overflow-hidden bg-[#f4f6f9]">
         {/* Top Navbar */}
-        <header className="flex h-16 w-full items-center justify-between border-b border-[#e2e8f0] bg-white/95 backdrop-blur px-6 sticky top-0 z-50 shrink-0">
-          <div className="flex items-center gap-4">
+        <header className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[#e2e8f0] bg-white/95 px-3 py-2 backdrop-blur sticky top-0 z-50 shrink-0 sm:h-16 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-500 hover:text-slate-900 md:hidden"
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-900 md:hidden"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-xs font-extrabold tracking-widest text-slate-800 uppercase font-sans">
-              {allNavItems.find((n) => n.path === pathname)?.label || 'Control Control Tower'}
+            <h1 className="min-w-0 truncate text-[11px] font-extrabold tracking-widest text-slate-800 uppercase font-sans sm:text-xs">
+              {currentSectionName}
             </h1>
           </div>
 
           {/* Time & Alert widgets */}
-          <div className="flex items-center gap-4">
-            <SectionExcelExport sectionName={allNavItems.find((n) => n.path === pathname)?.label || 'Current Section'} />
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <SectionExcelExport sectionName={currentSectionName} />
 
             {/* Clock Widget */}
             <div className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs text-brand-primary font-mono font-semibold md:flex">
@@ -235,7 +237,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Dynamic page viewport contents wrapper */}
-        <main className="p-6 md:p-8 flex-grow overflow-y-auto">
+        <main className="dashboard-main flex-grow overflow-y-auto p-4 sm:p-5 md:p-8">
           {children}
         </main>
       </div>
@@ -243,28 +245,39 @@ export default function DashboardLayout({
       {/* 3. Mobile Sidebar overlay drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] flex bg-black/30 backdrop-blur-sm md:hidden">
-          <div className="w-64 bg-white flex flex-col justify-between border-r border-[#e2e8f0] overflow-y-auto">
-            <div>
-              <div className="flex h-16 items-center gap-3 px-6 border-b border-[#e2e8f0]">
+          <div className="flex h-full w-[86vw] max-w-80 flex-col justify-between overflow-y-auto border-r border-[#e2e8f0] bg-white shadow-2xl">
+            <div className="min-h-0 flex-1">
+              <div className="flex h-16 items-center gap-3 px-5 border-b border-[#e2e8f0]">
                 <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
                 <span className="font-sans text-xl font-extrabold text-slate-800">ESPL TMS</span>
               </div>
-              <nav className="mt-6 space-y-1.5 px-4">
-                {allNavItems.map((item) => {
-                  const isActive = pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold ${
-                        isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-500 hover:bg-slate-100'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+              <nav className="space-y-5 px-4 py-5">
+                {allowedDivisions.map((division) => (
+                  <div key={division.title} className="space-y-2">
+                    <span className="px-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                      {division.title}
+                    </span>
+                    <div className="space-y-1">
+                      {division.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname === item.path;
+                        return (
+                          <Link
+                            key={item.path}
+                            href={item.path}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${
+                              isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-500 hover:bg-slate-100'
+                            }`}
+                          >
+                            <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-primary' : 'text-slate-400'}`} />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </nav>
             </div>
             <div className="p-4 border-t border-[#e2e8f0]">

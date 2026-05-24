@@ -3,11 +3,22 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    min-width: 0;
+  }
+
   body {
     background-color: #f4f6f9;
     color: #1e293b;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
   }
 }
 
@@ -50,6 +61,36 @@
   border-color: rgba(37, 99, 235, 0.25);
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.07);
   transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .dashboard-main > .space-y-8 {
+    --tw-space-y-reverse: 0;
+    margin-top: 0;
+  }
+
+  .dashboard-main h2 {
+    font-size: 1.25rem;
+    line-height: 1.65rem;
+  }
+
+  .dashboard-main h3 {
+    line-height: 1.25rem;
+  }
+
+  .dashboard-main .glass-card,
+  .dashboard-main .glass-panel,
+  .dashboard-main .bg-white.rounded-2xl {
+    border-radius: 0.875rem;
+  }
+
+  .dashboard-main table {
+    min-width: 720px;
+  }
+
+  .dashboard-main .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Maps — light theme */
