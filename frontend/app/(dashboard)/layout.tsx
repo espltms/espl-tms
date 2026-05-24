@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { 
   LayoutDashboard, 
   Truck, 
@@ -217,6 +218,8 @@ export default function DashboardLayout({
 
           {/* Time & Alert widgets */}
           <div className="flex items-center gap-4">
+            <SectionExcelExport sectionName={allNavItems.find((n) => n.path === pathname)?.label || 'Current Section'} />
+
             {/* Clock Widget */}
             <div className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs text-brand-primary font-mono font-semibold md:flex">
               <Clock className="h-3.5 w-3.5" />
