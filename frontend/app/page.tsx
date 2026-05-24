@@ -46,8 +46,8 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [selectedRole, setSelectedRole] = useState(portalRoles[0]);
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('dispatcher@logistics.com');
-  const [password, setPassword] = useState('TMSAdminPassword2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -100,22 +100,14 @@ export default function LoginPage() {
 
   const selectRole = (role: typeof portalRoles[number]) => {
     setSelectedRole(role);
-    if (mode === 'login') {
-      setEmail(role.email);
-    }
     setError('');
   };
 
   const switchMode = (nextMode: 'login' | 'register') => {
     setMode(nextMode);
     setError('');
-    if (nextMode === 'login') {
-      setEmail(selectedRole.email);
-      setPassword('TMSAdminPassword2026!');
-    } else {
-      setEmail('');
-      setPassword('');
-    }
+    setEmail('');
+    setPassword('');
   };
 
   if (isAuthenticated) {
