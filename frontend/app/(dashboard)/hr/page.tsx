@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, Plus, ShieldCheck, DollarSign, Award, ArrowUpRight, X, ArrowRight } from 'lucide-react';
 
 interface Employee {
@@ -16,6 +16,8 @@ interface Employee {
 
 import { getEmployees } from '@/app/data/dataHelper';
 
+const MANUAL_EMPLOYEES_KEY = 'tms_manual_employees';
+
 export default function HRPage() {
   const [employees, setEmployees] = useState<Employee[]>(() => getEmployees());
   const [showModal, setShowModal] = useState(false);
@@ -27,10 +29,21 @@ export default function HRPage() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
   };
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(MANUAL_EMPLOYEES_KEY);
+      if (!saved) return;
+      const manualEmployees = JSON.parse(saved) as Employee[];
+      setEmployees([...manualEmployees, ...getEmployees()]);
+    } catch {
+      localStorage.removeItem(MANUAL_EMPLOYEES_KEY);
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newEmployee: Employee = {
-      id: Date.now().toString(),
+      id: `manual-${Date.now()}`,
       name: formData.name,
       email: formData.email,
       department: formData.department,
@@ -39,6 +52,8 @@ export default function HRPage() {
       safetyScore: 100,
       joinDate: new Date().toISOString().split('T')[0]
     };
+    const existingManual = employees.filter(emp => emp.id.startsWith('manual-'));
+    localStorage.setItem(MANUAL_EMPLOYEES_KEY, JSON.stringify([newEmployee, ...existingManual]));
     setEmployees([newEmployee, ...employees]);
     setShowModal(false);
     setFormData({ name: '', email: '', department: 'DRIVER_PARTNER', salary: '', allowance: '' });

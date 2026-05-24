@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Wrench, Plus, AlertOctagon, ShieldCheck, Clock, X, ArrowRight } from 'lucide-react';
 
 interface Order {
@@ -17,6 +17,7 @@ import { getTrucks } from '@/app/data/dataHelper';
 
 const allTrucks = getTrucks();
 const INITIAL_ORDERS: Order[] = [];
+const MANUAL_MAINTENANCE_KEY = 'tms_manual_maintenance_orders';
 
 export default function MaintenancePage() {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
@@ -31,6 +32,16 @@ export default function MaintenancePage() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
   };
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(MANUAL_MAINTENANCE_KEY);
+      if (!saved) return;
+      setOrders(JSON.parse(saved) as Order[]);
+    } catch {
+      localStorage.removeItem(MANUAL_MAINTENANCE_KEY);
+    }
+  }, []);
+
   const handleCreateOrder = (e: React.FormEvent) => {
     e.preventDefault();
     const newOrder: Order = {
@@ -42,7 +53,9 @@ export default function MaintenancePage() {
       status: 'PENDING',
       workshop: 'Dallas Main Workshop'
     };
-    setOrders([newOrder, ...orders]);
+    const nextOrders = [newOrder, ...orders];
+    localStorage.setItem(MANUAL_MAINTENANCE_KEY, JSON.stringify(nextOrders));
+    setOrders(nextOrders);
     setModalOpen(false);
   };
 
