@@ -17,7 +17,14 @@ interface Bay {
   driverName?: string;
 }
 
-const INITIAL_BAYS: Bay[] = [];
+const INITIAL_BAYS: Bay[] = [
+  { id: 'bay-load-01', bayNumber: 'LD-01', type: 'LOADING', status: 'VACANT', activeTrip: '', dwellMinutes: 0 },
+  { id: 'bay-load-02', bayNumber: 'LD-02', type: 'LOADING', status: 'VACANT', activeTrip: '', dwellMinutes: 0 },
+  { id: 'bay-unload-01', bayNumber: 'UL-01', type: 'UNLOADING', status: 'VACANT', activeTrip: '', dwellMinutes: 0 },
+  { id: 'bay-park-01', bayNumber: 'PK-01', type: 'TRUCK_PARKING', status: 'VACANT', activeTrip: '', dwellMinutes: 0 },
+  { id: 'bay-wait-01', bayNumber: 'WA-01', type: 'WAITING_AREA', status: 'VACANT', activeTrip: '', dwellMinutes: 0 },
+  { id: 'bay-maint-01', bayNumber: 'MT-01', type: 'TRUCK_PARKING', status: 'MAINTENANCE', activeTrip: '', dwellMinutes: 0 },
+];
 
 export default function YardPage() {
   const [bays, setBays] = useState<Bay[]>(INITIAL_BAYS);
@@ -25,6 +32,11 @@ export default function YardPage() {
   const [filterType, setFilterType] = useState('ALL');
   const [showAllocateModal, setShowAllocateModal] = useState(false);
   const [selectedBay, setSelectedBay] = useState<Bay | null>(null);
+  const [allocationForm, setAllocationForm] = useState({
+    truckPlate: '',
+    driverName: '',
+    activeTrip: '',
+  });
 
   const filteredBays = bays.filter(bay => {
     const matchesSearch = 
@@ -56,10 +68,18 @@ export default function YardPage() {
   const handleAllocate = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedBay) {
-      setBays(bays.map(b => b.id === selectedBay.id ? { ...b, status: 'OCCUPIED', truckPlate: 'NEW-TRUCK-01', dwellMinutes: 1 } : b));
+      setBays(bays.map(b => b.id === selectedBay.id ? {
+        ...b,
+        status: 'OCCUPIED',
+        truckPlate: allocationForm.truckPlate.toUpperCase(),
+        driverName: allocationForm.driverName,
+        activeTrip: allocationForm.activeTrip,
+        dwellMinutes: 1
+      } : b));
     }
     setShowAllocateModal(false);
     setSelectedBay(null);
+    setAllocationForm({ truckPlate: '', driverName: '', activeTrip: '' });
   };
 
   return (
@@ -71,7 +91,11 @@ export default function YardPage() {
           <p className="text-xs text-slate-500 mt-1">Monitor dock loading occupancies, yard queues, and truck gate-house dwell times</p>
         </div>
         <button 
-          onClick={() => { setSelectedBay(bays.find(b => b.status === 'VACANT') || null); setShowAllocateModal(true); }}
+          onClick={() => {
+            setSelectedBay(bays.find(b => b.status === 'VACANT') || null);
+            setAllocationForm({ truckPlate: '', driverName: '', activeTrip: '' });
+            setShowAllocateModal(true);
+          }}
           className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
         >
           <Layers className="h-4 w-4" /> Allocate Dock Bay
@@ -93,7 +117,7 @@ export default function YardPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Overall Occupancy</span>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">
-              {Math.round((bays.filter(b => b.status === 'OCCUPIED').length / bays.length) * 100)}%
+              {bays.length ? Math.round((bays.filter(b => b.status === 'OCCUPIED').length / bays.length) * 100) : 0}%
             </span>
             <span className="text-[10px] text-slate-500">
               {bays.filter(b => b.status === 'OCCUPIED').length} of {bays.length} active bays
@@ -238,6 +262,8 @@ export default function YardPage() {
                 <input 
                   type="text" 
                   required
+                  value={allocationForm.truckPlate}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, truckPlate: e.target.value })}
                   placeholder="e.g. MH-04-AB-1234"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono uppercase"
                 />
@@ -247,6 +273,8 @@ export default function YardPage() {
                 <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Driver ID / Name</label>
                 <input 
                   type="text" 
+                  value={allocationForm.driverName}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, driverName: e.target.value })}
                   placeholder="e.g. EMP-9821 / Rajesh"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                 />
@@ -256,6 +284,8 @@ export default function YardPage() {
                 <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Trip ID Reference</label>
                 <input 
                   type="text" 
+                  value={allocationForm.activeTrip}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, activeTrip: e.target.value })}
                   placeholder="e.g. TRIP-99805"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono"
                 />
