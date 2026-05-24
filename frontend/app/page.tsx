@@ -67,7 +67,7 @@ export default function LoginPage() {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
       const payload =
         mode === 'login'
-          ? { email, password }
+          ? { email, password, role: selectedRole.value }
           : {
               email,
               password,
