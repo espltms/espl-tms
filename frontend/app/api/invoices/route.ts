@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getPagination, getSearchParam } from '@/lib/apiQuery';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const page = parseInt(req.nextUrl.searchParams.get('page') || '1');
-    const limit = parseInt(req.nextUrl.searchParams.get('limit') || '50');
-    const status = req.nextUrl.searchParams.get('status') || '';
+    const { page, limit, skip } = getPagination(req);
+    const status = getSearchParam(req, 'status');
+    const search = getSearchParam(req, 'search');
 
     const where: any = {};
     if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { invoiceNumber: { contains: search, mode: 'insensitive' } },
+        { vendorName: { contains: search, mode: 'insensitive' } },
+        { trip: { tripNumber: { contains: search, mode: 'insensitive' } } },
+        { trip: { purchaseOrder: { poNumber: { contains: search, mode: 'insensitive' } } } },
+      ];
+    }
 
     const [invoices, total] = await Promise.all([
       prisma.invoice.findMany({
@@ -25,7 +34,7 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),

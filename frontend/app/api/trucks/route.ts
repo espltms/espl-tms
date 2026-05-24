@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
+import { getPagination, getSearchParam } from '@/lib/apiQuery';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const page = parseInt(req.nextUrl.searchParams.get('page') || '1');
-    const limit = parseInt(req.nextUrl.searchParams.get('limit') || '50');
-    const search = req.nextUrl.searchParams.get('search') || '';
-    const status = req.nextUrl.searchParams.get('status') || '';
+    const { page, limit, skip } = getPagination(req);
+    const search = getSearchParam(req, 'search');
+    const status = getSearchParam(req, 'status');
 
     const where: any = {};
     if (search) {
@@ -21,7 +23,7 @@ export async function GET(req: NextRequest) {
     const [trucks, total] = await Promise.all([
       prisma.truck.findMany({
         where,
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),

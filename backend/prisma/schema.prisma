@@ -148,6 +148,8 @@ model Driver {
   complianceDocs   ComplianceRecord[]
 
   @@index([licenseNumber])
+  @@index([status, createdAt])
+  @@index([complianceVerified])
 }
 
 model Truck {
@@ -168,6 +170,8 @@ model Truck {
 
   @@index([plateNumber])
   @@index([gpsDeviceId])
+  @@index([status, createdAt])
+  @@index([complianceVerified])
 }
 
 model ComplianceRecord {
@@ -192,6 +196,7 @@ model ComplianceRecord {
   @@index([driverId])
   @@index([truckId])
   @@index([expiryDate])
+  @@index([status, expiryDate])
 }
 
 model Vendor {
@@ -235,6 +240,7 @@ model PurchaseOrder {
 
   @@index([poNumber])
   @@index([clientName])
+  @@index([status, createdAt])
 }
 
 model Trip {
@@ -271,7 +277,12 @@ model Trip {
 
   @@index([tripNumber])
   @@index([status])
+  @@index([status, createdAt])
+  @@index([scheduledStartDate])
   @@index([purchaseOrderId])
+  @@index([driverId])
+  @@index([truckId])
+  @@index([vendorId])
 }
 
 model Gatepass {
@@ -295,6 +306,7 @@ model Gatepass {
 
   @@index([gatepassNumber])
   @@index([tripId])
+  @@index([status, expiresAt])
 }
 
 model GPSPing {
@@ -328,6 +340,7 @@ model Expense {
 
   @@index([tripId])
   @@index([status])
+  @@index([status, createdAt])
 }
 
 model Invoice {
@@ -355,6 +368,9 @@ model Invoice {
   @@index([invoiceNumber])
   @@index([tripId])
   @@index([status])
+  @@index([status, createdAt])
+  @@index([dueDate])
+  @@index([vendorId])
 }
 
 model AuditLog {

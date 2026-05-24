@@ -1,8 +1,36 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
+type DashboardPayload = {
+  revenueKPI: number;
+  expenseKPI: number;
+  netMarginKPI: number;
+  reconciliationQueueCount: number;
+  disputedQueueCount: number;
+  activeTripsCount: number;
+  fleetUtilization: number;
+  totalTrucks: number;
+  totalDrivers: number;
+  totalTrips: number;
+  completedTrips: number;
+  revenueHistory: { date: string; tons: number; revenue: number }[];
+  poUsage: { name: string; allocated: number; total: number }[];
+};
+
+let dashboardCache: { payload: DashboardPayload; expiresAt: number } | null = null;
+const DASHBOARD_CACHE_MS = 15_000;
+
 export async function GET() {
   try {
+    const now = Date.now();
+    if (dashboardCache && dashboardCache.expiresAt > now) {
+      return NextResponse.json(dashboardCache.payload, {
+        headers: { 'Cache-Control': 'private, max-age=15' },
+      });
+    }
+
     const [
       totalTrucks,
       activeTrucks,
@@ -10,8 +38,10 @@ export async function GET() {
       totalTrips,
       activeTrips,
       completedTrips,
-      tripsWithTons,
+      revenueRows,
       ticketStats,
+      revenueHistoryRows,
+      pos,
     ] = await Promise.all([
       prisma.truck.count(),
       prisma.truck.count({ where: { status: 'ON_TRIP' } }),
@@ -19,26 +49,34 @@ export async function GET() {
       prisma.trip.count(),
       prisma.trip.count({ where: { status: { in: ['EN_ROUTE', 'LOADING'] } } }),
       prisma.trip.count({ where: { status: 'COMPLETED' } }),
-      prisma.trip.findMany({
-        select: {
-          estimatedQuantityTons: true,
-          actualDeliveredTons: true,
-          purchaseOrder: { select: { ratePerTon: true } },
-        },
-      }),
+      prisma.$queryRaw<{ revenue: unknown }[]>`
+        SELECT COALESCE(SUM(COALESCE(t."actualDeliveredTons", t."estimatedQuantityTons", 0) * po."ratePerTon"), 0) AS revenue
+        FROM "Trip" t
+        INNER JOIN "PurchaseOrder" po ON po.id = t."purchaseOrderId"
+      `,
       prisma.weighTicket.groupBy({
         by: ['status'],
         _count: { id: true },
       }),
+      prisma.$queryRaw<{ day: Date; tons: unknown; revenue: unknown }[]>`
+        SELECT
+          DATE(t."scheduledStartDate") AS day,
+          COALESCE(SUM(COALESCE(t."actualDeliveredTons", t."estimatedQuantityTons", 0)), 0) AS tons,
+          COALESCE(SUM(COALESCE(t."actualDeliveredTons", t."estimatedQuantityTons", 0) * po."ratePerTon"), 0) AS revenue
+        FROM "Trip" t
+        INNER JOIN "PurchaseOrder" po ON po.id = t."purchaseOrderId"
+        GROUP BY DATE(t."scheduledStartDate")
+        ORDER BY day DESC
+        LIMIT 7
+      `,
+      prisma.purchaseOrder.findMany({
+        select: { poNumber: true, totalQuantityTons: true, allocatedQuantityTons: true },
+        orderBy: { createdAt: 'desc' },
+        take: 25,
+      }),
     ]);
 
-    // Calculate revenue
-    let totalRevenue = 0;
-    tripsWithTons.forEach((trip) => {
-      const qty = Number(trip.actualDeliveredTons || trip.estimatedQuantityTons || 0);
-      const rate = Number(trip.purchaseOrder.ratePerTon || 240);
-      totalRevenue += qty * rate;
-    });
+    const totalRevenue = Number(revenueRows[0]?.revenue || 0);
 
     const fleetUtilization = totalTrucks > 0 ? parseFloat(((activeTrucks / totalTrucks) * 100).toFixed(1)) : 0;
     const totalExpenses = totalRevenue * 0.42;
@@ -47,50 +85,23 @@ export async function GET() {
     const verifiedTickets = ticketStats.find((t) => t.status === 'VERIFIED')?._count?.id || 0;
     const rejectedTickets = ticketStats.find((t) => t.status === 'REJECTED')?._count?.id || 0;
 
-    // Revenue history (last 7 days with data)
-    const recentTrips = await prisma.trip.findMany({
-      select: {
-        scheduledStartDate: true,
-        estimatedQuantityTons: true,
-        actualDeliveredTons: true,
-        purchaseOrder: { select: { ratePerTon: true, poNumber: true } },
-      },
-      orderBy: { scheduledStartDate: 'desc' },
-      take: 500,
-    });
-
-    const dateMap: Record<string, { tons: number; revenue: number }> = {};
-    recentTrips.forEach((trip) => {
-      const date = trip.scheduledStartDate.toISOString().split('T')[0];
-      const qty = Number(trip.actualDeliveredTons || trip.estimatedQuantityTons || 0);
-      const rate = Number(trip.purchaseOrder.ratePerTon || 240);
-      if (!dateMap[date]) dateMap[date] = { tons: 0, revenue: 0 };
-      dateMap[date].tons += qty;
-      dateMap[date].revenue += qty * rate;
-    });
-
-    const sortedDates = Object.keys(dateMap).sort();
-    const last7 = sortedDates.slice(-7);
-    const revenueHistory = last7.map((date) => {
-      const d = new Date(date);
+    const revenueHistory = revenueHistoryRows.reverse().map((row) => {
+      const d = new Date(row.day);
       return {
         date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        tons: Math.round(dateMap[date].tons),
-        revenue: Math.round(dateMap[date].revenue),
+        tons: Math.round(Number(row.tons || 0)),
+        revenue: Math.round(Number(row.revenue || 0)),
       };
     });
 
     // PO usage
-    const pos = await prisma.purchaseOrder.findMany({
-      select: { poNumber: true, totalQuantityTons: true, allocatedQuantityTons: true },
-    });
     const poUsage = pos.map((po) => ({
       name: po.poNumber.replace('-01', '').replace('-02', ''),
       allocated: Math.round(Number(po.allocatedQuantityTons)),
       total: Math.round(Number(po.totalQuantityTons)),
     }));
 
-    return NextResponse.json({
+    const payload = {
       revenueKPI: totalRevenue,
       expenseKPI: totalExpenses,
       netMarginKPI: netMargin,
@@ -104,6 +115,12 @@ export async function GET() {
       completedTrips,
       revenueHistory,
       poUsage,
+    };
+
+    dashboardCache = { payload, expiresAt: now + DASHBOARD_CACHE_MS };
+
+    return NextResponse.json(payload, {
+      headers: { 'Cache-Control': 'private, max-age=15' },
     });
   } catch (error) {
     console.error('Dashboard error:', error);

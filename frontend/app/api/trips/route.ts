@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
+import { getPagination, getSearchParam } from '@/lib/apiQuery';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const page = parseInt(req.nextUrl.searchParams.get('page') || '1');
-    const limit = parseInt(req.nextUrl.searchParams.get('limit') || '50');
-    const status = req.nextUrl.searchParams.get('status') || '';
+    const { page, limit, skip } = getPagination(req);
+    const status = getSearchParam(req, 'status');
+    const search = getSearchParam(req, 'search');
 
     const where: any = {};
     if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { tripNumber: { contains: search, mode: 'insensitive' } },
+        { source: { contains: search, mode: 'insensitive' } },
+        { destination: { contains: search, mode: 'insensitive' } },
+        { driver: { fullName: { contains: search, mode: 'insensitive' } } },
+        { truck: { plateNumber: { contains: search, mode: 'insensitive' } } },
+        { purchaseOrder: { poNumber: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
     const [trips, total] = await Promise.all([
       prisma.trip.findMany({
@@ -19,7 +32,7 @@ export async function GET(req: NextRequest) {
           truck: { select: { plateNumber: true, model: true } },
           purchaseOrder: { select: { poNumber: true, clientName: true, commodity: true } },
         },
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
