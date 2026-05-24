@@ -90,15 +90,11 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
   };
 
   useEffect(() => {
-    collectTables();
+    if (!open) return;
     setSearch('');
     setColumnFilters({});
-  }, [sectionName]);
-
-  useEffect(() => {
-    if (!open) return;
     collectTables();
-  }, [open]);
+  }, [open, sectionName]);
 
   const selectedTable = tables.find(table => table.id === selectedTableId);
 

@@ -13,7 +13,6 @@ import {
   HelpCircle,
   Radio
 } from 'lucide-react';
-import io from 'socket.io-client';
 
 import { getTrips } from '@/app/data/dataHelper';
 
@@ -62,31 +61,45 @@ export default function DispatchMapPage() {
   const currentRouteIndex = useRef(0);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!document.getElementById('leaflet-css')) {
+      const leafletCss = document.createElement('link');
+      leafletCss.id = 'leaflet-css';
+      leafletCss.rel = 'stylesheet';
+      leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      leafletCss.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      leafletCss.crossOrigin = '';
+      document.head.appendChild(leafletCss);
+    }
     
-    try {
-      socketRef.current = io(`${apiUrl}/dispatch`, {
-        transports: ['websocket'],
-      });
+    if (apiUrl) {
+      import('socket.io-client')
+        .then(({ io }) => {
+          socketRef.current = io(`${apiUrl}/dispatch`, {
+            transports: ['websocket'],
+          });
 
-      socketRef.current.on('connect', () => {
-        console.log('Connected to dispatch websocket stream');
-        socketRef.current.emit('joinTrip', { tripId: activeTripObj?.tripNumber || 'TRIP-NO-ACTIVE' });
-      });
+          socketRef.current.on('connect', () => {
+            console.log('Connected to dispatch websocket stream');
+            socketRef.current.emit('joinTrip', { tripId: activeTripObj?.tripNumber || 'TRIP-NO-ACTIVE' });
+          });
 
-      socketRef.current.on('locationUpdated', (data: any) => {
-        setGpsStats(prev => ({
-          ...prev,
-          latitude: Number(data.latitude),
-          longitude: Number(data.longitude),
-          speedKmh: Number(data.speedKmh),
-          heading: Number(data.heading),
-        }));
-        
-        updateMarkerPosition(data.latitude, data.longitude);
-      });
-    } catch (e) {
-      console.warn('Socket connection failed, operating offline local loop.');
+          socketRef.current.on('locationUpdated', (data: any) => {
+            setGpsStats(prev => ({
+              ...prev,
+              latitude: Number(data.latitude),
+              longitude: Number(data.longitude),
+              speedKmh: Number(data.speedKmh),
+              heading: Number(data.heading),
+            }));
+
+            updateMarkerPosition(data.latitude, data.longitude);
+          });
+        })
+        .catch(() => {
+          console.warn('Socket connection failed, operating offline local loop.');
+        });
     }
 
     if (typeof window !== 'undefined' && mapContainerRef.current && !mapInstanceRef.current) {

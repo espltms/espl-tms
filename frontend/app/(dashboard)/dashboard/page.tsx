@@ -1,35 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { useCallback, useMemo } from 'react';
 import { 
   TrendingUp, 
-  DollarSign, 
   Clock, 
   AlertOctagon, 
   Truck, 
-  MapPin, 
-  FileText, 
-  ChevronRight 
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar 
-} from 'recharts';
-import { 
-  getDashboardStats, 
-  getRevenueHistory, 
-  getPoUsageData, 
-  getTrips 
-} from '@/app/data/dataHelper';
 
 import { useApiData } from '@/lib/useApiData';
+
+const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="glass-panel h-96 rounded-2xl border border-brand-slate lg:col-span-2" />
+      <div className="glass-panel h-96 rounded-2xl border border-brand-slate" />
+    </div>
+  ),
+});
 
 export default function DashboardPage() {
   const { data: dashboardData, loading: dashboardLoading } = useApiData('/api/dashboard', null);
@@ -46,7 +36,7 @@ export default function DashboardPage() {
   const poUsageData = dashboardData?.poUsage || [];
   const revenueHistory = dashboardData?.revenueHistory || [];
 
-  const activeTrips = (tripsData?.data || []).map((t: any) => ({
+  const activeTrips = useMemo(() => (tripsData?.data || []).map((t: any) => ({
     id: t.id,
     tripNumber: t.tripNumber,
     origin: t.source?.replace(' Plant (Mines Loading)', '').replace(' Hub (Mines Loading)', ''),
@@ -54,13 +44,13 @@ export default function DashboardPage() {
     driver: t.driver?.fullName || 'Unassigned',
     quantity: `${Number(t.estimatedQuantityTons || 0).toFixed(1)} Tons`,
     status: t.status
-  }));
+  })), [tripsData]);
 
 
-  const formatCurrency = (val: number) => {
+  const formatCurrency = useCallback((val: number) => {
     // Beautiful Indian Rupees format output
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
-  };
+  }, []);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -127,58 +117,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Analytics Charts Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Large Chart */}
-        <div className="glass-panel rounded-2xl p-6 border border-brand-slate lg:col-span-2">
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Dynamic Freight Volume Trends</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Aggregate shipment tonnages & daily billings tracking (INR)</p>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '10px' }} />
-                <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} />
-                <Tooltip 
-                  formatter={(value) => [formatCurrency(Number(value)), 'Revenue']}
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', color: '#1e293b' }}
-                  labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="#38bdf8" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Small Chart */}
-        <div className="glass-panel rounded-2xl p-6 border border-brand-slate">
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Contract Budget Allocation</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Tonnage limits matching aggregate client contracts</p>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={poUsageData} layout="vertical" margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                <XAxis type="number" stroke="#6b7280" style={{ fontSize: '10px' }} />
-                <YAxis dataKey="name" type="category" stroke="#6b7280" style={{ fontSize: '10px' }} width={90} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', color: '#1e293b' }}
-                />
-                <Bar dataKey="allocated" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={12} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+      <DashboardCharts revenueHistory={revenueHistory} poUsageData={poUsageData} formatCurrency={formatCurrency} />
 
       {/* Live Tower Status feed & alert notifications */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -1,4 +1,4 @@
-import tmsData from './tms_data.json';
+import tmsData from './tms_data_client.json';
 
 // NOTE: This file is kept for backwards compatibility or fallback during development.
 // In production, components should use the /api routes via the useApiData hook.
@@ -257,4 +257,3 @@ export const getInvoices = (): Invoice[] => {
     };
   });
 };
-

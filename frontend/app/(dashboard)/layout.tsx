@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -28,6 +28,72 @@ import {
   Settings
 } from 'lucide-react';
 
+const navigationDivisions = [
+  {
+    title: "Core Division",
+    items: [
+      { label: 'Executive Console', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Control Room Live', path: '/dispatch', icon: Map, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Trip Dispatch & POs', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+    ]
+  },
+  {
+    title: "Fleet & Crew",
+    items: [
+      { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Tyre Inspection', path: '/tyres', icon: Disc, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Workshop & Repairs', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
+      { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
+    ]
+  },
+  {
+    title: "Terminal & Yard",
+    items: [
+      { label: 'Yard & Bay Queue', path: '/yard', icon: ParkingCircle, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Weighbridge Weighing', path: '/weighbridge', icon: Scale, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Store & Spare Inventory', path: '/inventory', icon: Warehouse, roles: ['SYS_ADMIN', 'FINANCE_OFFICER', 'DISPATCHER'] },
+    ]
+  },
+  {
+    title: "Finance & Law",
+    items: [
+      { label: 'Billing & Matches', path: '/billing', icon: BadgeCent, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
+      { label: 'Corporate Compliance', path: '/legal', icon: Building2, roles: ['SYS_ADMIN', 'COMPLIANCE_OFFICER', 'FINANCE_OFFICER'] },
+      { label: 'System Configuration', path: '/settings', icon: Settings, roles: ['SYS_ADMIN'] },
+    ]
+  }
+];
+
+const allNavItems = navigationDivisions.flatMap(div => div.items);
+
+const ClockWidget = memo(function ClockWidget() {
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZoneName: 'short'
+      }));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs text-brand-primary font-mono font-semibold md:flex">
+      <Clock className="h-3.5 w-3.5" />
+      <span>{currentTime}</span>
+    </div>
+  );
+});
+
 export default function DashboardLayout({
   children,
 }: {
@@ -38,28 +104,12 @@ export default function DashboardLayout({
   const { user, logout, isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
     setMounted(true);
     if (!isAuthenticated) {
       router.push('/');
     }
-
-    const updateTime = () => {
-      const options: Intl.DateTimeFormatOptions = { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false, 
-        timeZoneName: 'short' 
-      };
-      setCurrentTime(new Date().toLocaleTimeString('en-US', options));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
   }, [isAuthenticated, router]);
 
   if (!mounted || !isAuthenticated) {
@@ -70,50 +120,10 @@ export default function DashboardLayout({
     );
   }
 
-  // Multi-division categorizations for the 14 enterprise logistics domains
-  const navigationDivisions = [
-    {
-      title: "Core Division",
-      items: [
-        { label: 'Executive Console', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-        { label: 'Control Room Live', path: '/dispatch', icon: Map, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Trip Dispatch & POs', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      ]
-    },
-    {
-      title: "Fleet & Crew",
-      items: [
-        { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Tyre Inspection', path: '/tyres', icon: Disc, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Workshop & Repairs', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
-        { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
-      ]
-    },
-    {
-      title: "Terminal & Yard",
-      items: [
-        { label: 'Yard & Bay Queue', path: '/yard', icon: ParkingCircle, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Weighbridge Weighing', path: '/weighbridge', icon: Scale, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-        { label: 'Store & Spare Inventory', path: '/inventory', icon: Warehouse, roles: ['SYS_ADMIN', 'FINANCE_OFFICER', 'DISPATCHER'] },
-      ]
-    },
-    {
-      title: "Finance & Law",
-      items: [
-        { label: 'Billing & Matches', path: '/billing', icon: BadgeCent, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
-        { label: 'Corporate Compliance', path: '/legal', icon: Building2, roles: ['SYS_ADMIN', 'COMPLIANCE_OFFICER', 'FINANCE_OFFICER'] },
-        { label: 'System Configuration', path: '/settings', icon: Settings, roles: ['SYS_ADMIN'] },
-      ]
-    }
-  ];
-
-  const allowedDivisions = navigationDivisions.map(div => ({
+  const allowedDivisions = useMemo(() => navigationDivisions.map(div => ({
     ...div,
     items: div.items.filter(item => item.roles.includes(user?.role || 'SYS_ADMIN'))
-  })).filter(div => div.items.length > 0);
-
-  const allNavItems = navigationDivisions.flatMap(div => div.items);
+  })).filter(div => div.items.length > 0), [user?.role]);
 
   const handleSignOut = () => {
     logout();
@@ -222,11 +232,7 @@ export default function DashboardLayout({
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <SectionExcelExport sectionName={currentSectionName} />
 
-            {/* Clock Widget */}
-            <div className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs text-brand-primary font-mono font-semibold md:flex">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{currentTime}</span>
-            </div>
+            <ClockWidget />
 
             {/* Notification center */}
             <button className="relative rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all">
