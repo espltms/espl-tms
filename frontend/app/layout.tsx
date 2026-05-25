@@ -4,6 +4,13 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'ESPL TMS | Eastern Stevedores Private Limited',
   description: 'Production-grade enterprise Transportation Management System for high-throughput logistics, fleet compliance, digital gatepasses, and live dispatch tracking.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
 };
 
 export default function RootLayout({
