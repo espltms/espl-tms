@@ -112,14 +112,6 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router]);
 
-  if (!mounted || !isAuthenticated) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#f4f6f9]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-primary border-t-transparent" />
-      </div>
-    );
-  }
-
   const allowedDivisions = useMemo(() => navigationDivisions.map(div => ({
     ...div,
     items: div.items.filter(item => item.roles.includes(user?.role || 'SYS_ADMIN'))
@@ -140,6 +132,14 @@ export default function DashboardLayout({
   };
 
   const currentSectionName = allNavItems.find((n) => n.path === pathname)?.label || 'Current Section';
+
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#f4f6f9]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-dvh min-h-dvh w-full bg-[#f4f6f9] text-slate-700 overflow-hidden">
