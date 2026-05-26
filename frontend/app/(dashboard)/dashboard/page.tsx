@@ -159,19 +159,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-start gap-3 rounded-xl border border-brand-danger/20 bg-brand-danger/5 p-3.5">
-              <AlertOctagon className="h-5 w-5 text-brand-danger flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-3.5">
+              <AlertOctagon className="h-5 w-5 text-brand-primary flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-xs font-bold text-slate-800">RECONCILIATION EXCEPTION SHRINKAGE</div>
-                <div className="text-[10px] text-slate-500 mt-1">Invoice INV-VEN-491028 matched variance is 0.12% (limit: 0.50%). Cargo weight shrinkage flagged.</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl border border-brand-warning/20 bg-brand-warning/5 p-3.5">
-              <Clock className="h-5 w-5 text-brand-warning flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-xs font-bold text-slate-800">LICENSING EXPIRATION WARNING</div>
-                <div className="text-[10px] text-slate-500 mt-1">Driver license record for Anil Deshmukh (IND-DL-1092837) expired. Automations suspended for new trip dispatches.</div>
+                <div className="text-xs font-bold text-slate-800">DATASET-ONLY VIEW</div>
+                <div className="text-[10px] text-slate-500 mt-1">No manual compliance or invoice exception records are bundled outside the imported dataset.</div>
               </div>
             </div>
           </div>

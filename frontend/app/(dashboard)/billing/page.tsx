@@ -331,6 +331,13 @@ export default function BillingPage() {
                       </td>
                     </tr>
                   ))}
+                  {invoices.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                        No invoice records are present in the imported dataset.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

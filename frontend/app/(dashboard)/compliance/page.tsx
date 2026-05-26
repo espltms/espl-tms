@@ -13,6 +13,7 @@ import {
   X,
   FileDown
 } from 'lucide-react';
+import { getDrivers, getTrucks } from '@/app/data/dataHelper';
 
 interface ComplianceRecord {
   id: string;
@@ -28,56 +29,27 @@ interface ComplianceRecord {
 }
 
 export default function CompliancePage() {
+  const datasetDrivers = getDrivers();
+  const datasetTrucks = getTrucks();
+  const compliantDrivers = datasetDrivers.filter(driver => driver.verified).length;
+  const compliantTrucks = datasetTrucks.filter(truck => truck.status !== 'MAINTENANCE').length;
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
-    drivers: { total: 4, compliant: 3, nonCompliant: 1 },
-    trucks: { total: 3, compliant: 2, nonCompliant: 1 },
-    pendingReviews: 1,
-    expiringSoon: 1,
+    drivers: {
+      total: datasetDrivers.length,
+      compliant: compliantDrivers,
+      nonCompliant: datasetDrivers.length - compliantDrivers,
+    },
+    trucks: {
+      total: datasetTrucks.length,
+      compliant: compliantTrucks,
+      nonCompliant: datasetTrucks.length - compliantTrucks,
+    },
+    pendingReviews: 0,
+    expiringSoon: 0,
   });
 
-  const [records, setRecords] = useState<ComplianceRecord[]>([
-    {
-      id: 'rec-1',
-      documentType: 'DRIVING_LICENSE',
-      documentNumber: 'DL-9948271',
-      documentUrl: '#',
-      expiryDate: '2028-12-15T00:00:00Z',
-      status: 'APPROVED',
-      driver: { fullName: 'John Doe', licenseNumber: 'DL-9948271' },
-      verifiedBy: { fullName: 'Arthur Dent' },
-    },
-    {
-      id: 'rec-2',
-      documentType: 'VEHICLE_REGISTRATION',
-      documentNumber: 'REG-TX-FL-4810',
-      documentUrl: '#',
-      expiryDate: '2029-05-15T00:00:00Z',
-      status: 'APPROVED',
-      truck: { plateNumber: 'TX-FL-4810', model: 'Volvo FH16 Multi-Axle' },
-      verifiedBy: { fullName: 'Arthur Dent' },
-    },
-    {
-      id: 'rec-3',
-      documentType: 'DRIVING_LICENSE',
-      documentNumber: 'DL-2819384',
-      documentUrl: '#',
-      expiryDate: '2025-05-10T00:00:00Z',
-      status: 'REJECTED',
-      rejectionReason: 'Driver license has expired and must be renewed.',
-      driver: { fullName: 'Robert Chen', licenseNumber: 'DL-2819384' },
-      verifiedBy: { fullName: 'Arthur Dent' },
-    },
-    {
-      id: 'rec-4',
-      documentType: 'VEHICLE_INSURANCE',
-      documentNumber: 'INS-TX-TB-2918',
-      documentUrl: '#',
-      expiryDate: '2026-09-01T00:00:00Z',
-      status: 'PENDING',
-      truck: { plateNumber: 'TX-TB-2918', model: 'Scania R500 V8' },
-    },
-  ]);
+  const [records, setRecords] = useState<ComplianceRecord[]>([]);
 
   const [reviewingRecord, setReviewingRecord] = useState<ComplianceRecord | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -87,25 +59,7 @@ export default function CompliancePage() {
   }, []);
 
   const fetchComplianceData = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      
-      const summaryRes = await fetch(`${apiUrl}/api/compliance/summary`);
-      if (summaryRes.ok) {
-        const data = await summaryRes.json();
-        setSummary(data);
-      }
-
-      const recordsRes = await fetch(`${apiUrl}/api/compliance/records`);
-      if (recordsRes.ok) {
-        const data = await recordsRes.json();
-        setRecords(data);
-      }
-    } catch (err) {
-      console.warn('Backend API connection failed; using offline static compliance database.');
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
   const handleVerify = async (recordId: string, status: 'APPROVED' | 'REJECTED') => {
@@ -329,6 +283,13 @@ export default function CompliancePage() {
                   </td>
                 </tr>
               ))}
+              {records.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                    No compliance document records are present in the imported dataset.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -125,6 +125,13 @@ export default function TripsPage() {
       fetchTripsData();
       setModalOpen(false);
     } catch (err: any) {
+      const selectedDriver = drivers.find(d => d.id === driverId);
+      const selectedTruck = trucks.find(t => t.id === truckId);
+      if (!selectedDriver || !selectedTruck) {
+        setError('Select a valid driver and truck from the imported dataset');
+        return;
+      }
+
       const newTrip: Trip = {
         id: `trip-local-${Date.now()}`,
         tripNumber: `TRIP-${10000 + trips.length + 1}`,
@@ -134,8 +141,8 @@ export default function TripsPage() {
         estimatedQuantityTons: requestedQty,
         status: 'SCHEDULED',
         scheduledStartDate: new Date().toISOString(),
-        driver: { fullName: drivers.find(d => d.id === driverId)?.fullName || 'Ramesh Yadav', phone: '+919876543210' },
-        truck: { plateNumber: trucks.find(t => t.id === truckId)?.plateNumber || 'MH-12-QG-4810', model: 'Tata Prima' },
+        driver: { fullName: selectedDriver.fullName, phone: selectedDriver.phone },
+        truck: { plateNumber: selectedTruck.plateNumber, model: selectedTruck.model },
         purchaseOrder: {
           poNumber: targetPO.poNumber,
           clientName: targetPO.clientName,

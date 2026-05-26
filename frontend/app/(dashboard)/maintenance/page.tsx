@@ -24,9 +24,9 @@ export default function MaintenancePage() {
   const [modalOpen, setModalOpen] = useState(false);
   
   const [plate, setPlate] = useState(allTrucks[0]?.plateNumber || '');
-  const [description, setDescription] = useState('Tyre inspection tread depth wear replacement');
+  const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('MEDIUM');
-  const [cost, setCost] = useState('350.00');
+  const [cost, setCost] = useState('');
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
@@ -51,7 +51,7 @@ export default function MaintenancePage() {
       severity,
       cost: parseFloat(cost) || 0,
       status: 'PENDING',
-      workshop: 'Dallas Main Workshop'
+      workshop: ''
     };
     const nextOrders = [newOrder, ...orders];
     localStorage.setItem(MANUAL_MAINTENANCE_KEY, JSON.stringify(nextOrders));
@@ -175,10 +175,11 @@ export default function MaintenancePage() {
                   onChange={(e) => setPlate(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 font-mono uppercase"
                 >
-                  <option value="TX-FL-4810">TX-FL-4810 (Volvo FH16)</option>
-                  <option value="TX-TB-2918">TX-TB-2918 (Scania R500)</option>
-                  <option value="TX-FB-1928">TX-FB-1928 (Peterbilt 389)</option>
-                  <option value="KA-01-GH-3456">KA-01-GH-3456 (Ashok Leyland)</option>
+                  {allTrucks.map(truck => (
+                    <option key={truck.id} value={truck.plateNumber}>
+                      {truck.plateNumber} ({truck.model})
+                    </option>
+                  ))}
                 </select>
               </div>
 

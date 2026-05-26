@@ -82,31 +82,8 @@ export const getPurchaseOrders = (): PurchaseOrder[] => tmsData.purchaseOrders a
 export const getTrips = (): Trip[] => tmsData.trips as Trip[];
 export const getWeighTickets = (): WeighTicket[] => tmsData.weighTickets as WeighTicket[];
 
-// 2. Generate HR Employees list using drivers and some admins
-export const getEmployees = (): Employee[] => {
-  const employees: Employee[] = [
-    { id: 'emp-admin', name: 'Vikram Sharma', email: 'admin@logistics.com', department: 'SYS_ADMIN', salary: 180000, allowance: 0, safetyScore: 100, joinDate: '2025-01-10' },
-    { id: 'emp-finance', name: 'Elena Rostova', email: 'finance@logistics.com', department: 'FINANCE_OFFICER', salary: 120000, allowance: 0, safetyScore: 100, joinDate: '2025-03-20' },
-    { id: 'emp-dispatcher', name: 'Alok Gupta', email: 'dispatcher@logistics.com', department: 'DISPATCHER', salary: 85000, allowance: 0, safetyScore: 100, joinDate: '2025-05-15' }
-  ];
-
-  // Map drivers to employees
-  const driversList = getDrivers();
-  driversList.forEach((d, idx) => {
-    employees.push({
-      id: `emp-drv-${d.id}`,
-      name: d.fullName,
-      email: `${d.fullName.toLowerCase().replace(/\s+/g, '.')}@aero-tms.com`,
-      department: 'DRIVER_PARTNER',
-      salary: 35000 + (idx % 5) * 2000,
-      allowance: 1200 + (idx % 3) * 300,
-      safetyScore: 85 + (idx % 15),
-      joinDate: '2025-06-15'
-    });
-  });
-
-  return employees;
-};
+// 2. HR employees are not present in the imported dataset.
+export const getEmployees = (): Employee[] => [];
 
 // 3. Compute dashboard metrics dynamically
 export const getDashboardStats = () => {
@@ -136,10 +113,10 @@ export const getDashboardStats = () => {
     revenueKPI: totalRevenue,
     expenseKPI: totalExpenses,
     netMarginKPI: netMargin,
-    reconciliationQueueCount: reconciliationQueueCount || 1,
+    reconciliationQueueCount,
     disputedQueueCount: disputedQueueCount || 0,
     activeTripsCount: activeTripsCount,
-    fleetUtilization: fleetUtilization || 85.0
+    fleetUtilization: Number.isFinite(fleetUtilization) ? fleetUtilization : 0
   };
 };
 
@@ -216,44 +193,5 @@ export interface Invoice {
   vendor?: { name: string };
 }
 
-// 6. Generate Invoices from completed trips
-export const getInvoices = (): Invoice[] => {
-  const trips = getTrips();
-  const completedTrips = trips.filter(t => t.status === 'COMPLETED').slice(0, 15);
-  
-  return completedTrips.map((t, idx) => {
-    const rate = t.purchaseOrder.poNumber === "PO-VEDANTA-PRMNDPR-01" ? 240 : 280;
-    const subtotal = (t.actualDeliveredTons || t.estimatedQuantityTons) * rate;
-    const taxAmount = subtotal * 0.05; // 5% GST
-    const totalAmount = subtotal + taxAmount;
-    
-    // Distribute some statuses for demo variety
-    const statuses: Invoice['status'][] = ['PAID', 'PENDING_RECONCILIATION', 'DISPUTED', 'SENT'];
-    const status = statuses[idx % statuses.length];
-    
-    return {
-      id: `inv-${idx + 1}`,
-      invoiceNumber: `INV-VED-${100000 + idx}`,
-      tripId: t.id,
-      vendorId: `vendor-${(idx % 3) + 1}`,
-      type: 'CLIENT_INVOICE',
-      subtotal: Math.round(subtotal),
-      taxAmount: Math.round(taxAmount),
-      totalAmount: Math.round(totalAmount),
-      status: status,
-      dueDate: new Date(new Date(t.scheduledStartDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      trip: {
-        tripNumber: t.tripNumber,
-        source: t.source,
-        destination: t.destination,
-        purchaseOrder: {
-          poNumber: t.purchaseOrder.poNumber,
-          clientName: t.purchaseOrder.clientName
-        }
-      },
-      vendor: {
-        name: idx % 2 === 0 ? 'Gati Freight Carriers Pvt Ltd' : 'VRL Logistics Ltd'
-      }
-    };
-  });
-};
+// 6. Invoices are not present in the imported dataset.
+export const getInvoices = (): Invoice[] => [];

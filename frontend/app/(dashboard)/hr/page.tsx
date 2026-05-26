@@ -148,6 +148,13 @@ export default function HRPage() {
                   </td>
                 </tr>
               ))}
+              {employees.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    No HR or payroll records are present in the imported dataset.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

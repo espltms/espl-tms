@@ -36,30 +36,30 @@ interface Driver {
 
 import { getDrivers } from '@/app/data/dataHelper';
 
-const INITIAL_DRIVERS: Driver[] = getDrivers().map((d, idx) => ({
+const INITIAL_DRIVERS: Driver[] = getDrivers().map((d) => ({
   id: d.id,
   fullName: d.fullName,
-  fatherName: d.fullName.split(' ')[0] + ' Senior',
+  fatherName: '',
   license: d.licenseNumber,
-  licenseExpiry: '2028-06-15',
+  licenseExpiry: '',
   phone: d.phone,
-  emergencyPhone: d.phone.substring(0, d.phone.length - 1) + '1',
-  email: `${d.fullName.toLowerCase().replace(/\s+/g, '.')}@aero-tms.com`,
-  address: 'Transport Yard Area, Lanjigarh',
-  city: 'Bhawanipatna',
-  state: 'Odisha',
-  pincode: '766027',
-  dateOfBirth: '1988-05-10',
-  joiningDate: '2025-06-15',
-  aadharNumber: `4532 8821 ${1000 + idx}`,
-  panNumber: `ABCPS${1000 + idx}F`,
-  bloodGroup: 'O+',
+  emergencyPhone: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
+  dateOfBirth: '',
+  joiningDate: '',
+  aadharNumber: '',
+  panNumber: '',
+  bloodGroup: '',
   dutyHours: d.status === 'ON_TRIP' ? '6.0 / 11h' : '0.0 / 11h',
-  safetyScore: 90 + (idx % 11),
+  safetyScore: d.verified ? 100 : 0,
   status: (d.status === 'ON_TRIP' ? 'ON_TRIP' : 'AVAILABLE'),
-  salary: 30000 + (idx % 5) * 2000,
-  experience: 5 + (idx % 10),
-  vehicleType: 'Tipper'
+  salary: 0,
+  experience: 0,
+  vehicleType: ''
 }));
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];

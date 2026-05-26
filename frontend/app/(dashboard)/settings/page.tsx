@@ -1,14 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { Settings, ShieldCheck, Activity, Users, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const [logs, setLogs] = useState([
-    { id: '1', operator: 'Sarah Jenkins', action: 'TRIP_DISPATCHED', payload: 'TRIP-99801 (Volvo FH16)', timestamp: '2026-05-23T09:15:00Z', ip: '192.168.1.104' },
-    { id: '2', operator: 'Elena Rostova', action: 'INVOICE_THREE_WAY_MATCH_RUN', payload: 'INV-VEN-491028 (Disbursed)', timestamp: '2026-05-23T08:30:00Z', ip: '192.168.1.105' },
-    { id: '3', operator: 'Arthur Dent', action: 'COMPLIANCE_VERIFIED', payload: 'DL-9948271 (Approved)', timestamp: '2026-05-23T08:12:00Z', ip: '192.168.1.106' },
-  ]);
+  const logs: Array<{ id: string; operator: string; action: string; payload: string; timestamp: string; ip: string }> = [];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -82,6 +77,13 @@ export default function SettingsPage() {
                   <td className="px-6 py-4 text-right font-mono text-slate-400">{log.ip}</td>
                 </tr>
               ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                    No audit log records are present in the imported dataset.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
