@@ -12,7 +12,7 @@ interface TruckData {
   capacity: string;
   fuelCard: string;
   health: number;
-  status: 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE';
+  status: TruckStatus;
   vendor?: string;
   subVendor?: string;
   wheeler?: string;
@@ -41,9 +41,15 @@ interface DriverData {
 import { getDrivers, getTrucks } from '@/app/data/dataHelper';
 
 type OnboardingMode = 'vehicle' | 'driver' | 'both';
+type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const WHEELER_OPTIONS = ['6 Wheeler', '10 Wheeler', '12 Wheeler', '14 Wheeler', '16 Wheeler', '18 Wheeler', '22 Wheeler'];
+const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
+  { value: 'IN_TRANSIT', label: 'In transit' },
+  { value: 'RECEIVED', label: 'Received' },
+  { value: 'ACTION', label: 'Action' },
+];
 
 const emptyVehicleForm = {
   plateNumber: '',
@@ -58,6 +64,7 @@ const emptyVehicleForm = {
   insuranceDocumentName: '',
   pucDocumentName: '',
   assignedDriverId: '',
+  status: 'RECEIVED' as TruckStatus,
 };
 
 const emptyDriverForm = {
@@ -81,7 +88,21 @@ export default function FleetPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 15;
 
-  const filteredTrucks = filter === 'ALL' ? trucks : trucks.filter(t => t.status === filter);
+  const normalizeTruckStatus = (status: TruckStatus) => {
+    if (status === 'ON_TRIP') return 'IN_TRANSIT';
+    if (status === 'MAINTENANCE') return 'ACTION';
+    if (status === 'AVAILABLE') return 'RECEIVED';
+    return status;
+  };
+
+  const getStatusClasses = (status: TruckStatus) => {
+    const normalized = normalizeTruckStatus(status);
+    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+  };
+
+  const filteredTrucks = filter === 'ALL' ? trucks : trucks.filter(t => normalizeTruckStatus(t.status) === filter);
   const totalPages = Math.ceil(filteredTrucks.length / ITEMS_PER_PAGE);
   const paginatedTrucks = filteredTrucks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -115,7 +136,7 @@ export default function FleetPage() {
           phone: driverForm.phone,
           licenseNumber: driverForm.licenseNumber,
           aadharNumber: driverForm.aadharNumber,
-          status: 'AVAILABLE',
+          status: vehicleForm.status,
           verified: Boolean(driverForm.licenseNumber && driverForm.aadharNumber),
         }
       : null;
@@ -188,6 +209,12 @@ export default function FleetPage() {
     setReassigningTruck(null);
   };
 
+  const handleTruckStatusChange = (truckId: string, status: TruckStatus) => {
+    const nextTrucks = trucks.map(truck => truck.id === truckId ? { ...truck, status } : truck);
+    setTrucks(nextTrucks);
+    persistLocalTrucks(nextTrucks);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -209,7 +236,7 @@ export default function FleetPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aggregate Utilization</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">
-              {Math.round((trucks.filter(t => t.status === 'ON_TRIP').length / trucks.length) * 100) || 0}%
+              {Math.round((trucks.filter(t => normalizeTruckStatus(t.status) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
             </span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">+2.4% vs last week</span>
           </div>
@@ -222,10 +249,10 @@ export default function FleetPage() {
           </div>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Critical Health Alarms</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Action Required</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-red-600">{trucks.filter(t => t.health < 50).length} Vehicle</span>
-            <span className="text-[10px] text-red-600 font-semibold">Immediate overhaul scheduled</span>
+            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => normalizeTruckStatus(t.status) === 'ACTION').length} Vehicle</span>
+            <span className="text-[10px] text-amber-600 font-semibold">Needs follow-up</span>
           </div>
         </div>
       </div>
@@ -236,8 +263,15 @@ export default function FleetPage() {
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Fleet Registry</h3>
           <div className="flex gap-2">
             <button onClick={() => { setFilter('ALL'); setCurrentPage(1); }} className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === 'ALL' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>ALL</button>
-            <button onClick={() => { setFilter('AVAILABLE'); setCurrentPage(1); }} className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>AVAILABLE</button>
-            <button onClick={() => { setFilter('MAINTENANCE'); setCurrentPage(1); }} className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === 'MAINTENANCE' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>WORKSHOP</button>
+            {TRUCK_STATUS_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                onClick={() => { setFilter(option.value); setCurrentPage(1); }}
+                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === option.value ? `${getStatusClasses(option.value)} border` : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+              >
+                {option.label.toUpperCase()}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -304,13 +338,15 @@ export default function FleetPage() {
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
-                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
-                        truck.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                        truck.status === 'ON_TRIP' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                        'bg-red-50 text-red-700 border-red-200'
-                      }`}>
-                        {truck.status.replace('_', ' ')}
-                      </span>
+                      <select
+                        value={normalizeTruckStatus(truck.status)}
+                        onChange={(e) => handleTruckStatusChange(truck.id, e.target.value as TruckStatus)}
+                        className={`rounded-full border px-2.5 py-1 text-[9px] font-bold outline-none ${getStatusClasses(truck.status)}`}
+                      >
+                        {TRUCK_STATUS_OPTIONS.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </td>
                 </tr>
@@ -403,6 +439,11 @@ export default function FleetPage() {
                     <Field label="Vehicle Type">
                       <select value={vehicleForm.type} onChange={(e) => setVehicleForm({...vehicleForm, type: e.target.value})} className="fleet-input">
                         {VEHICLE_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Truck Status">
+                      <select value={vehicleForm.status} onChange={(e) => setVehicleForm({...vehicleForm, status: e.target.value as TruckStatus})} className="fleet-input">
+                        {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </Field>
                     <Field label="Wheeler">

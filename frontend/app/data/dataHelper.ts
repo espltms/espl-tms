@@ -11,7 +11,7 @@ export interface TruckData {
   capacity: string;
   fuelCard: string;
   health: number;
-  status: 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE';
+  status: 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
   vendor?: string;
   subVendor?: string;
   wheeler?: string;
@@ -128,7 +128,7 @@ export const getDashboardStats = () => {
 
   const activeTripsCount = trips.filter(t => t.status === 'EN_ROUTE' || t.status === 'LOADING').length;
   const totalTrucks = trucks.length;
-  const activeTrucks = trucks.filter(t => t.status === 'ON_TRIP').length;
+  const activeTrucks = trucks.filter(t => t.status === 'ON_TRIP' || t.status === 'IN_TRANSIT').length;
   const fleetUtilization = parseFloat(((activeTrucks / totalTrucks) * 100).toFixed(1));
 
   const totalExpenses = totalRevenue * 0.42; // standard 42% cost structure
