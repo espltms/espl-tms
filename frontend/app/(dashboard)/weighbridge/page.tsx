@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { 
   Scale, Plus, ShieldCheck, AlertOctagon, CheckCircle2, FileText,
-  Truck, ArrowRight, X, Printer, Fingerprint, PackageCheck
+  Truck, ArrowRight, X, Printer, Fingerprint, PackageCheck, PackageOpen
 } from 'lucide-react';
 
 interface WeighTicket {
@@ -43,6 +43,10 @@ interface LoadingRecord {
   challanNo: string;
   uom: string;
   truckStatus: TruckStatus;
+  receivedQty?: number;
+  unloadingDateTime?: string;
+  turnaroundMinutes?: number;
+  unloadingTruckStatus?: TruckStatus;
 }
 
 import { getTrucks, getWeighTickets } from '@/app/data/dataHelper';
@@ -68,6 +72,12 @@ const emptyLoadingForm = {
   truckStatus: 'IN_TRANSIT' as TruckStatus,
 };
 
+const emptyUnloadingForm = {
+  truckStatus: 'RECEIVED' as TruckStatus,
+  receivedQty: '',
+  unloadingDateTime: new Date().toISOString().slice(0, 16),
+};
+
 export default function WeighbridgePage() {
   const [tickets, setTickets] = useState<WeighTicket[]>(() => getWeighTickets());
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
@@ -81,11 +91,13 @@ export default function WeighbridgePage() {
   });
   const [showModal, setShowModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [unloadingRecord, setUnloadingRecord] = useState<LoadingRecord | null>(null);
   const [step, setStep] = useState(1);
   const [ticketData, setTicketData] = useState({
     truckPlate: '', tripNo: '', material: '', tareTons: '', grossTons: '', sealNumber: ''
   });
   const [loadingForm, setLoadingForm] = useState(emptyLoadingForm);
+  const [unloadingForm, setUnloadingForm] = useState(emptyUnloadingForm);
 
   const persistTruckStatusOverrides = (records: TruckData[]) => {
     if (typeof window === 'undefined') return;
@@ -116,6 +128,14 @@ export default function WeighbridgePage() {
   };
 
   const selectedLoadingTruck = trucks.find(truck => truck.id === loadingForm.truckId);
+
+  const formatTurnaround = (minutes?: number) => {
+    if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return 'Pending';
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours <= 0) return `${remainingMinutes}m`;
+    return `${hours}h ${remainingMinutes}m`;
+  };
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -198,6 +218,46 @@ export default function WeighbridgePage() {
     setLoadingForm(emptyLoadingForm);
   };
 
+  const openUnloadingModal = (record: LoadingRecord) => {
+    setUnloadingRecord(record);
+    setUnloadingForm({
+      truckStatus: record.unloadingTruckStatus || 'RECEIVED',
+      receivedQty: record.receivedQty?.toString() || record.netWeight.toString(),
+      unloadingDateTime: record.unloadingDateTime || new Date().toISOString().slice(0, 16),
+    });
+  };
+
+  const handleUnloadingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unloadingRecord) return;
+
+    const loadingTime = new Date(unloadingRecord.loadingDateTime).getTime();
+    const unloadingTime = new Date(unloadingForm.unloadingDateTime).getTime();
+    const turnaroundMinutes = Math.max(0, Math.round((unloadingTime - loadingTime) / 60000));
+    const nextRecords = loadingRecords.map(record =>
+      record.id === unloadingRecord.id
+        ? {
+            ...record,
+            receivedQty: parseFloat(unloadingForm.receivedQty) || 0,
+            unloadingDateTime: unloadingForm.unloadingDateTime,
+            turnaroundMinutes,
+            unloadingTruckStatus: unloadingForm.truckStatus,
+            truckStatus: unloadingForm.truckStatus,
+          }
+        : record
+    );
+    const nextTrucks = trucks.map(truck =>
+      truck.id === unloadingRecord.truckId ? { ...truck, status: unloadingForm.truckStatus } : truck
+    );
+
+    setLoadingRecords(nextRecords);
+    setTrucks(nextTrucks);
+    persistLoadingRecords(nextRecords);
+    persistTruckStatusOverrides(nextTrucks);
+    setUnloadingRecord(null);
+    setUnloadingForm(emptyUnloadingForm);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -211,6 +271,13 @@ export default function WeighbridgePage() {
             className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
           >
             <PackageCheck className="h-4 w-4" /> Loading Vehicle
+          </button>
+          <button 
+            onClick={() => loadingRecords[0] && openUnloadingModal(loadingRecords[0])}
+            disabled={loadingRecords.length === 0}
+            className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-xs font-bold text-emerald-700 hover:bg-emerald-100 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <PackageOpen className="h-4 w-4" /> Unloading Vehicle
           </button>
           <button 
             onClick={() => setShowModal(true)}
@@ -278,13 +345,14 @@ export default function WeighbridgePage() {
                 <th className="px-6 py-4">Weights</th>
                 <th className="px-6 py-4">U.O.M</th>
                 <th className="px-6 py-4">Loading Time</th>
+                <th className="px-6 py-4">Unloading</th>
                 <th className="px-6 py-4 text-right">Truck Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loadingRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td>
                 </tr>
               ) : loadingRecords.map(record => (
                 <tr key={record.id} className="hover:bg-slate-50 transition-colors">
@@ -300,6 +368,23 @@ export default function WeighbridgePage() {
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
                   <td className="px-6 py-4 text-slate-500">
                     {new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </td>
+                  <td className="px-6 py-4">
+                    {record.unloadingDateTime ? (
+                      <div>
+                        <div className="font-mono font-bold text-slate-700">Received: {record.receivedQty?.toFixed(2)} {record.uom}</div>
+                        <div className="mt-0.5 text-[10px] text-slate-500">
+                          TAT: {formatTurnaround(record.turnaroundMinutes)}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openUnloadingModal(record)}
+                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 hover:bg-emerald-100"
+                      >
+                        Unload
+                      </button>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getTruckStatusStyle(record.truckStatus)}`}>
@@ -522,6 +607,81 @@ export default function WeighbridgePage() {
                 </button>
                 <button type="submit" className="flex-[2] rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
                   Save Loading Entry <PackageCheck className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Unloading Vehicle Modal */}
+      {unloadingRecord && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Unloading Vehicle</h3>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                  {unloadingRecord.truckPlate} | Loaded {new Date(unloadingRecord.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                </p>
+              </div>
+              <button onClick={() => { setUnloadingRecord(null); setUnloadingForm(emptyUnloadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUnloadingSubmit} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Status *</label>
+                <select
+                  required
+                  value={unloadingForm.truckStatus}
+                  onChange={(e) => setUnloadingForm({ ...unloadingForm, truckStatus: e.target.value as TruckStatus })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                >
+                  {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Received Qty *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={unloadingForm.receivedQty}
+                    onChange={(e) => setUnloadingForm({ ...unloadingForm, receivedQty: e.target.value })}
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 font-mono font-bold"
+                    placeholder="38.20"
+                  />
+                  <p className="mt-1 text-[9px] text-slate-400">Loaded net: {unloadingRecord.netWeight.toFixed(2)} {unloadingRecord.uom}</p>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Date & Time of Unloading *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={unloadingForm.unloadingDateTime}
+                    onChange={(e) => setUnloadingForm({ ...unloadingForm, unloadingDateTime: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Calculated Turnaround Time</div>
+                <div className="mt-2 text-lg font-extrabold text-slate-800">
+                  {formatTurnaround(Math.max(0, Math.round((new Date(unloadingForm.unloadingDateTime).getTime() - new Date(unloadingRecord.loadingDateTime).getTime()) / 60000)))}
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => { setUnloadingRecord(null); setUnloadingForm(emptyUnloadingForm); }} className="flex-1 rounded-xl bg-slate-100 border border-slate-200 py-3 text-xs font-bold text-slate-600 hover:bg-slate-200 transition-all">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-[2] rounded-xl bg-gradient-to-r from-brand-success to-emerald-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
+                  Save Unloading Entry <PackageOpen className="h-4 w-4" />
                 </button>
               </div>
             </form>
