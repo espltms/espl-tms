@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { 
   Scale, Plus, ShieldCheck, AlertOctagon, CheckCircle2, FileText,
-  Truck, ArrowRight, X, Printer, Fingerprint
+  Truck, ArrowRight, X, Printer, Fingerprint, PackageCheck
 } from 'lucide-react';
 
 interface WeighTicket {
@@ -20,15 +20,102 @@ interface WeighTicket {
   timestamp: string;
 }
 
-import { getWeighTickets } from '@/app/data/dataHelper';
+interface TruckData {
+  id: string;
+  plateNumber: string;
+  model: string;
+  type: string;
+  capacity: string;
+  fuelCard: string;
+  health: number;
+  status: TruckStatus;
+}
+
+interface LoadingRecord {
+  id: string;
+  truckId: string;
+  truckPlate: string;
+  tareWeight: number;
+  grossWeight: number;
+  netWeight: number;
+  loadingDateTime: string;
+  ticketNo: string;
+  challanNo: string;
+  uom: string;
+  truckStatus: TruckStatus;
+}
+
+import { getTrucks, getWeighTickets } from '@/app/data/dataHelper';
+
+type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+
+const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
+const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
+  { value: 'IN_TRANSIT', label: 'In transit' },
+  { value: 'RECEIVED', label: 'Received' },
+  { value: 'ACTION', label: 'Action' },
+];
+
+const emptyLoadingForm = {
+  truckId: '',
+  tareWeight: '',
+  grossWeight: '',
+  netWeight: '',
+  loadingDateTime: new Date().toISOString().slice(0, 16),
+  ticketNo: '',
+  challanNo: '',
+  uom: 'Metric Ton',
+  truckStatus: 'IN_TRANSIT' as TruckStatus,
+};
 
 export default function WeighbridgePage() {
   const [tickets, setTickets] = useState<WeighTicket[]>(() => getWeighTickets());
+  const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
+  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
+    } catch {
+      return [];
+    }
+  });
   const [showModal, setShowModal] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [step, setStep] = useState(1);
   const [ticketData, setTicketData] = useState({
     truckPlate: '', tripNo: '', material: '', tareTons: '', grossTons: '', sealNumber: ''
   });
+  const [loadingForm, setLoadingForm] = useState(emptyLoadingForm);
+
+  const persistTruckStatusOverrides = (records: TruckData[]) => {
+    if (typeof window === 'undefined') return;
+    const overrides = records.reduce<Record<string, TruckStatus>>((acc, truck) => {
+      acc[truck.id] = truck.status;
+      return acc;
+    }, {});
+    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+  };
+
+  const persistLoadingRecords = (records: LoadingRecord[]) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('tms_loading_records', JSON.stringify(records));
+  };
+
+  const normalizeTruckStatus = (status: TruckStatus) => {
+    if (status === 'ON_TRIP') return 'IN_TRANSIT';
+    if (status === 'MAINTENANCE') return 'ACTION';
+    if (status === 'AVAILABLE') return 'RECEIVED';
+    return status;
+  };
+
+  const getTruckStatusStyle = (status: TruckStatus) => {
+    const normalized = normalizeTruckStatus(status);
+    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+  };
+
+  const selectedLoadingTruck = trucks.find(truck => truck.id === loadingForm.truckId);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -70,6 +157,47 @@ export default function WeighbridgePage() {
     setTicketData({ truckPlate: '', tripNo: '', material: '', tareTons: '', grossTons: '', sealNumber: '' });
   };
 
+  const handleLoadingNumberChange = (field: 'tareWeight' | 'grossWeight' | 'netWeight', value: string) => {
+    const nextForm = { ...loadingForm, [field]: value };
+    if (field === 'tareWeight' || field === 'grossWeight') {
+      const tare = parseFloat(field === 'tareWeight' ? value : nextForm.tareWeight) || 0;
+      const gross = parseFloat(field === 'grossWeight' ? value : nextForm.grossWeight) || 0;
+      nextForm.netWeight = gross > tare ? (gross - tare).toFixed(2) : '0.00';
+    }
+    setLoadingForm(nextForm);
+  };
+
+  const handleLoadingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLoadingTruck) return;
+
+    const newRecord: LoadingRecord = {
+      id: `loading-${Date.now()}`,
+      truckId: selectedLoadingTruck.id,
+      truckPlate: selectedLoadingTruck.plateNumber,
+      tareWeight: parseFloat(loadingForm.tareWeight) || 0,
+      grossWeight: parseFloat(loadingForm.grossWeight) || 0,
+      netWeight: parseFloat(loadingForm.netWeight) || 0,
+      loadingDateTime: loadingForm.loadingDateTime,
+      ticketNo: loadingForm.ticketNo,
+      challanNo: loadingForm.challanNo,
+      uom: loadingForm.uom,
+      truckStatus: loadingForm.truckStatus,
+    };
+
+    const nextRecords = [newRecord, ...loadingRecords];
+    const nextTrucks = trucks.map(truck =>
+      truck.id === selectedLoadingTruck.id ? { ...truck, status: loadingForm.truckStatus } : truck
+    );
+
+    setLoadingRecords(nextRecords);
+    setTrucks(nextTrucks);
+    persistLoadingRecords(nextRecords);
+    persistTruckStatusOverrides(nextTrucks);
+    setShowLoadingModal(false);
+    setLoadingForm(emptyLoadingForm);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -77,12 +205,20 @@ export default function WeighbridgePage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Weighbridge & Weighing Tickets</h2>
           <p className="text-xs text-slate-500 mt-1">Register vehicle tare weights, gross weights, and lock tamper-proof cargo security seals</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
-        >
-          <Scale className="h-4 w-4" /> Log Weighment
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button 
+            onClick={() => setShowLoadingModal(true)}
+            className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
+          >
+            <PackageCheck className="h-4 w-4" /> Loading Vehicle
+          </button>
+          <button 
+            onClick={() => setShowModal(true)}
+            className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-sm"
+          >
+            <Scale className="h-4 w-4" /> Log Weighment
+          </button>
+        </div>
       </div>
 
       {/* Quick Stats */}
@@ -116,6 +252,64 @@ export default function WeighbridgePage() {
             <span className="text-2xl font-extrabold text-emerald-600">Active</span>
             <span className="text-[10px] text-slate-500">Scale calibrated</span>
           </div>
+        </div>
+      </div>
+
+      {/* Loading Vehicle Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <PackageCheck className="h-4 w-4 text-brand-primary" /> Loading Vehicle Records
+          </h3>
+          <button
+            onClick={() => setShowLoadingModal(true)}
+            className="rounded-lg bg-blue-50 px-3 py-2 text-[10px] font-extrabold text-blue-700 border border-blue-200 hover:bg-blue-100"
+          >
+            Add Loading Entry
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">Vehicle</th>
+                <th className="px-6 py-4">Ticket / Challan</th>
+                <th className="px-6 py-4">Weights</th>
+                <th className="px-6 py-4">U.O.M</th>
+                <th className="px-6 py-4">Loading Time</th>
+                <th className="px-6 py-4 text-right">Truck Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-600">
+              {loadingRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td>
+                </tr>
+              ) : loadingRecords.map(record => (
+                <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{record.truckPlate}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-mono font-bold text-slate-700">{record.ticketNo}</div>
+                    <div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono">
+                    <div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div>
+                    <div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div>
+                  </td>
+                  <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
+                  <td className="px-6 py-4 text-slate-500">
+                    {new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getTruckStatusStyle(record.truckStatus)}`}>
+                      {TRUCK_STATUS_OPTIONS.find(option => option.value === normalizeTruckStatus(record.truckStatus))?.label || record.truckStatus}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -183,6 +377,157 @@ export default function WeighbridgePage() {
           </table>
         </div>
       </div>
+
+      {/* Loading Vehicle Modal */}
+      {showLoadingModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Loading Vehicle</h3>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">Capture loading weights, ticket details, and truck status</p>
+              </div>
+              <button onClick={() => { setShowLoadingModal(false); setLoadingForm(emptyLoadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleLoadingSubmit} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Vehicle *</label>
+                  <select
+                    required
+                    value={loadingForm.truckId}
+                    onChange={(e) => {
+                      const truck = trucks.find(item => item.id === e.target.value);
+                      setLoadingForm({
+                        ...loadingForm,
+                        truckId: e.target.value,
+                        truckStatus: truck ? normalizeTruckStatus(truck.status) : loadingForm.truckStatus,
+                      });
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                  >
+                    <option value="">Choose vehicle...</option>
+                    {trucks.map(truck => (
+                      <option key={truck.id} value={truck.id}>{truck.plateNumber} - {truck.model}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Status *</label>
+                  <select
+                    required
+                    value={loadingForm.truckStatus}
+                    onChange={(e) => setLoadingForm({ ...loadingForm, truckStatus: e.target.value as TruckStatus })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                  >
+                    {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Tare Weight *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={loadingForm.tareWeight}
+                    onChange={(e) => handleLoadingNumberChange('tareWeight', e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 font-mono font-bold"
+                    placeholder="15.20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Gross Weight *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={loadingForm.grossWeight}
+                    onChange={(e) => handleLoadingNumberChange('grossWeight', e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 font-mono font-bold"
+                    placeholder="53.40"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Net Weight *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={loadingForm.netWeight}
+                    onChange={(e) => handleLoadingNumberChange('netWeight', e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 font-mono font-bold"
+                    placeholder="38.20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Time & Date of Loading *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={loadingForm.loadingDateTime}
+                    onChange={(e) => setLoadingForm({ ...loadingForm, loadingDateTime: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">U.O.M *</label>
+                  <select
+                    required
+                    value={loadingForm.uom}
+                    onChange={(e) => setLoadingForm({ ...loadingForm, uom: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
+                  >
+                    {UOM_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Ticket No. *</label>
+                  <input
+                    type="text"
+                    required
+                    value={loadingForm.ticketNo}
+                    onChange={(e) => setLoadingForm({ ...loadingForm, ticketNo: e.target.value.toUpperCase() })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 uppercase font-mono"
+                    placeholder="TKT-10291"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Challan No. *</label>
+                  <input
+                    type="text"
+                    required
+                    value={loadingForm.challanNo}
+                    onChange={(e) => setLoadingForm({ ...loadingForm, challanNo: e.target.value.toUpperCase() })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1 uppercase font-mono"
+                    placeholder="CH-88912"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => { setShowLoadingModal(false); setLoadingForm(emptyLoadingForm); }} className="flex-1 rounded-xl bg-slate-100 border border-slate-200 py-3 text-xs font-bold text-slate-600 hover:bg-slate-200 transition-all">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-[2] rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
+                  Save Loading Entry <PackageCheck className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Log Modal */}
       {showModal && (

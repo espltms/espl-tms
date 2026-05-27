@@ -98,11 +98,26 @@ const getLocalItems = <T>(key: string): T[] => {
   }
 };
 
+const getTruckStatusOverrides = (): Record<string, TruckData['status']> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(window.localStorage.getItem('tms_truck_status_overrides') || '{}') as Record<string, TruckData['status']>;
+  } catch {
+    return {};
+  }
+};
+
 // 1. Get raw lists directly from JSON data, plus locally onboarded records.
-export const getTrucks = (): TruckData[] => [
-  ...getLocalItems<TruckData>('tms_local_trucks'),
-  ...(tmsData.trucks as TruckData[])
-];
+export const getTrucks = (): TruckData[] => {
+  const statusOverrides = getTruckStatusOverrides();
+  return [
+    ...getLocalItems<TruckData>('tms_local_trucks'),
+    ...(tmsData.trucks as TruckData[])
+  ].map(truck => ({
+    ...truck,
+    status: statusOverrides[truck.id] || truck.status
+  }));
+};
 export const getDrivers = (): DriverData[] => [
   ...getLocalItems<DriverData>('tms_local_drivers'),
   ...(tmsData.drivers as DriverData[])

@@ -111,6 +111,15 @@ export default function FleetPage() {
     window.localStorage.setItem('tms_local_trucks', JSON.stringify(records.filter(t => t.id.startsWith('local-truck-'))));
   };
 
+  const persistTruckStatusOverrides = (records: TruckData[]) => {
+    if (typeof window === 'undefined') return;
+    const overrides = records.reduce<Record<string, TruckStatus>>((acc, truck) => {
+      acc[truck.id] = truck.status;
+      return acc;
+    }, {});
+    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+  };
+
   const persistLocalDrivers = (records: DriverData[]) => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('tms_local_drivers', JSON.stringify(records.filter(d => d.id.startsWith('local-driver-'))));
@@ -136,7 +145,7 @@ export default function FleetPage() {
           phone: driverForm.phone,
           licenseNumber: driverForm.licenseNumber,
           aadharNumber: driverForm.aadharNumber,
-          status: vehicleForm.status,
+          status: 'AVAILABLE',
           verified: Boolean(driverForm.licenseNumber && driverForm.aadharNumber),
         }
       : null;
@@ -162,7 +171,7 @@ export default function FleetPage() {
           assignedDriverLicense: driverForVehicle?.licenseNumber,
           assignedDriverAadhar: driverForVehicle?.aadharNumber,
           health: 100,
-          status: 'AVAILABLE',
+          status: vehicleForm.status,
         }
       : null;
 
@@ -213,6 +222,7 @@ export default function FleetPage() {
     const nextTrucks = trucks.map(truck => truck.id === truckId ? { ...truck, status } : truck);
     setTrucks(nextTrucks);
     persistLocalTrucks(nextTrucks);
+    persistTruckStatusOverrides(nextTrucks);
   };
 
   return (
