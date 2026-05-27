@@ -224,6 +224,7 @@ export default function FleetPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary focus:ring-1"
                   >
                     <option value="Tipper">Tipper</option>
+                    <option value="Dalla">Dalla</option>
                     <option value="Tanker">Tanker</option>
                     <option value="Flatbed">Flatbed</option>
                     <option value="Container Carrier">Container Carrier</option>

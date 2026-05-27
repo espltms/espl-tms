@@ -63,7 +63,7 @@ const INITIAL_DRIVERS: Driver[] = getDrivers().map((d) => ({
 }));
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const VEHICLE_TYPES = ['Multi-Axle Trailer', 'Tanker', 'Tipper', 'Flatbed', 'Container Carrier', 'Bulker', 'LPG Carrier', 'Car Carrier'];
+const VEHICLE_TYPES = ['Multi-Axle Trailer', 'Tanker', 'Tipper', 'Dalla', 'Flatbed', 'Container Carrier', 'Bulker', 'LPG Carrier', 'Car Carrier'];
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
   'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala',

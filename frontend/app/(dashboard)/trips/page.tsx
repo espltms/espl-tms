@@ -37,6 +37,7 @@ interface Trip {
   actualDeliveredTons?: number;
   status: string;
   scheduledStartDate: string;
+  vendorName?: string;
   driver: { fullName: string; phone: string };
   truck: { plateNumber: string; model: string };
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
@@ -56,6 +57,7 @@ export default function TripsPage() {
   const [truckId, setTruckId] = useState('');
   const [source, setSource] = useState('Vedanta Lanjigarh Plant');
   const [destination, setDestination] = useState('Paramanandpur Stockyard');
+  const [vendorName, setVendorName] = useState('');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
   const [error, setError] = useState('');
@@ -100,6 +102,7 @@ export default function TripsPage() {
       truckId,
       source,
       destination,
+      vendorName,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
       scheduledStartDate: new Date().toISOString(),
@@ -137,6 +140,7 @@ export default function TripsPage() {
         tripNumber: `TRIP-${10000 + trips.length + 1}`,
         source,
         destination,
+        vendorName,
         distanceKm: Number(distance),
         estimatedQuantityTons: requestedQty,
         status: 'SCHEDULED',
@@ -254,6 +258,7 @@ export default function TripsPage() {
                 <th className="px-6 py-4">Trip details</th>
                 <th className="px-6 py-4">Contracts Reference</th>
                 <th className="px-6 py-4">Assigned Crew</th>
+                <th className="px-6 py-4">Vendor</th>
                 <th className="px-6 py-4">Tonnages</th>
                 <th className="px-6 py-4">Trip Status</th>
                 <th className="px-6 py-4 text-right">Digital Gatepass</th>
@@ -286,6 +291,7 @@ export default function TripsPage() {
                       </div>
                     </div>
                   </td>
+                  <td className="px-6 py-4 font-semibold text-slate-500">{trip.vendorName || '—'}</td>
                   <td className="px-6 py-4">
                     <div>
                       <span>Est: {trip.estimatedQuantityTons} Tons</span>
@@ -318,7 +324,7 @@ export default function TripsPage() {
               ))}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
@@ -429,6 +435,30 @@ export default function TripsPage() {
                       <option key={t.id} value={t.id}>{t.plateNumber}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vendor</label>
+                  <input
+                    type="text"
+                    value={vendorName}
+                    onChange={(e) => setVendorName(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                    placeholder="Enter vendor name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Distance (Km)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={distance}
+                    onChange={(e) => setDistance(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  />
                 </div>
               </div>
 
