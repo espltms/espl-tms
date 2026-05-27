@@ -26,7 +26,9 @@ import {
   ParkingCircle,
   Disc,
   Layers,
-  Settings
+  Settings,
+  PackageCheck,
+  PackageOpen
 } from 'lucide-react';
 
 const navigationDivisions = [
@@ -53,6 +55,8 @@ const navigationDivisions = [
     items: [
       { label: 'Yard & Bay Queue', path: '/yard', icon: ParkingCircle, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Weighbridge Weighing', path: '/weighbridge', icon: Scale, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Loading Vehicle', path: '/loading', icon: PackageCheck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Store & Spare Inventory', path: '/inventory', icon: Warehouse, roles: ['SYS_ADMIN', 'FINANCE_OFFICER', 'DISPATCHER'] },
     ]
   },

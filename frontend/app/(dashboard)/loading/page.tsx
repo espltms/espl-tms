@@ -1,0 +1,234 @@
+'use client';
+
+import { useState } from 'react';
+import { PackageCheck, Plus, Truck, X } from 'lucide-react';
+import { getTrucks } from '@/app/data/dataHelper';
+
+type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+
+interface TruckData {
+  id: string;
+  plateNumber: string;
+  model: string;
+  status: TruckStatus;
+}
+
+interface LoadingRecord {
+  id: string;
+  truckId: string;
+  truckPlate: string;
+  tareWeight: number;
+  grossWeight: number;
+  netWeight: number;
+  loadingDateTime: string;
+  ticketNo: string;
+  challanNo: string;
+  uom: string;
+  truckStatus: TruckStatus;
+  receivedQty?: number;
+  unloadingDateTime?: string;
+  turnaroundMinutes?: number;
+  unloadingTruckStatus?: TruckStatus;
+}
+
+const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
+const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
+  { value: 'IN_TRANSIT', label: 'In transit' },
+  { value: 'RECEIVED', label: 'Received' },
+  { value: 'ACTION', label: 'Action' },
+];
+
+const emptyLoadingForm = {
+  truckId: '',
+  tareWeight: '',
+  grossWeight: '',
+  netWeight: '',
+  loadingDateTime: new Date().toISOString().slice(0, 16),
+  ticketNo: '',
+  challanNo: '',
+  uom: 'Metric Ton',
+  truckStatus: 'IN_TRANSIT' as TruckStatus,
+};
+
+export default function LoadingVehiclePage() {
+  const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
+  const [records, setRecords] = useState<LoadingRecord[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
+    } catch {
+      return [];
+    }
+  });
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState(emptyLoadingForm);
+
+  const selectedTruck = trucks.find(truck => truck.id === form.truckId);
+
+  const normalizeTruckStatus = (status: TruckStatus) => {
+    if (status === 'ON_TRIP') return 'IN_TRANSIT';
+    if (status === 'MAINTENANCE') return 'ACTION';
+    if (status === 'AVAILABLE') return 'RECEIVED';
+    return status;
+  };
+
+  const getTruckStatusStyle = (status: TruckStatus) => {
+    const normalized = normalizeTruckStatus(status);
+    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+  };
+
+  const persistTruckStatusOverrides = (nextTrucks: TruckData[]) => {
+    if (typeof window === 'undefined') return;
+    const overrides = nextTrucks.reduce<Record<string, TruckStatus>>((acc, truck) => {
+      acc[truck.id] = truck.status;
+      return acc;
+    }, {});
+    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+  };
+
+  const persistRecords = (nextRecords: LoadingRecord[]) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('tms_loading_records', JSON.stringify(nextRecords));
+  };
+
+  const handleNumberChange = (field: 'tareWeight' | 'grossWeight' | 'netWeight', value: string) => {
+    const nextForm = { ...form, [field]: value };
+    if (field === 'tareWeight' || field === 'grossWeight') {
+      const tare = parseFloat(field === 'tareWeight' ? value : nextForm.tareWeight) || 0;
+      const gross = parseFloat(field === 'grossWeight' ? value : nextForm.grossWeight) || 0;
+      nextForm.netWeight = gross > tare ? (gross - tare).toFixed(2) : '0.00';
+    }
+    setForm(nextForm);
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedTruck) return;
+
+    const newRecord: LoadingRecord = {
+      id: `loading-${Date.now()}`,
+      truckId: selectedTruck.id,
+      truckPlate: selectedTruck.plateNumber,
+      tareWeight: parseFloat(form.tareWeight) || 0,
+      grossWeight: parseFloat(form.grossWeight) || 0,
+      netWeight: parseFloat(form.netWeight) || 0,
+      loadingDateTime: form.loadingDateTime,
+      ticketNo: form.ticketNo,
+      challanNo: form.challanNo,
+      uom: form.uom,
+      truckStatus: form.truckStatus,
+    };
+    const nextRecords = [newRecord, ...records];
+    const nextTrucks = trucks.map(truck => truck.id === selectedTruck.id ? { ...truck, status: form.truckStatus } : truck);
+
+    setRecords(nextRecords);
+    setTrucks(nextTrucks);
+    persistRecords(nextRecords);
+    persistTruckStatusOverrides(nextTrucks);
+    setShowModal(false);
+    setForm(emptyLoadingForm);
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Loading Vehicle</h2>
+          <p className="text-xs text-slate-500 mt-1">Capture loading weights, ticket details, challan number, U.O.M, and truck status</p>
+        </div>
+        <button onClick={() => setShowModal(true)} className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-md">
+          <Plus className="h-4 w-4" /> Add Loading Entry
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <PackageCheck className="h-4 w-4 text-brand-primary" /> Loading Records
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">Vehicle</th>
+                <th className="px-6 py-4">Ticket / Challan</th>
+                <th className="px-6 py-4">Weights</th>
+                <th className="px-6 py-4">U.O.M</th>
+                <th className="px-6 py-4">Loading Time</th>
+                <th className="px-6 py-4 text-right">Truck Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-600">
+              {records.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
+              ) : records.map(record => (
+                <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{record.truckPlate}</td>
+                  <td className="px-6 py-4"><div className="font-mono font-bold text-slate-700">{record.ticketNo}</div><div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div></td>
+                  <td className="px-6 py-4 font-mono"><div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div><div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div></td>
+                  <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
+                  <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                  <td className="px-6 py-4 text-right"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getTruckStatusStyle(record.truckStatus)}`}>{TRUCK_STATUS_OPTIONS.find(option => option.value === normalizeTruckStatus(record.truckStatus))?.label || record.truckStatus}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+              <div><h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Loading Vehicle</h3></div>
+              <button onClick={() => { setShowModal(false); setForm(emptyLoadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all"><X className="h-4 w-4" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Vehicle *">
+                  <select required value={form.truckId} onChange={(e) => { const truck = trucks.find(item => item.id === e.target.value); setForm({ ...form, truckId: e.target.value, truckStatus: truck ? normalizeTruckStatus(truck.status) : form.truckStatus }); }} className="load-input">
+                    <option value="">Choose vehicle...</option>
+                    {trucks.map(truck => <option key={truck.id} value={truck.id}>{truck.plateNumber} - {truck.model}</option>)}
+                  </select>
+                </Field>
+                <Field label="Truck Status *">
+                  <select required value={form.truckStatus} onChange={(e) => setForm({ ...form, truckStatus: e.target.value as TruckStatus })} className="load-input">
+                    {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Field label="Tare Weight *"><input type="number" step="0.01" required value={form.tareWeight} onChange={(e) => handleNumberChange('tareWeight', e.target.value)} className="load-input font-mono font-bold" /></Field>
+                <Field label="Gross Weight *"><input type="number" step="0.01" required value={form.grossWeight} onChange={(e) => handleNumberChange('grossWeight', e.target.value)} className="load-input font-mono font-bold" /></Field>
+                <Field label="Net Weight *"><input type="number" step="0.01" required value={form.netWeight} onChange={(e) => handleNumberChange('netWeight', e.target.value)} className="load-input font-mono font-bold" /></Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Time & Date of Loading *"><input type="datetime-local" required value={form.loadingDateTime} onChange={(e) => setForm({ ...form, loadingDateTime: e.target.value })} className="load-input" /></Field>
+                <Field label="U.O.M *"><select required value={form.uom} onChange={(e) => setForm({ ...form, uom: e.target.value })} className="load-input">{UOM_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}</select></Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Ticket No. *"><input type="text" required value={form.ticketNo} onChange={(e) => setForm({ ...form, ticketNo: e.target.value.toUpperCase() })} className="load-input uppercase font-mono" /></Field>
+                <Field label="Challan No. *"><input type="text" required value={form.challanNo} onChange={(e) => setForm({ ...form, challanNo: e.target.value.toUpperCase() })} className="load-input uppercase font-mono" /></Field>
+              </div>
+              <button type="submit" className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
+                Save Loading Entry <PackageCheck className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        .load-input { width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #f8fafc; padding: 0.625rem 0.75rem; color: #1e293b; outline: none; }
+        .load-input:focus { border-color: rgb(37 99 235 / 0.65); box-shadow: 0 0 0 1px rgb(37 99 235 / 0.2); }
+      `}</style>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block"><span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</span>{children}</label>;
+}
