@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PackageCheck, Plus, Truck, X } from 'lucide-react';
-import { getTrucks } from '@/app/data/dataHelper';
+import { getTrips, getTrucks } from '@/app/data/dataHelper';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -15,6 +15,8 @@ interface TruckData {
 
 interface LoadingRecord {
   id: string;
+  tripId?: string;
+  tripNumber?: string;
   truckId: string;
   truckPlate: string;
   tareWeight: number;
@@ -31,6 +33,18 @@ interface LoadingRecord {
   unloadingTruckStatus?: TruckStatus;
 }
 
+interface AssignedTrip {
+  id: string;
+  tripNumber: string;
+  truckId?: string;
+  source: string;
+  destination: string;
+  estimatedQuantityTons: number;
+  driver: { fullName: string; phone: string };
+  truck: { plateNumber: string; model: string };
+  purchaseOrder: { poNumber: string; clientName: string; commodity: string };
+}
+
 const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
 const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'IN_TRANSIT', label: 'In transit' },
@@ -39,7 +53,7 @@ const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
 ];
 
 const emptyLoadingForm = {
-  truckId: '',
+  tripId: '',
   tareWeight: '',
   grossWeight: '',
   netWeight: '',
@@ -52,6 +66,7 @@ const emptyLoadingForm = {
 
 export default function LoadingVehiclePage() {
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
+  const [assignedTrips] = useState<AssignedTrip[]>(() => getTrips());
   const [records, setRecords] = useState<LoadingRecord[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -63,7 +78,11 @@ export default function LoadingVehiclePage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyLoadingForm);
 
-  const selectedTruck = trucks.find(truck => truck.id === form.truckId);
+  const selectedTrip = assignedTrips.find(trip => trip.id === form.tripId);
+  const selectedTruck = selectedTrip
+    ? trucks.find(truck => truck.id === selectedTrip.truckId || truck.plateNumber === selectedTrip.truck.plateNumber)
+    : undefined;
+  const availableTrips = assignedTrips.filter(trip => !records.some(record => record.tripId === trip.id));
 
   const normalizeTruckStatus = (status: TruckStatus) => {
     if (status === 'ON_TRIP') return 'IN_TRANSIT';
@@ -105,10 +124,12 @@ export default function LoadingVehiclePage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedTruck) return;
+    if (!selectedTruck || !selectedTrip) return;
 
     const newRecord: LoadingRecord = {
       id: `loading-${Date.now()}`,
+      tripId: selectedTrip.id,
+      tripNumber: selectedTrip.tripNumber,
       truckId: selectedTruck.id,
       truckPlate: selectedTruck.plateNumber,
       tareWeight: parseFloat(form.tareWeight) || 0,
@@ -136,7 +157,7 @@ export default function LoadingVehiclePage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Loading Vehicle</h2>
-          <p className="text-xs text-slate-500 mt-1">Capture loading weights, ticket details, challan number, U.O.M, and truck status</p>
+          <p className="text-xs text-slate-500 mt-1">Select an assigned trip, then capture loading weights, ticket details, challan number, U.O.M, and truck status</p>
         </div>
         <button onClick={() => setShowModal(true)} className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-md">
           <Plus className="h-4 w-4" /> Add Loading Entry
@@ -153,7 +174,7 @@ export default function LoadingVehiclePage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Vehicle</th>
+                <th className="px-6 py-4">Trip / Vehicle</th>
                 <th className="px-6 py-4">Ticket / Challan</th>
                 <th className="px-6 py-4">Weights</th>
                 <th className="px-6 py-4">U.O.M</th>
@@ -166,7 +187,10 @@ export default function LoadingVehiclePage() {
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
               ) : records.map(record => (
                 <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{record.truckPlate}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-mono font-extrabold text-slate-800">{record.tripNumber || 'TRIP-REF'}</div>
+                    <div className="mt-0.5 text-[10px] text-slate-500 font-mono">{record.truckPlate}</div>
+                  </td>
                   <td className="px-6 py-4"><div className="font-mono font-bold text-slate-700">{record.ticketNo}</div><div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div></td>
                   <td className="px-6 py-4 font-mono"><div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div><div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div></td>
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
@@ -188,10 +212,18 @@ export default function LoadingVehiclePage() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Vehicle *">
-                  <select required value={form.truckId} onChange={(e) => { const truck = trucks.find(item => item.id === e.target.value); setForm({ ...form, truckId: e.target.value, truckStatus: truck ? normalizeTruckStatus(truck.status) : form.truckStatus }); }} className="load-input">
-                    <option value="">Choose vehicle...</option>
-                    {trucks.map(truck => <option key={truck.id} value={truck.id}>{truck.plateNumber} - {truck.model}</option>)}
+                <Field label="Assigned Trip *">
+                  <select required value={form.tripId} onChange={(e) => {
+                    const trip = assignedTrips.find(item => item.id === e.target.value);
+                    const truck = trip ? trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber) : undefined;
+                    setForm({ ...form, tripId: e.target.value, truckStatus: truck ? normalizeTruckStatus(truck.status) : form.truckStatus });
+                  }} className="load-input">
+                    <option value="">Choose assigned trip...</option>
+                    {availableTrips.map(trip => (
+                      <option key={trip.id} value={trip.id}>
+                        {trip.tripNumber} - {trip.truck.plateNumber} - {trip.purchaseOrder.commodity}
+                      </option>
+                    ))}
                   </select>
                 </Field>
                 <Field label="Truck Status *">
@@ -200,6 +232,17 @@ export default function LoadingVehiclePage() {
                   </select>
                 </Field>
               </div>
+              {selectedTrip && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="grid grid-cols-1 gap-3 text-[11px] md:grid-cols-3">
+                    <div><span className="block text-slate-400 font-bold uppercase">Truck</span><span className="font-mono font-bold text-slate-800">{selectedTrip.truck.plateNumber}</span></div>
+                    <div><span className="block text-slate-400 font-bold uppercase">Driver</span><span className="font-bold text-slate-800">{selectedTrip.driver.fullName}</span></div>
+                    <div><span className="block text-slate-400 font-bold uppercase">Commodity</span><span className="font-bold text-slate-800">{selectedTrip.purchaseOrder.commodity}</span></div>
+                    <div className="md:col-span-2"><span className="block text-slate-400 font-bold uppercase">Route</span><span className="font-bold text-slate-800">{selectedTrip.source} to {selectedTrip.destination}</span></div>
+                    <div><span className="block text-slate-400 font-bold uppercase">Planned Qty</span><span className="font-mono font-bold text-slate-800">{selectedTrip.estimatedQuantityTons} Tons</span></div>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <Field label="Tare Weight *"><input type="number" step="0.01" required value={form.tareWeight} onChange={(e) => handleNumberChange('tareWeight', e.target.value)} className="load-input font-mono font-bold" /></Field>
                 <Field label="Gross Weight *"><input type="number" step="0.01" required value={form.grossWeight} onChange={(e) => handleNumberChange('grossWeight', e.target.value)} className="load-input font-mono font-bold" /></Field>

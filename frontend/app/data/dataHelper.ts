@@ -51,6 +51,8 @@ export interface PurchaseOrder {
 export interface Trip {
   id: string;
   tripNumber: string;
+  truckId?: string;
+  driverId?: string;
   source: string;
   destination: string;
   distanceKm: number;
@@ -59,6 +61,8 @@ export interface Trip {
   actualDeliveredTons?: number;
   status: string;
   scheduledStartDate: string;
+  vendorName?: string;
+  vehicleType?: string;
   driver: { fullName: string; phone: string };
   truck: { plateNumber: string; model: string };
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
@@ -123,7 +127,10 @@ export const getDrivers = (): DriverData[] => [
   ...(tmsData.drivers as DriverData[])
 ];
 export const getPurchaseOrders = (): PurchaseOrder[] => tmsData.purchaseOrders as PurchaseOrder[];
-export const getTrips = (): Trip[] => tmsData.trips as Trip[];
+export const getTrips = (): Trip[] => [
+  ...getLocalItems<Trip>('tms_assigned_trips'),
+  ...(tmsData.trips as Trip[])
+];
 export const getWeighTickets = (): WeighTicket[] => tmsData.weighTickets as WeighTicket[];
 
 // 2. HR employees are not present in the imported dataset.

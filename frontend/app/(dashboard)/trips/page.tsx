@@ -29,6 +29,8 @@ interface PurchaseOrder {
 interface Trip {
   id: string;
   tripNumber: string;
+  truckId?: string;
+  driverId?: string;
   source: string;
   destination: string;
   distanceKm: number;
@@ -107,11 +109,46 @@ export default function TripsPage() {
 
     const requestedQty = Number(estimatedQuantity);
     const poRemaining = Number(targetPO.totalQuantityTons) - Number(targetPO.allocatedQuantityTons);
+    const selectedDriver = drivers.find(d => d.id === driverId);
+    const selectedTruck = trucks.find(t => t.id === truckId);
 
     if (requestedQty > poRemaining) {
       setError(`PO Allocation limit exceeded. PO has only ${poRemaining.toFixed(2)} remaining tons. Requested: ${requestedQty} tons.`);
       return;
     }
+
+    if (!selectedDriver || !selectedTruck) {
+      setError('Select a valid driver and truck from the imported dataset');
+      return;
+    }
+
+    const newTrip: Trip = {
+      id: `trip-local-${Date.now()}`,
+      tripNumber: `TRIP-${10000 + trips.length + 1}`,
+      truckId,
+      driverId,
+      source,
+      destination,
+      vendorName,
+      vehicleType,
+      distanceKm: Number(distance),
+      estimatedQuantityTons: requestedQty,
+      status: 'SCHEDULED',
+      scheduledStartDate: new Date().toISOString(),
+      driver: { fullName: selectedDriver.fullName, phone: selectedDriver.phone },
+      truck: { plateNumber: selectedTruck.plateNumber, model: selectedTruck.model },
+      purchaseOrder: {
+        poNumber: targetPO.poNumber,
+        clientName: targetPO.clientName,
+        commodity,
+      },
+    };
+
+    const persistAssignedTrip = (trip: Trip) => {
+      if (typeof window === 'undefined') return;
+      const existing = JSON.parse(window.localStorage.getItem('tms_assigned_trips') || '[]') as Trip[];
+      window.localStorage.setItem('tms_assigned_trips', JSON.stringify([trip, ...existing.filter(item => item.id !== trip.id)]));
+    };
 
     const payload = {
       purchaseOrderId: poId,
@@ -144,37 +181,20 @@ export default function TripsPage() {
         throw new Error(data.message || 'API failed to assign trip');
       }
 
+      setTrips(prev => [newTrip, ...prev]);
+      persistAssignedTrip(newTrip);
+      setPurchaseOrders(prev =>
+        prev.map(po =>
+          po.id === poId
+            ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
+            : po
+        )
+      );
       fetchTripsData();
       setModalOpen(false);
     } catch (err: any) {
-      const selectedDriver = drivers.find(d => d.id === driverId);
-      const selectedTruck = trucks.find(t => t.id === truckId);
-      if (!selectedDriver || !selectedTruck) {
-        setError('Select a valid driver and truck from the imported dataset');
-        return;
-      }
-
-      const newTrip: Trip = {
-        id: `trip-local-${Date.now()}`,
-        tripNumber: `TRIP-${10000 + trips.length + 1}`,
-        source,
-        destination,
-        vendorName,
-        vehicleType,
-        distanceKm: Number(distance),
-        estimatedQuantityTons: requestedQty,
-        status: 'SCHEDULED',
-        scheduledStartDate: new Date().toISOString(),
-        driver: { fullName: selectedDriver.fullName, phone: selectedDriver.phone },
-        truck: { plateNumber: selectedTruck.plateNumber, model: selectedTruck.model },
-        purchaseOrder: {
-          poNumber: targetPO.poNumber,
-          clientName: targetPO.clientName,
-          commodity,
-        },
-      };
-
       setTrips(prev => [newTrip, ...prev]);
+      persistAssignedTrip(newTrip);
 
       setPurchaseOrders(prev =>
         prev.map(po =>
