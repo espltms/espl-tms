@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { BarChart3, CalendarDays, Truck } from 'lucide-react';
-import { getTrips, getTrucks } from '@/app/data/dataHelper';
+import { getTrips, getTrucks, getWeighTickets } from '@/app/data/dataHelper';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -25,6 +25,27 @@ interface LoadingRecord {
   turnaroundMinutes?: number;
 }
 
+interface VehicleActivityRecord {
+  id: string;
+  tripId?: string;
+  tripNumber?: string;
+  truckId?: string;
+  truckPlate: string;
+  model?: string;
+  vendor?: string;
+  subVendor?: string;
+  fleetCategory?: string;
+  loadedQty: number;
+  receivedQty: number;
+  grossWeight: number;
+  tareWeight: number;
+  activityDateTime: string;
+  referenceNo?: string;
+  uom: string;
+  status: string;
+  turnaroundMinutes?: number;
+}
+
 const SESSION_OPTIONS = [
   { value: 'FIRST', label: 'Session 1', range: '1-15' },
   { value: 'SECOND', label: 'Session 2', range: '16-End' },
@@ -44,9 +65,12 @@ const formatTurnaround = (minutes: number) => {
 
 export default function VehicleSummaryPage() {
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [selectedSession, setSelectedSession] = useState<'FIRST' | 'SECOND'>('FIRST');
+  const [selectedSession, setSelectedSession] = useState<'FIRST' | 'SECOND'>(() => (
+    new Date().getDate() <= 15 ? 'FIRST' : 'SECOND'
+  ));
   const trucks = useMemo(() => getTrucks(), []);
   const trips = useMemo(() => getTrips(), []);
+  const weighTickets = useMemo(() => getWeighTickets(), []);
   const loadingRecords = useMemo<LoadingRecord[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -56,11 +80,70 @@ export default function VehicleSummaryPage() {
     }
   }, []);
 
-  const sessionRecords = loadingRecords.filter((record) => {
-    if (!record.loadingDateTime) return false;
-    const loadedAt = new Date(record.loadingDateTime);
+  const activityRecords = useMemo<VehicleActivityRecord[]>(() => {
+    const loadedTripKeys = new Set(
+      loadingRecords
+        .flatMap(record => [record.tripId, record.tripNumber])
+        .filter((value): value is string => Boolean(value))
+    );
+
+    const localActivities = loadingRecords.map((record) => ({
+      id: record.id,
+      tripId: record.tripId,
+      tripNumber: record.tripNumber,
+      truckId: record.truckId,
+      truckPlate: record.truckPlate,
+      loadedQty: record.netWeight || 0,
+      receivedQty: record.receivedQty || 0,
+      grossWeight: record.grossWeight || 0,
+      tareWeight: record.tareWeight || 0,
+      activityDateTime: record.loadingDateTime,
+      referenceNo: record.challanNo || record.ticketNo,
+      uom: record.uom || 'Metric Ton',
+      status: record.truckStatus,
+      turnaroundMinutes: record.turnaroundMinutes,
+    }));
+
+    const datasetActivities = trips
+      .filter(trip => !loadedTripKeys.has(trip.id) && !loadedTripKeys.has(trip.tripNumber))
+      .map((trip) => {
+        const ticket = weighTickets.find(item => item.tripNo === trip.tripNumber)
+          || weighTickets.find(item => item.truckPlate === trip.truck.plateNumber);
+        const truck = trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber);
+        const loadedQty = Number(trip.actualLoadedTons || ticket?.netTons || trip.estimatedQuantityTons || 0);
+        const receivedQty = Number(trip.actualDeliveredTons || 0);
+        const tareWeight = Number(ticket?.tareTons || 0);
+        const grossWeight = Number(ticket?.grossTons || (loadedQty && tareWeight ? loadedQty + tareWeight : 0));
+
+        return {
+          id: trip.id,
+          tripId: trip.id,
+          tripNumber: trip.tripNumber,
+          truckId: trip.truckId,
+          truckPlate: trip.truck.plateNumber,
+          model: truck?.model || trip.truck.model,
+          vendor: truck?.vendor || trip.vendorName || 'Dataset Vendor',
+          subVendor: truck?.subVendor || 'Not provided in dataset',
+          fleetCategory: truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet',
+          loadedQty,
+          receivedQty,
+          grossWeight,
+          tareWeight,
+          activityDateTime: trip.scheduledStartDate,
+          referenceNo: ticket?.ticketNo || trip.purchaseOrder?.poNumber,
+          uom: 'Metric Ton',
+          status: trip.status,
+        };
+      });
+
+    return [...localActivities, ...datasetActivities];
+  }, [loadingRecords, trips, trucks, weighTickets]);
+
+  const sessionRecords = activityRecords.filter((record) => {
+    if (!record.activityDateTime) return false;
+    const loadedAt = new Date(record.activityDateTime);
     if (Number.isNaN(loadedAt.getTime())) return false;
-    const monthKey = record.loadingDateTime.slice(0, 7);
+    const monthKey = record.activityDateTime.slice(0, 7);
     const day = loadedAt.getDate();
     const matchesSession = selectedSession === 'FIRST' ? day <= 15 : day >= 16;
     return monthKey === selectedMonth && matchesSession;
@@ -91,10 +174,10 @@ export default function VehicleSummaryPage() {
       acc[key] = {
         truckId: key,
         plateNumber: record.truckPlate,
-        model: truck?.model || trip?.truck.model || '-',
-        vendor: truck?.vendor || trip?.vendorName || '-',
-        subVendor: truck?.subVendor || '-',
-        fleetCategory: truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet',
+        model: truck?.model || record.model || trip?.truck.model || '-',
+        vendor: truck?.vendor || record.vendor || trip?.vendorName || '-',
+        subVendor: truck?.subVendor || record.subVendor || '-',
+        fleetCategory: record.fleetCategory || (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet'),
         trips: new Set<string>(),
         totalLoadedQty: 0,
         totalReceivedQty: 0,
@@ -102,20 +185,20 @@ export default function VehicleSummaryPage() {
         totalTare: 0,
         completedUnloads: 0,
         turnaroundMinutes: 0,
-        latestStatus: record.truckStatus,
+        latestStatus: record.status,
         uom: record.uom,
         challans: [],
       };
     }
 
     acc[key].trips.add(record.tripId || record.tripNumber || record.id);
-    acc[key].totalLoadedQty += record.netWeight || 0;
+    acc[key].totalLoadedQty += record.loadedQty || 0;
     acc[key].totalReceivedQty += record.receivedQty || 0;
     acc[key].totalGross += record.grossWeight || 0;
     acc[key].totalTare += record.tareWeight || 0;
-    acc[key].latestStatus = record.truckStatus;
+    acc[key].latestStatus = record.status;
     acc[key].uom = record.uom || acc[key].uom;
-    if (record.challanNo) acc[key].challans.push(record.challanNo);
+    if (record.referenceNo) acc[key].challans.push(record.referenceNo);
     if (record.turnaroundMinutes) {
       acc[key].completedUnloads += 1;
       acc[key].turnaroundMinutes += record.turnaroundMinutes;
