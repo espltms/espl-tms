@@ -85,6 +85,16 @@ export default function TripsPage() {
     setLoading(false);
   };
 
+  const handleTruckSelection = (selectedTruckId: string) => {
+    setTruckId(selectedTruckId);
+    const selectedTruck = trucks.find(truck => truck.id === selectedTruckId);
+    if (!selectedTruck) return;
+    setVehicleType(selectedTruck.type || 'Tipper');
+    if (selectedTruck.assignedDriverId) {
+      setDriverId(selectedTruck.assignedDriverId);
+    }
+  };
+
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -439,7 +449,7 @@ export default function TripsPage() {
                   <select 
                     required 
                     value={truckId}
-                    onChange={(e) => setTruckId(e.target.value)}
+                    onChange={(e) => handleTruckSelection(e.target.value)}
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
                   >
                     <option value="">Choose Truck...</option>

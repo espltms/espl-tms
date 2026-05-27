@@ -12,6 +12,17 @@ export interface TruckData {
   fuelCard: string;
   health: number;
   status: 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE';
+  vendor?: string;
+  subVendor?: string;
+  wheeler?: string;
+  rcDocumentName?: string;
+  insuranceDocumentName?: string;
+  pucDocumentName?: string;
+  assignedDriverId?: string;
+  assignedDriverName?: string;
+  assignedDriverPhone?: string;
+  assignedDriverLicense?: string;
+  assignedDriverAadhar?: string;
 }
 
 export interface DriverData {
@@ -21,6 +32,9 @@ export interface DriverData {
   licenseNumber: string;
   status: string;
   verified: boolean;
+  aadharNumber?: string;
+  assignedTruckId?: string;
+  assignedTruckPlate?: string;
 }
 
 export interface PurchaseOrder {
@@ -75,9 +89,24 @@ export interface Employee {
   joinDate: string;
 }
 
-// 1. Get raw lists directly from JSON data
-export const getTrucks = (): TruckData[] => tmsData.trucks as TruckData[];
-export const getDrivers = (): DriverData[] => tmsData.drivers as DriverData[];
+const getLocalItems = <T>(key: string): T[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(key) || '[]') as T[];
+  } catch {
+    return [];
+  }
+};
+
+// 1. Get raw lists directly from JSON data, plus locally onboarded records.
+export const getTrucks = (): TruckData[] => [
+  ...getLocalItems<TruckData>('tms_local_trucks'),
+  ...(tmsData.trucks as TruckData[])
+];
+export const getDrivers = (): DriverData[] => [
+  ...getLocalItems<DriverData>('tms_local_drivers'),
+  ...(tmsData.drivers as DriverData[])
+];
 export const getPurchaseOrders = (): PurchaseOrder[] => tmsData.purchaseOrders as PurchaseOrder[];
 export const getTrips = (): Trip[] => tmsData.trips as Trip[];
 export const getWeighTickets = (): WeighTicket[] => tmsData.weighTickets as WeighTicket[];
