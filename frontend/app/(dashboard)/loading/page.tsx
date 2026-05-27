@@ -40,6 +40,7 @@ interface AssignedTrip {
   source: string;
   destination: string;
   estimatedQuantityTons: number;
+  status?: string;
   driver: { fullName: string; phone: string };
   truck: { plateNumber: string; model: string };
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
@@ -82,7 +83,10 @@ export default function LoadingVehiclePage() {
   const selectedTruck = selectedTrip
     ? trucks.find(truck => truck.id === selectedTrip.truckId || truck.plateNumber === selectedTrip.truck.plateNumber)
     : undefined;
-  const availableTrips = assignedTrips.filter(trip => !records.some(record => record.tripId === trip.id));
+  const availableTrips = assignedTrips.filter(trip =>
+    !records.some(record => record.tripId === trip.id) &&
+    !['COMPLETED', 'CANCELLED'].includes(trip.status || '')
+  );
 
   const normalizeTruckStatus = (status: TruckStatus) => {
     if (status === 'ON_TRIP') return 'IN_TRANSIT';
@@ -152,6 +156,17 @@ export default function LoadingVehiclePage() {
     setForm(emptyLoadingForm);
   };
 
+  const openLoadingForTrip = (tripId = '') => {
+    const trip = assignedTrips.find(item => item.id === tripId);
+    const truck = trip ? trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber) : undefined;
+    setForm({
+      ...emptyLoadingForm,
+      tripId,
+      truckStatus: truck ? normalizeTruckStatus(truck.status) : emptyLoadingForm.truckStatus,
+    });
+    setShowModal(true);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -159,9 +174,61 @@ export default function LoadingVehiclePage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Loading Vehicle</h2>
           <p className="text-xs text-slate-500 mt-1">Select an assigned trip, then capture loading weights, ticket details, challan number, U.O.M, and truck status</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-md">
+        <button onClick={() => openLoadingForTrip()} className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-md">
           <Plus className="h-4 w-4" /> Add Loading Entry
         </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <Truck className="h-4 w-4 text-brand-primary" /> Assigned Trips Ready for Loading
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">Trip Details</th>
+                <th className="px-6 py-4">Contract</th>
+                <th className="px-6 py-4">Truck & Driver</th>
+                <th className="px-6 py-4">Planned Qty</th>
+                <th className="px-6 py-4 text-right">Loading</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-600">
+              {availableTrips.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500">No assigned trips waiting for loading.</td>
+                </tr>
+              ) : availableTrips.map(trip => (
+                <tr key={trip.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-mono font-extrabold text-slate-800">{trip.tripNumber}</div>
+                    <div className="mt-1 text-[10px] text-slate-500">{trip.source} to {trip.destination}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-slate-700">{trip.purchaseOrder.poNumber}</div>
+                    <div className="mt-0.5 text-[10px] text-brand-primary">{trip.purchaseOrder.commodity}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-mono font-bold text-slate-800">{trip.truck.plateNumber}</div>
+                    <div className="mt-0.5 text-[10px] text-slate-500">{trip.driver.fullName}</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-bold text-slate-700">{trip.estimatedQuantityTons} Tons</td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => openLoadingForTrip(trip.id)}
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[10px] font-extrabold text-blue-700 hover:bg-blue-100"
+                    >
+                      Load
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
