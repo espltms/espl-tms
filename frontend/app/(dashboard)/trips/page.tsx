@@ -38,12 +38,17 @@ interface Trip {
   status: string;
   scheduledStartDate: string;
   vendorName?: string;
+  vehicleType?: string;
   driver: { fullName: string; phone: string };
   truck: { plateNumber: string; model: string };
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
 }
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
+
+const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
+const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
+
 export default function TripsPage() {
   const [loading, setLoading] = useState(false);
   const [trips, setTrips] = useState<Trip[]>(() => getTrips());
@@ -58,6 +63,8 @@ export default function TripsPage() {
   const [source, setSource] = useState('Vedanta Lanjigarh Plant');
   const [destination, setDestination] = useState('Paramanandpur Stockyard');
   const [vendorName, setVendorName] = useState('');
+  const [vehicleType, setVehicleType] = useState('Tipper');
+  const [commodity, setCommodity] = useState('Fly Ash');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
   const [error, setError] = useState('');
@@ -103,6 +110,8 @@ export default function TripsPage() {
       source,
       destination,
       vendorName,
+      vehicleType,
+      commodity,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
       scheduledStartDate: new Date().toISOString(),
@@ -141,6 +150,7 @@ export default function TripsPage() {
         source,
         destination,
         vendorName,
+        vehicleType,
         distanceKm: Number(distance),
         estimatedQuantityTons: requestedQty,
         status: 'SCHEDULED',
@@ -150,7 +160,7 @@ export default function TripsPage() {
         purchaseOrder: {
           poNumber: targetPO.poNumber,
           clientName: targetPO.clientName,
-          commodity: targetPO.commodity,
+          commodity,
         },
       };
 
@@ -277,6 +287,7 @@ export default function TripsPage() {
                     <div>
                       <span className="text-slate-800 font-semibold">{trip.purchaseOrder.poNumber}</span>
                       <div className="text-[10px] text-brand-primary mt-0.5">{trip.purchaseOrder.clientName}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">{trip.purchaseOrder.commodity}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -289,6 +300,7 @@ export default function TripsPage() {
                         <Truck className="h-3.5 w-3.5 text-slate-400" />
                         <span>{trip.truck.plateNumber}</span>
                       </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">{trip.vehicleType || trip.truck.model}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-semibold text-slate-500">{trip.vendorName || '—'}</td>
@@ -459,6 +471,35 @@ export default function TripsPage() {
                     onChange={(e) => setDistance(e.target.value)}
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vehicle Type</label>
+                  <select
+                    required
+                    value={vehicleType}
+                    onChange={(e) => setVehicleType(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  >
+                    {VEHICLE_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Commodity</label>
+                  <select
+                    required
+                    value={commodity}
+                    onChange={(e) => setCommodity(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  >
+                    {COMMODITIES.map(item => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
