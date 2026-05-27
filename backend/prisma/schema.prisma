@@ -31,6 +31,11 @@ enum TruckStatus {
   OUT_OF_SERVICE
 }
 
+enum FleetCategory {
+  OWNED_FLEET
+  ATTACHED_FLEET
+}
+
 enum DocumentType {
   DRIVING_LICENSE
   MEDICAL_CERTIFICATE
@@ -158,6 +163,7 @@ model Truck {
   model            String
   capacityTons     Decimal      @db.Decimal(10, 2)
   type             String       // e.g., Tipper, Flatbed, Tanker, Box Trailer
+  fleetCategory    FleetCategory @default(OWNED_FLEET)
   status           TruckStatus  @default(AVAILABLE)
   gpsDeviceId      String?      @unique
   complianceVerified Boolean    @default(false)
@@ -169,6 +175,7 @@ model Truck {
   complianceDocs   ComplianceRecord[]
 
   @@index([plateNumber])
+  @@index([fleetCategory])
   @@index([gpsDeviceId])
   @@index([status, createdAt])
   @@index([complianceVerified])

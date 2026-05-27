@@ -9,6 +9,7 @@ interface TruckData {
   plateNumber: string;
   model: string;
   type: string;
+  fleetCategory?: FleetCategory;
   capacity: string;
   fuelCard: string;
   health: number;
@@ -42,9 +43,14 @@ import { getDrivers, getTrucks } from '@/app/data/dataHelper';
 
 type OnboardingMode = 'vehicle' | 'driver' | 'both';
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+type FleetCategory = 'OWNED_FLEET' | 'ATTACHED_FLEET';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const WHEELER_OPTIONS = ['6 Wheeler', '10 Wheeler', '12 Wheeler', '14 Wheeler', '16 Wheeler', '18 Wheeler', '22 Wheeler'];
+const FLEET_CATEGORY_OPTIONS: { value: FleetCategory; label: string }[] = [
+  { value: 'OWNED_FLEET', label: 'Owned Fleet' },
+  { value: 'ATTACHED_FLEET', label: 'Attached Fleet' },
+];
 const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'IN_TRANSIT', label: 'In transit' },
   { value: 'RECEIVED', label: 'Received' },
@@ -55,6 +61,7 @@ const emptyVehicleForm = {
   plateNumber: '',
   model: '',
   type: 'Tipper',
+  fleetCategory: 'OWNED_FLEET' as FleetCategory,
   capacity: '',
   fuelCard: '',
   vendor: '',
@@ -157,6 +164,7 @@ export default function FleetPage() {
           plateNumber: vehicleForm.plateNumber.toUpperCase(),
           model: vehicleForm.model,
           type: vehicleForm.type,
+          fleetCategory: vehicleForm.fleetCategory,
           capacity: `${parseFloat(vehicleForm.capacity || '0').toFixed(1)} Tons`,
           fuelCard: vehicleForm.fuelCard.toUpperCase() || 'PENDING',
           vendor: vehicleForm.vendor,
@@ -291,6 +299,7 @@ export default function FleetPage() {
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
                 <th className="px-6 py-4">Plate Number</th>
                 <th className="px-6 py-4">Truck Specs</th>
+                <th className="px-6 py-4">Fleet Category</th>
                 <th className="px-6 py-4">Vendor</th>
                 <th className="px-6 py-4">Assigned Driver</th>
                 <th className="px-6 py-4">Docs</th>
@@ -307,6 +316,15 @@ export default function FleetPage() {
                   <td className="px-6 py-4">
                     <div className="font-semibold text-slate-700">{truck.model} <span className="text-slate-400 font-normal">({truck.type})</span></div>
                     <div className="text-[10px] text-slate-400 mt-0.5">{truck.wheeler || 'Wheeler not set'}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${
+                      (truck.fleetCategory || 'OWNED_FLEET') === 'OWNED_FLEET'
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : 'border-violet-200 bg-violet-50 text-violet-700'
+                    }`}>
+                      {FLEET_CATEGORY_OPTIONS.find(option => option.value === (truck.fleetCategory || 'OWNED_FLEET'))?.label}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-slate-700">{truck.vendor || '—'}</div>
@@ -363,7 +381,7 @@ export default function FleetPage() {
               ))}
               {paginatedTrucks.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-8 text-center text-slate-500">No vehicles found.</td>
+                  <td colSpan={10} className="px-6 py-8 text-center text-slate-500">No vehicles found.</td>
                 </tr>
               )}
             </tbody>
@@ -449,6 +467,11 @@ export default function FleetPage() {
                     <Field label="Vehicle Type">
                       <select value={vehicleForm.type} onChange={(e) => setVehicleForm({...vehicleForm, type: e.target.value})} className="fleet-input">
                         {VEHICLE_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Fleet Category">
+                      <select value={vehicleForm.fleetCategory} onChange={(e) => setVehicleForm({...vehicleForm, fleetCategory: e.target.value as FleetCategory})} className="fleet-input">
+                        {FLEET_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </Field>
                     <Field label="Truck Status">

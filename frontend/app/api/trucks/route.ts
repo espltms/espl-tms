@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
         model: body.model,
         capacityTons: body.capacityTons || 0,
         type: body.type || 'Tipper',
+        fleetCategory: body.fleetCategory || 'OWNED_FLEET',
         fuelCard: body.fuelCard || null,
         health: body.health || 100,
         status: body.status || 'AVAILABLE',

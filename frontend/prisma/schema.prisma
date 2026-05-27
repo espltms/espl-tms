@@ -32,6 +32,11 @@ enum TruckStatus {
   OUT_OF_SERVICE
 }
 
+enum FleetCategory {
+  OWNED_FLEET
+  ATTACHED_FLEET
+}
+
 enum TripStatus {
   SCHEDULED
   GATE_IN_LOADING
@@ -101,6 +106,7 @@ model Truck {
   model              String
   capacityTons       Decimal     @db.Decimal(10, 2)
   type               String
+  fleetCategory      FleetCategory @default(OWNED_FLEET)
   fuelCard           String?
   health             Int         @default(100)
   status             TruckStatus @default(AVAILABLE)
@@ -111,6 +117,7 @@ model Truck {
   trips Trip[]
 
   @@index([plateNumber])
+  @@index([fleetCategory])
   @@index([status, createdAt])
   @@index([complianceVerified])
 }

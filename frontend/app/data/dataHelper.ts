@@ -8,6 +8,7 @@ export interface TruckData {
   plateNumber: string;
   model: string;
   type: string;
+  fleetCategory?: 'OWNED_FLEET' | 'ATTACHED_FLEET';
   capacity: string;
   fuelCard: string;
   health: number;
@@ -119,6 +120,7 @@ export const getTrucks = (): TruckData[] => {
     ...(tmsData.trucks as TruckData[])
   ].map(truck => ({
     ...truck,
+    fleetCategory: truck.fleetCategory || 'OWNED_FLEET',
     status: statusOverrides[truck.id] || truck.status
   }));
 };
