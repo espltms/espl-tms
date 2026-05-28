@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FileSpreadsheet, Trash2, Upload, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { FileSpreadsheet, Trash2, Upload, X, CheckCircle2 } from 'lucide-react';
 
 type ImportedSheet = {
   id: string;
@@ -24,9 +25,15 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imports, setImports] = useState<ImportedSheet[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const storageKey = useMemo(() => storageKeyFor(sectionName), [sectionName]);
   const latestImport = imports[0];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     try {
@@ -37,6 +44,13 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       setImports([]);
     }
   }, [storageKey]);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const persistImports = (nextImports: ImportedSheet[]) => {
     localStorage.setItem(storageKey, JSON.stringify(nextImports));
@@ -65,8 +79,8 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       });
 
       const nonEmptyRows = matrix
-        .map(row => row.map(normalize))
-        .filter(row => row.some(Boolean));
+         .map(row => row.map(normalize))
+         .filter(row => row.some(Boolean));
 
       if (nonEmptyRows.length === 0) {
         throw new Error('This file does not contain readable rows.');
@@ -92,6 +106,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
           import: importedSheet,
         },
       }));
+      setToast(`"${file.name}" imported successfully and reflected in the page.`);
       setOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to read this Excel file.');
@@ -105,6 +120,101 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
   const clearImport = (id: string) => {
     persistImports(imports.filter(item => item.id !== id));
   };
+
+  const toastContent = toast && (
+    <div className="fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-50/95 backdrop-blur-md px-4 py-3 shadow-2xl animate-slide-in max-w-sm">
+      <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 animate-bounce" />
+      <div className="flex-1">
+        <h4 className="text-[11px] font-bold text-emerald-950 uppercase tracking-wider">Excel Sheet Imported</h4>
+        <p className="text-[10px] text-emerald-700 mt-0.5">{toast}</p>
+      </div>
+      <button 
+        onClick={() => setToast(null)} 
+        className="rounded-lg p-1 text-emerald-400 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+
+  const modalContent = open && (
+    <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-xl sm:rounded-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
+          <div>
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Imported Excel Data</h3>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{sectionName}</p>
+          </div>
+          <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-5 p-4 sm:p-6">
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+              {error}
+            </div>
+          )}
+
+          {!latestImport ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-xs font-semibold text-slate-500">
+              No Excel file has been imported for this section yet.
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-extrabold text-slate-800">{latestImport.fileName}</div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    {latestImport.rows.length} rows imported on {new Date(latestImport.importedAt).toLocaleString('en-IN')}
+                  </div>
+                </div>
+                <button
+                  onClick={() => clearImport(latestImport.id)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 font-bold text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                      {latestImport.headers.map((header, idx) => (
+                        <th key={`${header}-${idx}`} className="px-4 py-3 font-bold uppercase tracking-wider">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-600">
+                    {latestImport.rows.slice(0, 50).map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-slate-50">
+                        {latestImport.headers.map((_, idx) => (
+                          <td key={idx} className="px-4 py-3">
+                            {row[idx]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {latestImport.rows.length > 50 && (
+                <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Showing first 50 imported rows
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -137,84 +247,14 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         </button>
       )}
 
-      {open && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-xl sm:rounded-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
-              <div>
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Imported Excel Data</h3>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{sectionName}</p>
-              </div>
-              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-5 p-4 sm:p-6">
-              {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
-                  {error}
-                </div>
-              )}
-
-              {!latestImport ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-xs font-semibold text-slate-500">
-                  No Excel file has been imported for this section yet.
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="font-extrabold text-slate-800">{latestImport.fileName}</div>
-                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                        {latestImport.rows.length} rows imported on {new Date(latestImport.importedAt).toLocaleString('en-IN')}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => clearImport(latestImport.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 font-bold text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </div>
-
-                  <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="w-full border-collapse text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
-                          {latestImport.headers.map((header, idx) => (
-                            <th key={`${header}-${idx}`} className="px-4 py-3 font-bold uppercase tracking-wider">
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-600">
-                        {latestImport.rows.slice(0, 50).map((row, rowIdx) => (
-                          <tr key={rowIdx} className="hover:bg-slate-50">
-                            {latestImport.headers.map((_, idx) => (
-                              <td key={idx} className="px-4 py-3">
-                                {row[idx]}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {latestImport.rows.length > 50 && (
-                    <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                      Showing first 50 imported rows
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <>
+          {toastContent}
+          {modalContent}
+        </>,
+        document.body
       )}
     </>
   );
 }
+
