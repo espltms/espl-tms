@@ -87,13 +87,71 @@ export default function TripsPage() {
     setLoading(false);
   };
 
+  const applyTruckSelection = (selectedTruck: typeof trucks[number]) => {
+    setTruckId(selectedTruck.id);
+    setVehicleType(selectedTruck.type || 'Tipper');
+    if (selectedTruck.vendor) {
+      setVendorName(prev => prev || selectedTruck.vendor || '');
+    }
+  };
+
+  const findTruckForDriver = (selectedDriverId: string) => {
+    const selectedDriver = drivers.find(driver => driver.id === selectedDriverId);
+    if (!selectedDriver) return undefined;
+
+    return trucks.find(truck => truck.id === selectedDriver.assignedTruckId)
+      || trucks.find(truck => truck.plateNumber === selectedDriver.assignedTruckPlate)
+      || trucks.find(truck => truck.assignedDriverId === selectedDriver.id)
+      || trucks.find(truck => truck.assignedDriverName === selectedDriver.fullName)
+      || (() => {
+        const matchingTrip = trips.find(trip =>
+          trip.driverId === selectedDriver.id || trip.driver.fullName === selectedDriver.fullName
+        );
+        return matchingTrip
+          ? trucks.find(truck =>
+              truck.id === matchingTrip.truckId || truck.plateNumber === matchingTrip.truck.plateNumber
+            )
+          : undefined;
+      })();
+  };
+
+  const findDriverForTruck = (selectedTruckId: string) => {
+    const selectedTruck = trucks.find(truck => truck.id === selectedTruckId);
+    if (!selectedTruck) return undefined;
+
+    return drivers.find(driver => driver.id === selectedTruck.assignedDriverId)
+      || drivers.find(driver => driver.fullName === selectedTruck.assignedDriverName)
+      || drivers.find(driver => driver.assignedTruckId === selectedTruck.id)
+      || drivers.find(driver => driver.assignedTruckPlate === selectedTruck.plateNumber)
+      || (() => {
+        const matchingTrip = trips.find(trip =>
+          trip.truckId === selectedTruck.id || trip.truck.plateNumber === selectedTruck.plateNumber
+        );
+        return matchingTrip
+          ? drivers.find(driver =>
+              driver.id === matchingTrip.driverId || driver.fullName === matchingTrip.driver.fullName
+            )
+          : undefined;
+      })();
+  };
+
+  const handleDriverSelection = (selectedDriverId: string) => {
+    setDriverId(selectedDriverId);
+    const pairedTruck = findTruckForDriver(selectedDriverId);
+    if (pairedTruck) {
+      applyTruckSelection(pairedTruck);
+    }
+  };
+
   const handleTruckSelection = (selectedTruckId: string) => {
     setTruckId(selectedTruckId);
     const selectedTruck = trucks.find(truck => truck.id === selectedTruckId);
     if (!selectedTruck) return;
-    setVehicleType(selectedTruck.type || 'Tipper');
-    if (selectedTruck.assignedDriverId) {
-      setDriverId(selectedTruck.assignedDriverId);
+
+    applyTruckSelection(selectedTruck);
+    const pairedDriver = findDriverForTruck(selectedTruckId);
+    if (pairedDriver) {
+      setDriverId(pairedDriver.id);
     }
   };
 
@@ -455,7 +513,7 @@ export default function TripsPage() {
                   <select 
                     required 
                     value={driverId}
-                    onChange={(e) => setDriverId(e.target.value)}
+                    onChange={(e) => handleDriverSelection(e.target.value)}
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
                   >
                     <option value="">Choose Driver...</option>
