@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PackageOpen, X } from 'lucide-react';
 import { getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -36,6 +37,8 @@ const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'RECEIVED', label: 'Received' },
   { value: 'ACTION', label: 'Action' },
 ];
+const LOADING_RECORDS_KEY = 'tms_loading_records';
+const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 
 const emptyUnloadingForm = {
   truckStatus: 'RECEIVED' as TruckStatus,
@@ -45,16 +48,13 @@ const emptyUnloadingForm = {
 
 export default function UnloadingVehiclePage() {
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
-  const [records, setRecords] = useState<LoadingRecord[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
-    } catch {
-      return [];
-    }
-  });
+  const [records, setRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [activeRecord, setActiveRecord] = useState<LoadingRecord | null>(null);
   const [form, setForm] = useState(emptyUnloadingForm);
+
+  useEffect(() => {
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
+  }, []);
 
   const normalizeTruckStatus = (status: TruckStatus) => {
     if (status === 'ON_TRIP') return 'IN_TRANSIT';
@@ -84,12 +84,11 @@ export default function UnloadingVehiclePage() {
       acc[truck.id] = truck.status;
       return acc;
     }, {});
-    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+    saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, overrides);
   };
 
   const persistRecords = (nextRecords: LoadingRecord[]) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('tms_loading_records', JSON.stringify(nextRecords));
+    saveSyncedValue(LOADING_RECORDS_KEY, nextRecords);
   };
 
   const openUnloadingModal = (record: LoadingRecord) => {

@@ -48,6 +48,7 @@ interface ManualFinanceEntry {
   entryDate: string;
 }
 import { getInvoices } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 const MANUAL_FINANCE_ENTRIES_KEY = 'tms_manual_finance_entries';
 const FLEET_FINANCE_OPTIONS = {
@@ -77,12 +78,7 @@ export default function BillingPage() {
   });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(MANUAL_FINANCE_ENTRIES_KEY);
-      if (saved) setManualEntries(JSON.parse(saved) as ManualFinanceEntry[]);
-    } catch {
-      localStorage.removeItem(MANUAL_FINANCE_ENTRIES_KEY);
-    }
+    fetchSyncedValue<ManualFinanceEntry[]>(MANUAL_FINANCE_ENTRIES_KEY, []).then(setManualEntries);
   }, []);
 
   const fetchInvoicesData = async () => {
@@ -177,7 +173,7 @@ export default function BillingPage() {
       entryDate: manualForm.entryDate,
     };
     const nextEntries = [newEntry, ...manualEntries];
-    localStorage.setItem(MANUAL_FINANCE_ENTRIES_KEY, JSON.stringify(nextEntries));
+    saveSyncedValue(MANUAL_FINANCE_ENTRIES_KEY, nextEntries);
     setManualEntries(nextEntries);
     setManualForm({
       fleetCategory: manualForm.fleetCategory,

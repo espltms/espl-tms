@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, CalendarDays, Truck } from 'lucide-react';
 import { getTrips, getTrucks, getWeighTickets } from '@/app/data/dataHelper';
+import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -50,6 +51,7 @@ const SESSION_OPTIONS = [
   { value: 'FIRST', label: 'Session 1', range: '1-15' },
   { value: 'SECOND', label: 'Session 2', range: '16-End' },
 ];
+const LOADING_RECORDS_KEY = 'tms_loading_records';
 
 const formatQty = (value: number) => Number(value || 0).toLocaleString('en-IN', {
   maximumFractionDigits: 2,
@@ -71,13 +73,10 @@ export default function VehicleSummaryPage() {
   const trucks = useMemo(() => getTrucks(), []);
   const trips = useMemo(() => getTrips(), []);
   const weighTickets = useMemo(() => getWeighTickets(), []);
-  const loadingRecords = useMemo<LoadingRecord[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
-    } catch {
-      return [];
-    }
+  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+
+  useEffect(() => {
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
   }, []);
 
   const activityRecords = useMemo<VehicleActivityRecord[]>(() => {

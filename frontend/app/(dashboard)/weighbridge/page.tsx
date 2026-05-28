@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Scale, Plus, ShieldCheck, AlertOctagon, CheckCircle2, FileText,
   Truck, ArrowRight, X, Printer, Fingerprint, PackageCheck, PackageOpen
@@ -50,6 +50,7 @@ interface LoadingRecord {
 }
 
 import { getTrucks, getWeighTickets } from '@/app/data/dataHelper';
+import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -59,6 +60,8 @@ const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'RECEIVED', label: 'Received' },
   { value: 'ACTION', label: 'Action' },
 ];
+const LOADING_RECORDS_KEY = 'tms_loading_records';
+const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 
 const emptyLoadingForm = {
   truckId: '',
@@ -81,14 +84,7 @@ const emptyUnloadingForm = {
 export default function WeighbridgePage() {
   const [tickets, setTickets] = useState<WeighTicket[]>(() => getWeighTickets());
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
-  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
-    } catch {
-      return [];
-    }
-  });
+  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [showModal, setShowModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [unloadingRecord, setUnloadingRecord] = useState<LoadingRecord | null>(null);
@@ -99,18 +95,21 @@ export default function WeighbridgePage() {
   const [loadingForm, setLoadingForm] = useState(emptyLoadingForm);
   const [unloadingForm, setUnloadingForm] = useState(emptyUnloadingForm);
 
+  useEffect(() => {
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
+  }, []);
+
   const persistTruckStatusOverrides = (records: TruckData[]) => {
     if (typeof window === 'undefined') return;
     const overrides = records.reduce<Record<string, TruckStatus>>((acc, truck) => {
       acc[truck.id] = truck.status;
       return acc;
     }, {});
-    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+    saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, overrides);
   };
 
   const persistLoadingRecords = (records: LoadingRecord[]) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('tms_loading_records', JSON.stringify(records));
+    saveSyncedValue(LOADING_RECORDS_KEY, records);
   };
 
   const normalizeTruckStatus = (status: TruckStatus) => {

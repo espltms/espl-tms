@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Truck, Plus, X, ArrowRight, User, FileText, RefreshCw } from 'lucide-react';
 
@@ -40,6 +40,7 @@ interface DriverData {
 }
 
 import { getDrivers, getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 type OnboardingMode = 'vehicle' | 'driver' | 'both';
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
@@ -56,6 +57,9 @@ const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'RECEIVED', label: 'Received' },
   { value: 'ACTION', label: 'Action' },
 ];
+const LOCAL_TRUCKS_KEY = 'tms_local_trucks';
+const LOCAL_DRIVERS_KEY = 'tms_local_drivers';
+const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 
 const emptyVehicleForm = {
   plateNumber: '',
@@ -113,9 +117,23 @@ export default function FleetPage() {
   const totalPages = Math.ceil(filteredTrucks.length / ITEMS_PER_PAGE);
   const paginatedTrucks = filteredTrucks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
+  useEffect(() => {
+    fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {
+      setTrucks((currentTrucks) => [
+        ...syncedTrucks,
+        ...currentTrucks.filter(truck => !syncedTrucks.some(syncedTruck => syncedTruck.id === truck.id)),
+      ]);
+    });
+    fetchSyncedValue<DriverData[]>(LOCAL_DRIVERS_KEY, []).then((syncedDrivers) => {
+      setDrivers((currentDrivers) => [
+        ...syncedDrivers,
+        ...currentDrivers.filter(driver => !syncedDrivers.some(syncedDriver => syncedDriver.id === driver.id)),
+      ]);
+    });
+  }, []);
+
   const persistLocalTrucks = (records: TruckData[]) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('tms_local_trucks', JSON.stringify(records.filter(t => t.id.startsWith('local-truck-'))));
+    saveSyncedValue(LOCAL_TRUCKS_KEY, records.filter(t => t.id.startsWith('local-truck-')));
   };
 
   const persistTruckStatusOverrides = (records: TruckData[]) => {
@@ -124,12 +142,11 @@ export default function FleetPage() {
       acc[truck.id] = truck.status;
       return acc;
     }, {});
-    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+    saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, overrides);
   };
 
   const persistLocalDrivers = (records: DriverData[]) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('tms_local_drivers', JSON.stringify(records.filter(d => d.id.startsWith('local-driver-'))));
+    saveSyncedValue(LOCAL_DRIVERS_KEY, records.filter(d => d.id.startsWith('local-driver-')));
   };
 
   const resetForms = () => {

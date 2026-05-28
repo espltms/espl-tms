@@ -14,6 +14,7 @@ interface Order {
 }
 
 import { getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 const allTrucks = getTrucks();
 const INITIAL_ORDERS: Order[] = [];
@@ -33,13 +34,7 @@ export default function MaintenancePage() {
   };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(MANUAL_MAINTENANCE_KEY);
-      if (!saved) return;
-      setOrders(JSON.parse(saved) as Order[]);
-    } catch {
-      localStorage.removeItem(MANUAL_MAINTENANCE_KEY);
-    }
+    fetchSyncedValue<Order[]>(MANUAL_MAINTENANCE_KEY, []).then(setOrders);
   }, []);
 
   const handleCreateOrder = (e: React.FormEvent) => {
@@ -54,7 +49,7 @@ export default function MaintenancePage() {
       workshop: ''
     };
     const nextOrders = [newOrder, ...orders];
-    localStorage.setItem(MANUAL_MAINTENANCE_KEY, JSON.stringify(nextOrders));
+    saveSyncedValue(MANUAL_MAINTENANCE_KEY, nextOrders);
     setOrders(nextOrders);
     setModalOpen(false);
   };

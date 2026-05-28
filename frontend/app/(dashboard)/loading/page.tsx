@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PackageCheck, Plus, Truck, X } from 'lucide-react';
 import { getTrips, getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -52,6 +53,9 @@ const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
   { value: 'RECEIVED', label: 'Received' },
   { value: 'ACTION', label: 'Action' },
 ];
+const LOADING_RECORDS_KEY = 'tms_loading_records';
+const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
+const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
 
 const emptyLoadingForm = {
   tripId: '',
@@ -67,17 +71,20 @@ const emptyLoadingForm = {
 
 export default function LoadingVehiclePage() {
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
-  const [assignedTrips] = useState<AssignedTrip[]>(() => getTrips());
-  const [records, setRecords] = useState<LoadingRecord[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      return JSON.parse(window.localStorage.getItem('tms_loading_records') || '[]') as LoadingRecord[];
-    } catch {
-      return [];
-    }
-  });
+  const [assignedTrips, setAssignedTrips] = useState<AssignedTrip[]>(() => getTrips());
+  const [records, setRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyLoadingForm);
+
+  useEffect(() => {
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
+    fetchSyncedValue<AssignedTrip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
+      setAssignedTrips((currentTrips) => [
+        ...syncedTrips,
+        ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
+      ]);
+    });
+  }, []);
 
   const selectedTrip = assignedTrips.find(trip => trip.id === form.tripId);
   const selectedTruck = selectedTrip
@@ -108,12 +115,11 @@ export default function LoadingVehiclePage() {
       acc[truck.id] = truck.status;
       return acc;
     }, {});
-    window.localStorage.setItem('tms_truck_status_overrides', JSON.stringify(overrides));
+    saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, overrides);
   };
 
   const persistRecords = (nextRecords: LoadingRecord[]) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('tms_loading_records', JSON.stringify(nextRecords));
+    saveSyncedValue(LOADING_RECORDS_KEY, nextRecords);
   };
 
   const handleNumberChange = (field: 'tareWeight' | 'grossWeight' | 'netWeight', value: string) => {

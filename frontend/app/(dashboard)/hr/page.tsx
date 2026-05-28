@@ -15,6 +15,7 @@ interface Employee {
 }
 
 import { getEmployees } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 const MANUAL_EMPLOYEES_KEY = 'tms_manual_employees';
 
@@ -30,14 +31,9 @@ export default function HRPage() {
   };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(MANUAL_EMPLOYEES_KEY);
-      if (!saved) return;
-      const manualEmployees = JSON.parse(saved) as Employee[];
+    fetchSyncedValue<Employee[]>(MANUAL_EMPLOYEES_KEY, []).then((manualEmployees) => {
       setEmployees([...manualEmployees, ...getEmployees()]);
-    } catch {
-      localStorage.removeItem(MANUAL_EMPLOYEES_KEY);
-    }
+    });
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,7 +49,7 @@ export default function HRPage() {
       joinDate: new Date().toISOString().split('T')[0]
     };
     const existingManual = employees.filter(emp => emp.id.startsWith('manual-'));
-    localStorage.setItem(MANUAL_EMPLOYEES_KEY, JSON.stringify([newEmployee, ...existingManual]));
+    saveSyncedValue(MANUAL_EMPLOYEES_KEY, [newEmployee, ...existingManual]);
     setEmployees([newEmployee, ...employees]);
     setShowModal(false);
     setFormData({ name: '', email: '', department: 'DRIVER_PARTNER', salary: '', allowance: '' });

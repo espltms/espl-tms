@@ -47,9 +47,11 @@ interface Trip {
 }
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
+const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
 
 export default function TripsPage() {
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,12 @@ export default function TripsPage() {
   const paginatedTrips = trips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
-    // Loaded on init from helper
+    fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
+      setTrips((currentTrips) => [
+        ...syncedTrips,
+        ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
+      ]);
+    });
   }, []);
 
   const fetchTripsData = async () => {
@@ -204,8 +211,8 @@ export default function TripsPage() {
 
     const persistAssignedTrip = (trip: Trip) => {
       if (typeof window === 'undefined') return;
-      const existing = JSON.parse(window.localStorage.getItem('tms_assigned_trips') || '[]') as Trip[];
-      window.localStorage.setItem('tms_assigned_trips', JSON.stringify([trip, ...existing.filter(item => item.id !== trip.id)]));
+      const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
+      saveSyncedValue(ASSIGNED_TRIPS_KEY, [trip, ...existing.filter(item => item.id !== trip.id)]);
     };
 
     const payload = {

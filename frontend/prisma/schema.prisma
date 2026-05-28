@@ -79,7 +79,24 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  syncedRecords SyncedRecord[]
+
   @@index([email])
+}
+
+model SyncedRecord {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recordType String
+  recordKey  String
+  payload    Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, recordType, recordKey])
+  @@index([userId, recordType])
+  @@index([recordKey])
 }
 
 model Driver {
