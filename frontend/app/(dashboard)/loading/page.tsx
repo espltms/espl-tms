@@ -61,6 +61,24 @@ interface AssignedTrip {
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
 }
 
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
+const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+const parseNumberCell = (value: string) => {
+  const parsed = Number(String(value || '').replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+const parseImportedDate = (value: string) => {
+  const parsed = value === '-' ? new Date() : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const emptyLoadingForm = {
@@ -91,6 +109,130 @@ export default function LoadingVehiclePage() {
       ]);
     });
   }, []);
+
+  useEffect(() => {
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '-';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'Loading Vehicle') return;
+
+      const newTripsList: AssignedTrip[] = [];
+      const newLoadingRecords: LoadingRecord[] = [];
+
+      detail.import.rows.forEach((row, index) => {
+        const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate', 'vehicle_no']);
+        if (truckPlate === '-') return;
+
+        const ticketNo = getCellValue(detail.import.headers, row, ['ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no']);
+        const challanNo = getCellValue(detail.import.headers, row, ['challan', 'challan no', 'challan number', 'challan_no']);
+        
+        const qtyValue = getCellValue(detail.import.headers, row, ['received qty', 'received_qty', 'qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight']);
+        const grossValue = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross tons', 'gross_weight']);
+        const tareValue = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare tons', 'tare_weight']);
+        const dateValue = getCellValue(detail.import.headers, row, ['date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val']);
+        
+        const poNumber = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract']);
+        const clientName = getCellValue(detail.import.headers, row, ['client', 'client name', 'customer', 'company']);
+        const commodityValue = getCellValue(detail.import.headers, row, ['commodity', 'commodities', 'material', 'cargo']);
+        const driverName = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner']);
+        const driverPhone = getCellValue(detail.import.headers, row, ['driver phone', 'driver mobile', 'mobile', 'phone']);
+
+        const netWeight = qtyValue !== '-' ? parseNumberCell(qtyValue) : (grossValue !== '-' && tareValue !== '-' ? Math.max(0, parseNumberCell(grossValue) - parseNumberCell(tareValue)) : 0);
+        const tareWeight = tareValue !== '-' ? parseNumberCell(tareValue) : 15.0;
+        const grossWeight = grossValue !== '-' ? parseNumberCell(grossValue) : netWeight + tareWeight;
+        const loadingDateTime = parseImportedDate(dateValue);
+
+        // Find match in current list or new list
+        let matchingTrip = assignedTrips.find(trip => 
+          trip.truck.plateNumber.toUpperCase().trim() === truckPlate.toUpperCase().trim() &&
+          !records.some(record => record.tripId === trip.id) &&
+          !newLoadingRecords.some(record => record.tripId === trip.id)
+        );
+
+        if (!matchingTrip) {
+          matchingTrip = newTripsList.find(trip => 
+            trip.truck.plateNumber.toUpperCase().trim() === truckPlate.toUpperCase().trim() &&
+            !newLoadingRecords.some(record => record.tripId === trip.id)
+          );
+        }
+
+        let tripId = '';
+        let tripNumber = '';
+
+        if (matchingTrip) {
+          tripId = matchingTrip.id;
+          tripNumber = matchingTrip.tripNumber;
+        } else {
+          tripId = `trip-auto-${Date.now()}-${index}`;
+          tripNumber = `TRIP-AUTO-${Date.now()}-${index + 1}`;
+          
+          const autoTrip: AssignedTrip = {
+            id: tripId,
+            tripNumber,
+            truckId: `truck-auto-${truckPlate}`,
+            source: '-',
+            destination: '-',
+            estimatedQuantityTons: netWeight,
+            status: 'IN_TRANSIT',
+            driver: { fullName: driverName, phone: driverPhone },
+            truck: { plateNumber: truckPlate, model: '-' },
+            purchaseOrder: { poNumber, clientName, commodity: commodityValue },
+          };
+          newTripsList.push(autoTrip);
+        }
+
+        const newRecord: LoadingRecord = {
+          id: `loading-import-${Date.now()}-${index}`,
+          tripId,
+          tripNumber,
+          truckId: matchingTrip ? (matchingTrip.truckId || `truck-auto-${truckPlate}`) : `truck-auto-${truckPlate}`,
+          truckPlate,
+          tareWeight,
+          grossWeight,
+          netWeight,
+          loadingDateTime,
+          ticketNo: ticketNo === '-' ? '-' : ticketNo.toUpperCase(),
+          challanNo: challanNo === '-' ? '-' : challanNo.toUpperCase(),
+          uom: 'Metric Ton',
+          truckStatus: 'IN_TRANSIT',
+        };
+
+        newLoadingRecords.push(newRecord);
+      });
+
+      if (newLoadingRecords.length === 0) return;
+
+      let updatedTrips = [...assignedTrips];
+      if (newTripsList.length > 0) {
+        updatedTrips = [...newTripsList, ...updatedTrips];
+        setAssignedTrips(updatedTrips);
+        
+        const existingTrips = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as AssignedTrip[];
+        saveSyncedValue(ASSIGNED_TRIPS_KEY, [
+          ...newTripsList,
+          ...existingTrips.filter(t => !newTripsList.some(nt => nt.tripNumber === t.tripNumber))
+        ]);
+      }
+
+      newLoadingRecords.forEach(record => {
+        updateAssignedTripStatus(record.tripId, record.tripNumber, 'IN_TRANSIT');
+        upsertTruckStatusOverride(record.truckId, 'IN_TRANSIT');
+      });
+
+      const nextRecords = [...newLoadingRecords, ...records];
+      setRecords(nextRecords);
+      persistRecords(nextRecords);
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [assignedTrips, records]);
 
   const selectedTrip = assignedTrips.find(trip => trip.id === form.tripId);
   const selectedTruck = selectedTrip
