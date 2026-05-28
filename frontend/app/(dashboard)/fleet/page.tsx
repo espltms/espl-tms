@@ -71,6 +71,7 @@ interface LoadingRecord {
   tripNumber?: string;
   truckId: string;
   truckPlate: string;
+  uom?: string;
   loadingDateTime: string;
   truckStatus?: TruckStatus;
   unloadingDateTime?: string;
@@ -150,7 +151,26 @@ export default function FleetPage() {
 
     return normalizeOperationalStatus(latestRecord?.unloadingTruckStatus || latestRecord?.truckStatus || truck.status);
   };
-  const filteredTrucks = trucks.filter(t =>
+  const activityOnlyTrucks = loadingRecords.reduce<TruckData[]>((acc, record) => {
+    const existsInMaster = trucks.some(truck => truck.id === record.truckId || truck.plateNumber === record.truckPlate);
+    const existsInActivityRows = acc.some(truck => truck.id === record.truckId || truck.plateNumber === record.truckPlate);
+    if (existsInMaster || existsInActivityRows) return acc;
+
+    acc.push({
+      id: record.truckId || `activity-truck-${record.truckPlate}`,
+      plateNumber: record.truckPlate,
+      model: 'From loading record',
+      type: 'Not set',
+      fleetCategory: 'OWNED_FLEET',
+      capacity: '-',
+      fuelCard: '-',
+      health: 100,
+      status: normalizeOperationalStatus(record.unloadingTruckStatus || record.truckStatus),
+    });
+    return acc;
+  }, []);
+  const registryTrucks = [...trucks, ...activityOnlyTrucks];
+  const filteredTrucks = registryTrucks.filter(t =>
     (filter === 'ALL' || getTruckCurrentStatus(t) === filter) &&
     vehicleHasActivityInRange(t)
   );
@@ -301,7 +321,7 @@ export default function FleetPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aggregate Utilization</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">
-              {Math.round((trucks.filter(t => getTruckCurrentStatus(t) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
+              {Math.round((registryTrucks.filter(t => getTruckCurrentStatus(t) === 'IN_TRANSIT').length / registryTrucks.length) * 100) || 0}%
             </span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">+2.4% vs last week</span>
           </div>
@@ -316,7 +336,7 @@ export default function FleetPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Action Required</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => getTruckCurrentStatus(t) === 'ACTION').length} Vehicle</span>
+            <span className="text-2xl font-extrabold text-amber-600">{registryTrucks.filter(t => getTruckCurrentStatus(t) === 'ACTION').length} Vehicle</span>
             <span className="text-[10px] text-amber-600 font-semibold">Needs follow-up</span>
           </div>
         </div>
