@@ -77,9 +77,10 @@ export default function FleetFinanceWorkspace({
   const [selectedRecordId, setSelectedRecordId] = useState('');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [form, setForm] = useState({
-    type: (fleetCategory === 'OWNED_FLEET' ? 'DIESEL_ENTRY' : 'REPAIR_MAINTENANCE') as FinanceEntryType,
-    amount: '',
-    description: '',
+    dieselAmount: '',
+    dieselDescription: '',
+    repairAmount: '',
+    repairDescription: '',
     entryDate: new Date().toISOString().split('T')[0],
     status: 'COMPLETED' as OperationalStatus,
   });
@@ -162,20 +163,34 @@ export default function FleetFinanceWorkspace({
     event.preventDefault();
     if (!selectedRecord) return;
 
-    const nextEntry: FleetFinanceEntry = {
-      id: `fleet-finance-${Date.now()}`,
+    const baseEntry = {
       fleetCategory,
-      type: form.type,
       loadingRecordId: selectedRecord.id,
       truckId: selectedRecord.truckId,
       truckPlate: selectedRecord.truckPlate,
       reference: selectedRecord.challanNo || selectedRecord.ticketNo,
-      description: form.description,
-      amount: parseFloat(form.amount) || 0,
       entryDate: form.entryDate,
       status: form.status,
     };
-    const nextEntries = [nextEntry, ...entries];
+    const now = Date.now();
+    const createdEntries: FleetFinanceEntry[] = [];
+    if (fleetCategory === 'OWNED_FLEET') {
+      createdEntries.push({
+        ...baseEntry,
+        id: `fleet-finance-diesel-${now}`,
+        type: 'DIESEL_ENTRY',
+        description: form.dieselDescription,
+        amount: parseFloat(form.dieselAmount) || 0,
+      });
+    }
+    createdEntries.push({
+      ...baseEntry,
+      id: `fleet-finance-repair-${now}`,
+      type: 'REPAIR_MAINTENANCE',
+      description: form.repairDescription,
+      amount: parseFloat(form.repairAmount) || 0,
+    });
+    const nextEntries = [...createdEntries, ...entries];
     const nextRecords = loadingRecords.map(record => record.id === selectedRecord.id
       ? {
           ...record,
@@ -191,17 +206,14 @@ export default function FleetFinanceWorkspace({
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextRecords, form.status, selectedRecord.truckId);
     setForm({
-      type: fleetCategory === 'OWNED_FLEET' ? 'DIESEL_ENTRY' : 'REPAIR_MAINTENANCE',
-      amount: '',
-      description: '',
+      dieselAmount: '',
+      dieselDescription: '',
+      repairAmount: '',
+      repairDescription: '',
       entryDate: new Date().toISOString().split('T')[0],
       status: 'COMPLETED',
     });
   };
-
-  const entryOptions: FinanceEntryType[] = fleetCategory === 'OWNED_FLEET'
-    ? ['DIESEL_ENTRY', 'REPAIR_MAINTENANCE']
-    : ['REPAIR_MAINTENANCE'];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -339,38 +351,62 @@ export default function FleetFinanceWorkspace({
                 ))}
               </select>
             </Field>
-            <Field label="Entry Type">
-              <select
-                required
-                value={form.type}
-                onChange={(event) => setForm({ ...form, type: event.target.value as FinanceEntryType })}
-                className="fleet-finance-input"
-              >
-                {entryOptions.map(option => (
-                  <option key={option} value={option}>{getEntryLabel(option)}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Amount">
-              <input
-                required
-                type="number"
-                step="0.01"
-                value={form.amount}
-                onChange={(event) => setForm({ ...form, amount: event.target.value })}
-                className="fleet-finance-input font-mono font-bold"
-                placeholder="0.00"
-              />
-            </Field>
-            <Field label="Description">
-              <input
-                required
-                value={form.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-                className="fleet-finance-input"
-                placeholder={form.type === 'DIESEL_ENTRY' ? 'Fuel slip / diesel details' : 'Repair or maintenance details'}
-              />
-            </Field>
+            {fleetCategory === 'OWNED_FLEET' && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+                <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  <Fuel className="h-3.5 w-3.5" /> Diesel Entry
+                </div>
+                <div className="space-y-3">
+                  <Field label="Diesel Amount">
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      value={form.dieselAmount}
+                      onChange={(event) => setForm({ ...form, dieselAmount: event.target.value })}
+                      className="fleet-finance-input font-mono font-bold"
+                      placeholder="0.00"
+                    />
+                  </Field>
+                  <Field label="Diesel Details">
+                    <input
+                      required
+                      value={form.dieselDescription}
+                      onChange={(event) => setForm({ ...form, dieselDescription: event.target.value })}
+                      className="fleet-finance-input"
+                      placeholder="Fuel slip / diesel details"
+                    />
+                  </Field>
+                </div>
+              </div>
+            )}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                <Wrench className="h-3.5 w-3.5" /> Repair & Maintenance
+              </div>
+              <div className="space-y-3">
+                <Field label="R&M Amount">
+                  <input
+                    required
+                    type="number"
+                    step="0.01"
+                    value={form.repairAmount}
+                    onChange={(event) => setForm({ ...form, repairAmount: event.target.value })}
+                    className="fleet-finance-input font-mono font-bold"
+                    placeholder="0.00"
+                  />
+                </Field>
+                <Field label="R&M Details">
+                  <input
+                    required
+                    value={form.repairDescription}
+                    onChange={(event) => setForm({ ...form, repairDescription: event.target.value })}
+                    className="fleet-finance-input"
+                    placeholder="Repair or maintenance details"
+                  />
+                </Field>
+              </div>
+            </div>
             <Field label="Entry Date">
               <input
                 required
