@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   PlayCircle,
   FileCheck2,
-  ListRestart
+  Fuel,
+  Wrench,
+  Truck
 } from 'lucide-react';
 
 interface Invoice {
@@ -38,7 +40,8 @@ interface Invoice {
 
 interface ManualFinanceEntry {
   id: string;
-  type: 'DRIVER_SALARY' | 'MAINTENANCE_SERVICE';
+  fleetCategory?: 'OWNED_FLEET' | 'ATTACHED_FLEET';
+  type: 'DRIVER_SALARY' | 'MAINTENANCE_SERVICE' | 'OWNED_REPAIR_MAINTENANCE' | 'OWNED_DIESEL_ENTRY' | 'ATTACHED_REPAIR_MAINTENANCE';
   reference: string;
   description: string;
   amount: number;
@@ -47,6 +50,15 @@ interface ManualFinanceEntry {
 import { getInvoices } from '@/app/data/dataHelper';
 
 const MANUAL_FINANCE_ENTRIES_KEY = 'tms_manual_finance_entries';
+const FLEET_FINANCE_OPTIONS = {
+  OWNED_FLEET: [
+    { value: 'OWNED_REPAIR_MAINTENANCE', label: 'Repair & Maintenance' },
+    { value: 'OWNED_DIESEL_ENTRY', label: 'Diesel Entry' },
+  ],
+  ATTACHED_FLEET: [
+    { value: 'ATTACHED_REPAIR_MAINTENANCE', label: 'Repair & Maintenance' },
+  ],
+} as const;
 
 export default function BillingPage() {
   const [loading, setLoading] = useState(false);
@@ -56,7 +68,8 @@ export default function BillingPage() {
   const [matchingResults, setMatchingResults] = useState<any>(null);
   const [manualEntries, setManualEntries] = useState<ManualFinanceEntry[]>([]);
   const [manualForm, setManualForm] = useState({
-    type: 'DRIVER_SALARY' as ManualFinanceEntry['type'],
+    fleetCategory: 'OWNED_FLEET' as NonNullable<ManualFinanceEntry['fleetCategory']>,
+    type: 'OWNED_REPAIR_MAINTENANCE' as ManualFinanceEntry['type'],
     reference: '',
     description: '',
     amount: '',
@@ -156,6 +169,7 @@ export default function BillingPage() {
     e.preventDefault();
     const newEntry: ManualFinanceEntry = {
       id: `manual-finance-${Date.now()}`,
+      fleetCategory: manualForm.fleetCategory,
       type: manualForm.type,
       reference: manualForm.reference,
       description: manualForm.description,
@@ -166,6 +180,7 @@ export default function BillingPage() {
     localStorage.setItem(MANUAL_FINANCE_ENTRIES_KEY, JSON.stringify(nextEntries));
     setManualEntries(nextEntries);
     setManualForm({
+      fleetCategory: manualForm.fleetCategory,
       type: manualForm.type,
       reference: '',
       description: '',
@@ -177,9 +192,40 @@ export default function BillingPage() {
   const manualSalaryTotal = manualEntries
     .filter(entry => entry.type === 'DRIVER_SALARY')
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const manualMaintenanceTotal = manualEntries
+  const ownedRepairTotal = manualEntries
+    .filter(entry => entry.type === 'OWNED_REPAIR_MAINTENANCE')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const ownedDieselTotal = manualEntries
+    .filter(entry => entry.type === 'OWNED_DIESEL_ENTRY')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const attachedRepairTotal = manualEntries
+    .filter(entry => entry.type === 'ATTACHED_REPAIR_MAINTENANCE')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const legacyMaintenanceTotal = manualEntries
     .filter(entry => entry.type === 'MAINTENANCE_SERVICE')
     .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const getEntryTypeLabel = (entry: ManualFinanceEntry) => {
+    switch (entry.type) {
+      case 'DRIVER_SALARY':
+        return 'Driver Salary';
+      case 'OWNED_REPAIR_MAINTENANCE':
+        return 'Owned Repair & Maintenance';
+      case 'OWNED_DIESEL_ENTRY':
+        return 'Owned Diesel Entry';
+      case 'ATTACHED_REPAIR_MAINTENANCE':
+        return 'Attached Repair & Maintenance';
+      default:
+        return 'Maintenance';
+    }
+  };
+
+  const getEntryTypeClass = (entry: ManualFinanceEntry) => {
+    if (entry.type === 'OWNED_DIESEL_ENTRY') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    if (entry.fleetCategory === 'ATTACHED_FLEET' || entry.type === 'ATTACHED_REPAIR_MAINTENANCE') return 'border-violet-200 bg-violet-50 text-violet-700';
+    if (entry.type === 'DRIVER_SALARY') return 'border-amber-200 bg-amber-50 text-amber-700';
+    return 'border-blue-200 bg-blue-50 text-blue-700';
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -195,15 +241,45 @@ export default function BillingPage() {
             <div className="mt-3 text-2xl font-extrabold text-slate-800">{formatCurrency(manualSalaryTotal)}</div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Manual Maintenance Services</span>
-            <div className="mt-3 text-2xl font-extrabold text-slate-800">{formatCurrency(manualMaintenanceTotal)}</div>
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Fleet Finance Expenses</span>
+            <div className="mt-3 text-2xl font-extrabold text-slate-800">{formatCurrency(ownedRepairTotal + ownedDieselTotal + attachedRepairTotal + legacyMaintenanceTotal)}</div>
           </div>
         </div>
 
         <form onSubmit={handleManualEntrySubmit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
           <div className="mb-4 flex flex-col gap-1">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Manual Finance Entry</h3>
-            <p className="text-[10px] text-slate-400">Add driver salary or maintenance service money directly from Finance.</p>
+            <p className="text-[10px] text-slate-400">Add owned fleet repair, owned fleet diesel, or attached fleet repair money directly from Finance.</p>
+          </div>
+          <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setManualForm({ ...manualForm, fleetCategory: 'OWNED_FLEET', type: 'OWNED_REPAIR_MAINTENANCE' })}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                manualForm.fleetCategory === 'OWNED_FLEET'
+                  ? 'border-brand-primary bg-brand-primary/5 text-brand-primary'
+                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+                <Truck className="h-4 w-4" /> Owned Fleet
+              </div>
+              <div className="mt-1 text-[10px] font-semibold text-slate-400">Repair & Maintenance, Diesel Entry</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualForm({ ...manualForm, fleetCategory: 'ATTACHED_FLEET', type: 'ATTACHED_REPAIR_MAINTENANCE' })}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                manualForm.fleetCategory === 'ATTACHED_FLEET'
+                  ? 'border-brand-primary bg-brand-primary/5 text-brand-primary'
+                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+                <Truck className="h-4 w-4" /> Attached Fleet
+              </div>
+              <div className="mt-1 text-[10px] font-semibold text-slate-400">Repair & Maintenance only</div>
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
             <select
@@ -211,15 +287,16 @@ export default function BillingPage() {
               onChange={(e) => setManualForm({ ...manualForm, type: e.target.value as ManualFinanceEntry['type'] })}
               className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-brand-primary"
             >
-              <option value="DRIVER_SALARY">Driver Salary</option>
-              <option value="MAINTENANCE_SERVICE">Maintenance</option>
+              {FLEET_FINANCE_OPTIONS[manualForm.fleetCategory].map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
             <input
               required
               value={manualForm.reference}
               onChange={(e) => setManualForm({ ...manualForm, reference: e.target.value })}
               className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-800 outline-none focus:border-brand-primary"
-              placeholder={manualForm.type === 'DRIVER_SALARY' ? 'Driver name' : 'Truck / vendor'}
+              placeholder={manualForm.type === 'OWNED_DIESEL_ENTRY' ? 'Truck / fuel slip no.' : 'Truck / vendor'}
             />
             <input
               required
@@ -247,6 +324,40 @@ export default function BillingPage() {
         </form>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
+            <Truck className="h-4 w-4 text-brand-primary" /> Owned Fleet Finance
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                <Wrench className="h-3.5 w-3.5" /> Repair & Maintenance
+              </div>
+              <div className="mt-2 text-xl font-extrabold text-slate-800">{formatCurrency(ownedRepairTotal)}</div>
+            </div>
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                <Fuel className="h-3.5 w-3.5" /> Diesel Entry
+              </div>
+              <div className="mt-2 text-xl font-extrabold text-slate-800">{formatCurrency(ownedDieselTotal)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
+            <Truck className="h-4 w-4 text-brand-primary" /> Attached Fleet Finance
+          </div>
+          <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/60 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-violet-700">
+              <Wrench className="h-3.5 w-3.5" /> Repair & Maintenance
+            </div>
+            <div className="mt-2 text-xl font-extrabold text-slate-800">{formatCurrency(attachedRepairTotal)}</div>
+          </div>
+        </div>
+      </div>
+
       {manualEntries.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-6 py-4">
@@ -267,12 +378,8 @@ export default function BillingPage() {
                 {manualEntries.map(entry => (
                   <tr key={entry.id} className="hover:bg-slate-50">
                     <td className="px-6 py-3">
-                      <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${
-                        entry.type === 'DRIVER_SALARY'
-                          ? 'border-amber-200 bg-amber-50 text-amber-700'
-                          : 'border-blue-200 bg-blue-50 text-blue-700'
-                      }`}>
-                        {entry.type === 'DRIVER_SALARY' ? 'Driver Salary' : 'Maintenance'}
+                      <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${getEntryTypeClass(entry)}`}>
+                        {getEntryTypeLabel(entry)}
                       </span>
                     </td>
                     <td className="px-6 py-3 font-semibold text-slate-800">{entry.reference}</td>
