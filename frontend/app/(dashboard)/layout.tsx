@@ -28,7 +28,8 @@ import {
   Settings,
   PackageCheck,
   PackageOpen,
-  BarChart3
+  BarChart3,
+  Fuel
 } from 'lucide-react';
 
 const navigationDivisions = [
@@ -63,6 +64,8 @@ const navigationDivisions = [
   {
     title: "Finance & Law",
     items: [
+      { label: 'Owned Fleet Finance', path: '/owned-fleet', icon: Fuel, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
+      { label: 'Attached Fleet Finance', path: '/attached-fleet', icon: Truck, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
       { label: 'Billing & Matches', path: '/billing', icon: BadgeCent, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
       { label: 'Corporate Compliance', path: '/legal', icon: Building2, roles: ['SYS_ADMIN', 'COMPLIANCE_OFFICER', 'FINANCE_OFFICER'] },
       { label: 'System Configuration', path: '/settings', icon: Settings, roles: ['SYS_ADMIN'] },
