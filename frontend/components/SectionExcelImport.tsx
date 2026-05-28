@@ -86,6 +86,12 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       };
 
       persistImports([importedSheet, ...imports]);
+      window.dispatchEvent(new CustomEvent('tms:excel-imported', {
+        detail: {
+          sectionName,
+          import: importedSheet,
+        },
+      }));
       setOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to read this Excel file.');

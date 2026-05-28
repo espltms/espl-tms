@@ -34,9 +34,9 @@ interface Trip {
   source: string;
   destination: string;
   distanceKm: number;
-  estimatedQuantityTons: number;
-  actualLoadedTons?: number;
-  actualDeliveredTons?: number;
+  estimatedQuantityTons: number | string;
+  actualLoadedTons?: number | string;
+  actualDeliveredTons?: number | string;
   status: string;
   scheduledStartDate: string;
   vendorName?: string;
@@ -54,6 +54,32 @@ const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrie
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
 const VENDOR_OPTIONS = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
+
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
+const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+const parseNumberCell = (value: string) => {
+  const parsed = Number(String(value || '').replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+const parseImportedDate = (value: string) => {
+  const parsed = value === '-' ? new Date() : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+const normalizeImportedStatus = (value: string): OperationalStatus => {
+  const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
+  if (normalized.includes('complete')) return 'COMPLETED';
+  if (normalized.includes('receive')) return 'RECEIVED';
+  if (normalized.includes('action') || normalized.includes('issue')) return 'ACTION';
+  if (normalized.includes('transit') || normalized.includes('route')) return 'IN_TRANSIT';
+  return 'SCHEDULED';
+};
 
 export default function TripsPage() {
   const [loading, setLoading] = useState(false);
@@ -90,6 +116,78 @@ export default function TripsPage() {
         ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
       ]);
     });
+  }, []);
+
+  useEffect(() => {
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '-';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'Trip Dispatch & POs') return;
+
+      const importedTrips = detail.import.rows.map((row, index): Trip => {
+        const tripNumber = getCellValue(detail.import.headers, row, ['trip number', 'trip no', 'trip id', 'trip']);
+        const poNumber = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract']);
+        const clientName = getCellValue(detail.import.headers, row, ['client', 'client name', 'customer', 'company']);
+        const commodityValue = getCellValue(detail.import.headers, row, ['commodity', 'commodities', 'material', 'cargo']);
+        const driverName = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner']);
+        const driverPhone = getCellValue(detail.import.headers, row, ['driver phone', 'driver mobile', 'mobile', 'phone']);
+        const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate']);
+        const truckModel = getCellValue(detail.import.headers, row, ['truck model', 'model', 'vehicle model']);
+        const sourceValue = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading', 'loading point', 'source loading']);
+        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading', 'unloading point', 'destination unloading']);
+        const vendorValue = getCellValue(detail.import.headers, row, ['vendor', 'vendor name']);
+        const vehicleTypeValue = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
+        const statusValue = getCellValue(detail.import.headers, row, ['status', 'trip status']);
+        const qtyValue = getCellValue(detail.import.headers, row, ['estimated weight', 'estimated quantity', 'estimated tons', 'tons', 'quantity', 'qty', 'weight']);
+        const loadedValue = getCellValue(detail.import.headers, row, ['loaded', 'loaded tons', 'actual loaded']);
+        const distanceValue = getCellValue(detail.import.headers, row, ['distance', 'distance km', 'km']);
+        const dateValue = getCellValue(detail.import.headers, row, ['date', 'scheduled date', 'start date', 'trip date']);
+
+        return {
+          id: `trip-import-${Date.now()}-${index}`,
+          tripNumber: tripNumber === '-' ? `TRIP-IMP-${Date.now()}-${index + 1}` : tripNumber,
+          truckId: truckPlate === '-' ? '-' : `import-truck-${truckPlate}`,
+          driverId: driverName === '-' ? '-' : `import-driver-${driverName}-${index}`,
+          source: sourceValue,
+          destination: destinationValue,
+          vendorName: vendorValue,
+          vehicleType: vehicleTypeValue,
+          distanceKm: parseNumberCell(distanceValue),
+          estimatedQuantityTons: parseNumberCell(qtyValue),
+          actualLoadedTons: loadedValue === '-' ? undefined : parseNumberCell(loadedValue),
+          status: normalizeImportedStatus(statusValue),
+          scheduledStartDate: parseImportedDate(dateValue),
+          driver: { fullName: driverName, phone: driverPhone },
+          truck: { plateNumber: truckPlate, model: truckModel },
+          purchaseOrder: {
+            poNumber,
+            clientName,
+            commodity: commodityValue,
+          },
+        };
+      });
+
+      if (importedTrips.length === 0) return;
+      setTrips(prev => [
+        ...importedTrips,
+        ...prev.filter(trip => !importedTrips.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
+      ]);
+      const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
+      saveSyncedValue(ASSIGNED_TRIPS_KEY, [
+        ...importedTrips,
+        ...existing.filter(trip => !importedTrips.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
+      ]);
+      setCurrentPage(1);
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
   }, []);
 
   const fetchTripsData = async () => {
@@ -292,7 +390,7 @@ export default function TripsPage() {
       driverName: trip.driver.fullName,
       plateNumber: trip.truck.plateNumber,
       tareWeight: '15.30 Tons',
-      grossWeight: `${(15.30 + trip.estimatedQuantityTons).toFixed(2)} Tons (Est)`,
+      grossWeight: `${(15.30 + Number(trip.estimatedQuantityTons || 0)).toFixed(2)} Tons (Est)`,
       issuedAt: new Date().toLocaleDateString(),
     });
   };
