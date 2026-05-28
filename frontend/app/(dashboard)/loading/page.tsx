@@ -123,14 +123,21 @@ export default function LoadingVehiclePage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedTruck || !selectedTrip) return;
+    if (!selectedTrip) return;
+
+    const truckForRecord = selectedTruck || {
+      id: selectedTrip.truckId || `trip-truck-${selectedTrip.truck.plateNumber}`,
+      plateNumber: selectedTrip.truck.plateNumber,
+      model: selectedTrip.truck.model,
+      status: form.truckStatus,
+    };
 
     const newRecord: LoadingRecord = {
       id: `loading-${Date.now()}`,
       tripId: selectedTrip.id,
       tripNumber: selectedTrip.tripNumber,
-      truckId: selectedTruck.id,
-      truckPlate: selectedTruck.plateNumber,
+      truckId: truckForRecord.id,
+      truckPlate: truckForRecord.plateNumber,
       tareWeight: parseFloat(form.tareWeight) || 0,
       grossWeight: parseFloat(form.grossWeight) || 0,
       netWeight: parseFloat(form.netWeight) || 0,
@@ -141,7 +148,9 @@ export default function LoadingVehiclePage() {
       truckStatus: form.truckStatus,
     };
     const nextRecords = [newRecord, ...records];
-    const nextTrucks = trucks.map(truck => truck.id === selectedTruck.id ? { ...truck, status: form.truckStatus } : truck);
+    const nextTrucks = selectedTruck
+      ? trucks.map(truck => truck.id === selectedTruck.id ? { ...truck, status: form.truckStatus } : truck)
+      : trucks;
 
     setRecords(nextRecords);
     setTrucks(nextTrucks);
