@@ -24,7 +24,6 @@ import {
   Scale,
   Building2,
   ParkingCircle,
-  Disc,
   Layers,
   Settings,
   PackageCheck,
@@ -47,7 +46,6 @@ const navigationDivisions = [
       { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      { label: 'Tyre Inspection', path: '/tyres', icon: Disc, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Workshop & Repairs', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
     ]
