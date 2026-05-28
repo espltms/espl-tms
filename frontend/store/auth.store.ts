@@ -5,6 +5,8 @@ interface User {
   email: string;
   fullName: string;
   role: string;
+  regionName?: string | null;
+  vendorName?: string | null;
 }
 
 interface AuthStore {

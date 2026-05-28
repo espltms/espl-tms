@@ -3,52 +3,38 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { useRouter } from 'next/navigation';
-import { Shield, Truck, Compass, Key, Mail, AlertTriangle, ArrowRight, UserPlus, UserRound, BadgeCheck, WalletCards, Settings } from 'lucide-react';
+import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck } from 'lucide-react';
 
 const portalRoles = [
   {
-    label: 'Dispatcher',
-    value: 'DISPATCHER',
-    email: 'dispatcher@logistics.com',
-    icon: Truck,
+    label: 'Super Admin',
+    value: 'SUPER_ADMIN',
+    icon: Crown,
+    accent: 'text-purple-600',
+    chip: 'bg-purple-500/10 text-purple-600',
+  },
+  {
+    label: 'Region Admin',
+    value: 'REGION_ADMIN',
+    icon: Building2,
     accent: 'text-brand-primary',
     chip: 'bg-brand-primary/10 text-brand-primary',
   },
   {
-    label: 'Finance Officer',
-    value: 'FINANCE_OFFICER',
-    email: 'finance@logistics.com',
-    icon: WalletCards,
-    accent: 'text-brand-secondary',
-    chip: 'bg-brand-secondary/10 text-brand-secondary',
-  },
-  {
-    label: 'Compliance Officer',
-    value: 'COMPLIANCE_OFFICER',
-    email: 'compliance@logistics.com',
-    icon: BadgeCheck,
-    accent: 'text-brand-success',
-    chip: 'bg-brand-success/10 text-brand-success',
-  },
-  {
-    label: 'Sys Admin',
-    value: 'SYS_ADMIN',
-    email: 'admin@logistics.com',
-    icon: Settings,
-    accent: 'text-purple-500',
-    chip: 'bg-purple-500/10 text-purple-500',
+    label: 'Vendor',
+    value: 'VENDOR',
+    icon: Truck,
+    accent: 'text-emerald-600',
+    chip: 'bg-emerald-500/10 text-emerald-600',
   },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated } = useAuthStore();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [selectedRole, setSelectedRole] = useState(portalRoles[0]);
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,34 +50,22 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const payload =
-        mode === 'login'
-          ? { email, password, role: selectedRole.value }
-          : {
-              email,
-              password,
-              fullName,
-              phone,
-              role: selectedRole.value,
-            };
-
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ email, password, role: selectedRole.value }),
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || (mode === 'login' ? 'Authentication failed. Check your credentials.' : 'Registration failed. Check your details.'));
+        throw new Error(errData.error || 'Authentication failed. Check your credentials.');
       }
 
       const data = await response.json();
       login(data.user, data.token);
-      router.push('/dashboard');
+      router.push(data.user.role === 'VENDOR' ? '/vehicle-summary' : '/dashboard');
     } catch (err: any) {
-      console.error(`${mode} failed:`, err);
+      console.error('login failed:', err);
       setError(err.message || 'Unable to complete request. Please check the details and try again.');
     } finally {
       setLoading(false);
@@ -101,13 +75,6 @@ export default function LoginPage() {
   const selectRole = (role: typeof portalRoles[number]) => {
     setSelectedRole(role);
     setError('');
-  };
-
-  const switchMode = (nextMode: 'login' | 'register') => {
-    setMode(nextMode);
-    setError('');
-    setEmail('');
-    setPassword('');
   };
 
   if (isAuthenticated) {
@@ -174,7 +141,7 @@ export default function LoginPage() {
         <div className="glass-panel relative z-10 w-full max-w-md rounded-2xl border border-slate-200 p-5 shadow-glass shadow-glass-glow sm:p-8">
           <div className="mb-6 text-center md:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">Enterprise Portal Access</h2>
-            <p className="text-xs text-slate-500 mt-1">Choose your role before login or registration</p>
+            <p className="text-xs text-slate-500 mt-1">Choose your assigned access type before login</p>
           </div>
 
           <div className="mb-6">
@@ -182,7 +149,7 @@ export default function LoginPage() {
               <Shield className="h-3.5 w-3.5 text-brand-primary" />
               <span>Select Portal Role</span>
             </div>
-            <div className="grid grid-cols-1 gap-2 text-[11px] xs:grid-cols-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 text-[11px] sm:grid-cols-3">
               {portalRoles.map((role) => {
                 const Icon = role.icon;
                 const active = selectedRole.value === role.value;
@@ -207,43 +174,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => switchMode('login')}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors ${mode === 'login' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
-            >
-              <Key className="h-3.5 w-3.5" />
-              Login
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode('register')}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors ${mode === 'register' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              Register
-            </button>
-          </div>
-
           <form onSubmit={handleAuth} className="space-y-4 sm:space-y-5">
-            {mode === 'register' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Full Name</label>
-                <div className="relative">
-                  <UserRound className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-primary/50 transition-colors"
-                    placeholder="Your full name"
-                  />
-                </div>
-              </div>
-            )}
-
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Corporate Email</label>
               <div className="relative">
@@ -274,22 +205,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {mode === 'register' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Phone Number</label>
-                <div className="relative">
-                  <Compass className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-primary/50 transition-colors"
-                    placeholder="+91..."
-                  />
-                </div>
-              </div>
-            )}
-
             {error && (
               <div className="flex items-center gap-2 rounded-xl bg-brand-danger/10 border border-brand-danger/20 p-4 text-xs text-brand-danger">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -302,9 +217,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-sm font-semibold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-sans font-extrabold"
             >
-              {loading
-                ? mode === 'login' ? 'Decrypting Authentication Key...' : 'Creating Secure Account...'
-                : mode === 'login' ? 'Authorize Secure Gateway' : `Register as ${selectedRole.label}`}
+              {loading ? 'Decrypting Authentication Key...' : 'Authorize Secure Gateway'}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>

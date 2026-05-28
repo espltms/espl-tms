@@ -9,6 +9,9 @@ generator client {
 }
 
 enum UserRole {
+  SUPER_ADMIN
+  REGION_ADMIN
+  VENDOR
   SYS_ADMIN
   LOGISTICS_MANAGER
   DISPATCHER
@@ -75,6 +78,8 @@ model User {
   fullName     String
   role         UserRole  @default(DISPATCHER)
   phone        String?
+  regionName   String?
+  vendorName   String?
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

@@ -11,6 +11,8 @@ export interface JWTPayload {
   email: string;
   role: string;
   fullName: string;
+  regionName?: string | null;
+  vendorName?: string | null;
 }
 
 // Create a JWT token

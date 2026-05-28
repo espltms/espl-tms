@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      regionName: user.regionName,
+      vendorName: user.vendorName,
     });
 
     return NextResponse.json({
@@ -42,6 +44,8 @@ export async function POST(req: NextRequest) {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        regionName: user.regionName,
+        vendorName: user.vendorName,
       },
     });
   } catch (error) {

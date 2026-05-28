@@ -74,6 +74,18 @@ const navigationDivisions = [
 
 const allNavItems = navigationDivisions.flatMap(div => div.items);
 
+const ROLE_ACCESS = {
+  SUPER_ADMIN: allNavItems.map(item => item.path),
+  REGION_ADMIN: allNavItems.filter(item => item.path !== '/settings').map(item => item.path),
+  VENDOR: ['/vehicle-summary'],
+};
+
+const hasRouteAccess = (role: string | undefined, path: string) => {
+  const explicitAccess = ROLE_ACCESS[(role || 'SUPER_ADMIN') as keyof typeof ROLE_ACCESS];
+  if (explicitAccess) return explicitAccess.includes(path);
+  return allNavItems.find(item => item.path === path)?.roles.includes(role || 'SYS_ADMIN') ?? false;
+};
+
 const ClockWidget = memo(function ClockWidget() {
   const [currentTime, setCurrentTime] = useState('');
 
@@ -119,9 +131,17 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router]);
 
+  useEffect(() => {
+    if (!mounted || !isAuthenticated) return;
+    if (!hasRouteAccess(user?.role, pathname)) {
+      const fallback = ROLE_ACCESS[user?.role as keyof typeof ROLE_ACCESS]?.[0] || '/dashboard';
+      router.push(fallback);
+    }
+  }, [isAuthenticated, mounted, pathname, router, user?.role]);
+
   const allowedDivisions = useMemo(() => navigationDivisions.map(div => ({
     ...div,
-    items: div.items.filter(item => item.roles.includes(user?.role || 'SYS_ADMIN'))
+    items: div.items.filter(item => hasRouteAccess(user?.role, item.path))
   })).filter(div => div.items.length > 0), [user?.role]);
 
   const handleSignOut = () => {
@@ -131,6 +151,9 @@ export default function DashboardLayout({
 
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
+      case 'SUPER_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
+      case 'REGION_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'VENDOR': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'FINANCE_OFFICER': return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'COMPLIANCE_OFFICER': return 'bg-emerald-50 text-emerald-700 border-emerald-200';

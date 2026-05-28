@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, CalendarDays, Truck } from 'lucide-react';
 import { getTrips, getTrucks, getWeighTickets } from '@/app/data/dataHelper';
 import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 
 type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
 
@@ -52,6 +53,12 @@ const SESSION_OPTIONS = [
   { value: 'SECOND', label: 'Session 2', range: '16-End' },
 ];
 const LOADING_RECORDS_KEY = 'tms_loading_records';
+const VENDOR_NAMES = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
+
+const getFallbackVendorForPlate = (plateNumber: string) => {
+  const total = plateNumber.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return VENDOR_NAMES[total % VENDOR_NAMES.length];
+};
 
 const formatQty = (value: number) => Number(value || 0).toLocaleString('en-IN', {
   maximumFractionDigits: 2,
@@ -66,6 +73,7 @@ const formatTurnaround = (minutes: number) => {
 };
 
 export default function VehicleSummaryPage() {
+  const { user } = useAuthStore();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [selectedSession, setSelectedSession] = useState<'FIRST' | 'SECOND'>(() => (
     new Date().getDate() <= 15 ? 'FIRST' : 'SECOND'
@@ -121,7 +129,7 @@ export default function VehicleSummaryPage() {
           truckId: trip.truckId,
           truckPlate: trip.truck.plateNumber,
           model: truck?.model || trip.truck.model,
-          vendor: truck?.vendor || trip.vendorName || 'Dataset Vendor',
+          vendor: truck?.vendor || trip.vendorName || getFallbackVendorForPlate(trip.truck.plateNumber),
           subVendor: truck?.subVendor || 'Not provided in dataset',
           fleetCategory: truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet',
           loadedQty,
@@ -148,7 +156,11 @@ export default function VehicleSummaryPage() {
     return monthKey === selectedMonth && matchesSession;
   });
 
-  const summaries = Object.values(sessionRecords.reduce<Record<string, {
+  const visibleSessionRecords = user?.role === 'VENDOR'
+    ? sessionRecords.filter(record => (record.vendor || getFallbackVendorForPlate(record.truckPlate)) === user.vendorName)
+    : sessionRecords;
+
+  const summaries = Object.values(visibleSessionRecords.reduce<Record<string, {
     truckId: string;
     plateNumber: string;
     model: string;
@@ -174,7 +186,7 @@ export default function VehicleSummaryPage() {
         truckId: key,
         plateNumber: record.truckPlate,
         model: truck?.model || record.model || trip?.truck.model || '-',
-        vendor: truck?.vendor || record.vendor || trip?.vendorName || '-',
+        vendor: truck?.vendor || record.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate),
         subVendor: truck?.subVendor || record.subVendor || '-',
         fleetCategory: record.fleetCategory || (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet'),
         trips: new Set<string>(),
