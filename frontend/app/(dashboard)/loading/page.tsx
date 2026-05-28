@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PackageCheck, Plus, Truck, X } from 'lucide-react';
+import { PackageCheck, Plus, Truck, X, Trash2 } from 'lucide-react';
 import { getTrips, getTrucks } from '@/app/data/dataHelper';
 import {
   OPERATIONAL_STATUS_OPTIONS,
@@ -99,6 +99,7 @@ export default function LoadingVehiclePage() {
   const [records, setRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyLoadingForm);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
@@ -233,6 +234,30 @@ export default function LoadingVehiclePage() {
     window.addEventListener('tms:excel-imported', handleExcelImport);
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
   }, [assignedTrips, records]);
+
+  const deleteRecords = (recordIds: string[]) => {
+    const recordsToDelete = records.filter(r => recordIds.includes(r.id));
+    
+    recordsToDelete.forEach(record => {
+      if (record.tripId) {
+        updateAssignedTripStatus(record.tripId, record.tripNumber, 'SCHEDULED');
+      }
+    });
+
+    const nextRecords = records.filter(r => !recordIds.includes(r.id));
+    setRecords(nextRecords);
+    persistRecords(nextRecords);
+    
+    setAssignedTrips(prevTrips => 
+      prevTrips.map(trip => 
+        recordsToDelete.some(r => r.tripId === trip.id) 
+          ? { ...trip, status: 'SCHEDULED' } 
+          : trip
+      )
+    );
+
+    setSelectedIds(prev => prev.filter(id => !recordIds.includes(id)));
+  };
 
   const selectedTrip = assignedTrips.find(trip => trip.id === form.tripId);
   const selectedTruck = selectedTrip
@@ -383,28 +408,66 @@ export default function LoadingVehiclePage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <PackageCheck className="h-4 w-4 text-brand-primary" /> Loading Records
           </h3>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={() => deleteRecords(selectedIds)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Selected ({selectedIds.length})
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="w-10 px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={records.length > 0 && selectedIds.length === records.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(records.map(r => r.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4">Trip / Vehicle</th>
                 <th className="px-6 py-4">Ticket / Challan</th>
                 <th className="px-6 py-4">Weights</th>
                 <th className="px-6 py-4">U.O.M</th>
                 <th className="px-6 py-4">Loading Time</th>
-                <th className="px-6 py-4 text-right">Truck Status</th>
+                <th className="px-6 py-4">Truck Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {records.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
+                <tr><td colSpan={8} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
               ) : records.map(record => (
-                <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
+                  <td className="w-10 px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(record.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, record.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== record.id));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-mono font-extrabold text-slate-800">{record.tripNumber || 'TRIP-REF'}</div>
                     <div className="mt-0.5 text-[10px] text-slate-500 font-mono">{record.truckPlate}</div>
@@ -413,7 +476,16 @@ export default function LoadingVehiclePage() {
                   <td className="px-6 py-4 font-mono"><div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div><div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div></td>
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
                   <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                  <td className="px-6 py-4 text-right"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.truckStatus)}`}>{getOperationalStatusLabel(record.truckStatus)}</span></td>
+                  <td className="px-6 py-4"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.truckStatus)}`}>{getOperationalStatusLabel(record.truckStatus)}</span></td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => deleteRecords([record.id])}
+                      className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete Loading Entry"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

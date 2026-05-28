@@ -12,7 +12,8 @@ import {
   X, 
   Calendar,
   CheckCircle,
-  FileCheck2
+  FileCheck2,
+  Trash2
 } from 'lucide-react';
 
 interface PurchaseOrder {
@@ -101,9 +102,23 @@ export default function TripsPage() {
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
   const [error, setError] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [activeGatepass, setActiveGatepass] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const deleteTrips = (tripIds: string[]) => {
+    const nextTrips = trips.filter(t => !tripIds.includes(t.id));
+    setTrips(nextTrips);
+    
+    if (typeof window !== 'undefined') {
+      const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
+      const nextSynced = existing.filter(t => !tripIds.includes(t.id));
+      saveSyncedValue(ASSIGNED_TRIPS_KEY, nextSynced);
+    }
+    
+    setSelectedIds(prev => prev.filter(id => !tripIds.includes(id)));
+  };
   const ITEMS_PER_PAGE = 15;
 
   const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
@@ -460,26 +475,69 @@ export default function TripsPage() {
 
       {/* Dispatched Table */}
       <div className="glass-panel rounded-2xl border border-brand-slate overflow-hidden">
-        <div className="border-b border-[#e2e8f0] bg-white/60 px-6 py-4">
+        <div className="border-b border-[#e2e8f0] bg-white/60 px-6 py-4 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Trip dispatches</h3>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={() => deleteTrips(selectedIds)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Selected ({selectedIds.length})
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                <th className="w-10 px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={paginatedTrips.length > 0 && paginatedTrips.every(t => selectedIds.includes(t.id))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        const newSelections = [...selectedIds];
+                        paginatedTrips.forEach(t => {
+                          if (!newSelections.includes(t.id)) {
+                            newSelections.push(t.id);
+                          }
+                        });
+                        setSelectedIds(newSelections);
+                      } else {
+                        setSelectedIds(selectedIds.filter(id => !paginatedTrips.some(t => t.id === id)));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4">Trip details</th>
                 <th className="px-6 py-4">Contracts Reference</th>
                 <th className="px-6 py-4">Assigned Crew</th>
                 <th className="px-6 py-4">Vendor</th>
                 <th className="px-6 py-4">Tonnages</th>
                 <th className="px-6 py-4">Trip Status</th>
-                <th className="px-6 py-4 text-right">Digital Gatepass</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
               {paginatedTrips.map(trip => (
-                <tr key={trip.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
+                  <td className="w-10 px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(trip.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, trip.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== trip.id));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div>
                       <span className="font-bold text-slate-800 font-mono">{trip.tripNumber}</span>
@@ -520,7 +578,7 @@ export default function TripsPage() {
                       {getOperationalStatusLabel(trip.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                     <button
                       onClick={() => getGatepassToken(trip)}
                       className="inline-flex items-center gap-1 rounded-lg border border-brand-slate bg-white px-2.5 py-1.5 hover:border-brand-primary/30 text-slate-600 hover:text-slate-900 transition-colors"
@@ -528,12 +586,19 @@ export default function TripsPage() {
                       <QrCode className="h-4 w-4 text-brand-primary" />
                       <span>QR Gatepass</span>
                     </button>
+                    <button
+                      onClick={() => deleteTrips([trip.id])}
+                      className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete Trip"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={9} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
