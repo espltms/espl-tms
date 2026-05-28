@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getUserFromRequest(req);
+    if (user?.role === 'REGION_ADMIN') {
+      const { page, limit } = getPagination(req);
+      return NextResponse.json({ data: [], total: 0, page, limit });
+    }
+
     const { page, limit, skip } = getPagination(req);
     const status = getSearchParam(req, 'status');
     const search = getSearchParam(req, 'search');

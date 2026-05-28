@@ -26,8 +26,18 @@ const INITIAL_BAYS: Bay[] = [
   { id: 'bay-maint-01', bayNumber: 'MT-01', type: 'TRUCK_PARKING', status: 'MAINTENANCE', activeTrip: '', dwellMinutes: 0 },
 ];
 
+const isRegionalAdmin = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const user = JSON.parse(window.localStorage.getItem('tms_user') || 'null') as { role?: string } | null;
+    return user?.role === 'REGION_ADMIN';
+  } catch {
+    return false;
+  }
+};
+
 export default function YardPage() {
-  const [bays, setBays] = useState<Bay[]>(INITIAL_BAYS);
+  const [bays, setBays] = useState<Bay[]>(() => isRegionalAdmin() ? [] : INITIAL_BAYS);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL');
   const [showAllocateModal, setShowAllocateModal] = useState(false);
@@ -107,7 +117,7 @@ export default function YardPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Average Gate Dwell</span>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-800">28m</span>
+            <span className="text-2xl font-extrabold text-slate-800">{bays.length ? '28m' : '0m'}</span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
                Efficiency +4.2m
             </span>

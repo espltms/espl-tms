@@ -103,6 +103,16 @@ const getLocalItems = <T>(key: string): T[] => {
   }
 };
 
+const isRegionalAdmin = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const user = JSON.parse(window.localStorage.getItem('tms_user') || 'null') as { role?: string } | null;
+    return user?.role === 'REGION_ADMIN';
+  } catch {
+    return false;
+  }
+};
+
 const getTruckStatusOverrides = (): Record<string, TruckData['status']> => {
   if (typeof window === 'undefined') return {};
   try {
@@ -115,9 +125,11 @@ const getTruckStatusOverrides = (): Record<string, TruckData['status']> => {
 // 1. Get raw lists directly from JSON data, plus locally onboarded records.
 export const getTrucks = (): TruckData[] => {
   const statusOverrides = getTruckStatusOverrides();
+  const localTrucks = isRegionalAdmin() ? [] : getLocalItems<TruckData>('tms_local_trucks');
+  const datasetTrucks = isRegionalAdmin() ? [] : (tmsData.trucks as TruckData[]);
   return [
-    ...getLocalItems<TruckData>('tms_local_trucks'),
-    ...(tmsData.trucks as TruckData[])
+    ...localTrucks,
+    ...datasetTrucks
   ].map(truck => ({
     ...truck,
     fleetCategory: truck.fleetCategory || 'OWNED_FLEET',
@@ -125,15 +137,15 @@ export const getTrucks = (): TruckData[] => {
   }));
 };
 export const getDrivers = (): DriverData[] => [
-  ...getLocalItems<DriverData>('tms_local_drivers'),
-  ...(tmsData.drivers as DriverData[])
+  ...(isRegionalAdmin() ? [] : getLocalItems<DriverData>('tms_local_drivers')),
+  ...(isRegionalAdmin() ? [] : (tmsData.drivers as DriverData[]))
 ];
-export const getPurchaseOrders = (): PurchaseOrder[] => tmsData.purchaseOrders as PurchaseOrder[];
+export const getPurchaseOrders = (): PurchaseOrder[] => isRegionalAdmin() ? [] : tmsData.purchaseOrders as PurchaseOrder[];
 export const getTrips = (): Trip[] => [
-  ...getLocalItems<Trip>('tms_assigned_trips'),
-  ...(tmsData.trips as Trip[])
+  ...(isRegionalAdmin() ? [] : getLocalItems<Trip>('tms_assigned_trips')),
+  ...(isRegionalAdmin() ? [] : (tmsData.trips as Trip[]))
 ];
-export const getWeighTickets = (): WeighTicket[] => tmsData.weighTickets as WeighTicket[];
+export const getWeighTickets = (): WeighTicket[] => isRegionalAdmin() ? [] : tmsData.weighTickets as WeighTicket[];
 
 // 2. HR employees are not present in the imported dataset.
 export const getEmployees = (): Employee[] => [];

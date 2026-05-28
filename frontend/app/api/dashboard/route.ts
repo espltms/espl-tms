@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getUserFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,31 @@ type DashboardPayload = {
 let dashboardCache: { payload: DashboardPayload; expiresAt: number } | null = null;
 const DASHBOARD_CACHE_MS = 15_000;
 
-export async function GET() {
+const emptyDashboardPayload: DashboardPayload = {
+  revenueKPI: 0,
+  expenseKPI: 0,
+  netMarginKPI: 0,
+  reconciliationQueueCount: 0,
+  disputedQueueCount: 0,
+  activeTripsCount: 0,
+  fleetUtilization: 0,
+  totalTrucks: 0,
+  totalDrivers: 0,
+  totalTrips: 0,
+  completedTrips: 0,
+  revenueHistory: [],
+  poUsage: [],
+};
+
+export async function GET(req: NextRequest) {
   try {
+    const user = await getUserFromRequest(req);
+    if (user?.role === 'REGION_ADMIN') {
+      return NextResponse.json(emptyDashboardPayload, {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
+
     const now = Date.now();
     if (dashboardCache && dashboardCache.expiresAt > now) {
       return NextResponse.json(dashboardCache.payload, {
@@ -105,10 +129,10 @@ export async function GET() {
       revenueKPI: totalRevenue,
       expenseKPI: totalExpenses,
       netMarginKPI: netMargin,
-      reconciliationQueueCount: verifiedTickets || 1,
+      reconciliationQueueCount: verifiedTickets,
       disputedQueueCount: rejectedTickets,
       activeTripsCount: activeTrips,
-      fleetUtilization: fleetUtilization || 85.0,
+      fleetUtilization,
       totalTrucks,
       totalDrivers,
       totalTrips,
