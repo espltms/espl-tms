@@ -12,6 +12,13 @@ import {
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import {
+  FLEET_FINANCE_ENTRIES_KEY,
+  LOADING_RECORDS_KEY,
+  LOCAL_TRUCKS_KEY,
+  TRUCK_STATUS_OVERRIDES_KEY,
+  updateAssignedTripStatus,
+} from '@/lib/workflowAutomation';
 
 type FleetCategory = 'OWNED_FLEET' | 'ATTACHED_FLEET';
 type FinanceEntryType = 'REPAIR_MAINTENANCE' | 'DIESEL_ENTRY';
@@ -49,11 +56,6 @@ interface FleetFinanceEntry {
   entryDate: string;
   status: OperationalStatus;
 }
-
-const LOADING_RECORDS_KEY = 'tms_loading_records';
-const LOCAL_TRUCKS_KEY = 'tms_local_trucks';
-const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
-const FLEET_FINANCE_ENTRIES_KEY = 'tms_fleet_finance_entries';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value || 0);
@@ -205,6 +207,7 @@ export default function FleetFinanceWorkspace({
     saveSyncedValue(FLEET_FINANCE_ENTRIES_KEY, nextEntries);
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextRecords, form.status, selectedRecord.truckId);
+    updateAssignedTripStatus(selectedRecord.tripId, selectedRecord.tripNumber, form.status);
     setForm({
       dieselAmount: '',
       dieselDescription: '',

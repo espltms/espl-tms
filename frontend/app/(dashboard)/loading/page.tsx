@@ -11,6 +11,13 @@ import {
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import {
+  ASSIGNED_TRIPS_KEY,
+  LOADING_RECORDS_KEY,
+  TRUCK_STATUS_OVERRIDES_KEY,
+  updateAssignedTripStatus,
+  upsertTruckStatusOverride,
+} from '@/lib/workflowAutomation';
 
 type TruckStatus = OperationalStatus;
 
@@ -56,10 +63,6 @@ interface AssignedTrip {
 
 const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
-const LOADING_RECORDS_KEY = 'tms_loading_records';
-const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
-const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
-
 const emptyLoadingForm = {
   tripId: '',
   tareWeight: '',
@@ -156,6 +159,8 @@ export default function LoadingVehiclePage() {
     setTrucks(nextTrucks);
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextTrucks);
+    updateAssignedTripStatus(selectedTrip.id, selectedTrip.tripNumber, 'IN_TRANSIT');
+    upsertTruckStatusOverride(truckForRecord.id, form.truckStatus);
     setShowModal(false);
     setForm(emptyLoadingForm);
   };

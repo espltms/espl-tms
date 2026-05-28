@@ -9,6 +9,12 @@ import {
   getOperationalStatusClasses,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import {
+  LOADING_RECORDS_KEY,
+  TRUCK_STATUS_OVERRIDES_KEY,
+  updateAssignedTripStatus,
+  upsertTruckStatusOverride,
+} from '@/lib/workflowAutomation';
 
 type TruckStatus = OperationalStatus;
 
@@ -21,6 +27,8 @@ interface TruckData {
 
 interface LoadingRecord {
   id: string;
+  tripId?: string;
+  tripNumber?: string;
   truckId: string;
   truckPlate: string;
   tareWeight: number;
@@ -38,9 +46,6 @@ interface LoadingRecord {
 }
 
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
-const LOADING_RECORDS_KEY = 'tms_loading_records';
-const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
-
 const emptyUnloadingForm = {
   truckStatus: 'RECEIVED' as TruckStatus,
   receivedQty: '',
@@ -112,6 +117,8 @@ export default function UnloadingVehiclePage() {
     setTrucks(nextTrucks);
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextTrucks);
+    updateAssignedTripStatus(activeRecord.tripId, activeRecord.tripNumber, 'RECEIVED');
+    upsertTruckStatusOverride(activeRecord.truckId, form.truckStatus);
     setActiveRecord(null);
     setForm(emptyUnloadingForm);
   };

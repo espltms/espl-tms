@@ -11,6 +11,7 @@ import {
 
 import { useApiData } from '@/lib/useApiData';
 import { getOperationalStatusClasses, getOperationalStatusLabel } from '@/lib/operationalStatus';
+import WorkflowAlerts from '@/components/WorkflowAlerts';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
   ssr: false,
@@ -159,15 +160,7 @@ export default function DashboardPage() {
             <p className="text-[11px] text-slate-400 mt-0.5">Automated logs showing operator/terminal checkpoints updates</p>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-3.5">
-              <AlertOctagon className="h-5 w-5 text-brand-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-xs font-bold text-slate-800">DATASET-ONLY VIEW</div>
-                <div className="text-[10px] text-slate-500 mt-1">No manual compliance or invoice exception records are bundled outside the imported dataset.</div>
-              </div>
-            </div>
-          </div>
+          <WorkflowAlerts />
         </div>
       </div>
     </div>
