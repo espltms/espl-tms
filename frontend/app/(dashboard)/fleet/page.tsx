@@ -25,6 +25,7 @@ interface TruckData {
   assignedDriverPhone?: string;
   assignedDriverLicense?: string;
   assignedDriverAadhar?: string;
+  onboardedAt?: string;
 }
 
 interface DriverData {
@@ -44,6 +45,7 @@ import {
   OPERATIONAL_STATUS_OPTIONS,
   OperationalStatus,
   getOperationalStatusClasses,
+  getOperationalStatusLabel,
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
@@ -61,7 +63,19 @@ const FLEET_CATEGORY_OPTIONS: { value: FleetCategory; label: string }[] = [
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const LOCAL_TRUCKS_KEY = 'tms_local_trucks';
 const LOCAL_DRIVERS_KEY = 'tms_local_drivers';
-const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
+const LOADING_RECORDS_KEY = 'tms_loading_records';
+
+interface LoadingRecord {
+  id: string;
+  tripId?: string;
+  tripNumber?: string;
+  truckId: string;
+  truckPlate: string;
+  loadingDateTime: string;
+  truckStatus?: TruckStatus;
+  unloadingDateTime?: string;
+  unloadingTruckStatus?: TruckStatus;
+}
 
 const emptyVehicleForm = {
   plateNumber: '',
@@ -77,7 +91,6 @@ const emptyVehicleForm = {
   insuranceDocumentName: '',
   pucDocumentName: '',
   assignedDriverId: '',
-  status: 'RECEIVED' as TruckStatus,
 };
 
 const emptyDriverForm = {
@@ -99,9 +112,48 @@ export default function FleetPage() {
   const [driverForm, setDriverForm] = useState(emptyDriverForm);
   const [reassigningTruck, setReassigningTruck] = useState<TruckData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>([]);
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const ITEMS_PER_PAGE = 15;
 
-  const filteredTrucks = filter === 'ALL' ? trucks : trucks.filter(t => normalizeOperationalStatus(t.status) === filter);
+  const hasDateFilter = Boolean(dateRange.from || dateRange.to);
+  const isWithinDateRange = (dateValue?: string) => {
+    if (!dateValue) return false;
+    const value = new Date(dateValue);
+    if (Number.isNaN(value.getTime())) return false;
+    if (dateRange.from) {
+      const from = new Date(`${dateRange.from}T00:00:00`);
+      if (value < from) return false;
+    }
+    if (dateRange.to) {
+      const to = new Date(`${dateRange.to}T23:59:59`);
+      if (value > to) return false;
+    }
+    return true;
+  };
+  const vehicleHasActivityInRange = (truck: TruckData) => {
+    if (!hasDateFilter) return true;
+    if (isWithinDateRange(truck.onboardedAt)) return true;
+    return loadingRecords.some(record =>
+      (record.truckId === truck.id || record.truckPlate === truck.plateNumber) &&
+      (isWithinDateRange(record.loadingDateTime) || isWithinDateRange(record.unloadingDateTime))
+    );
+  };
+  const getTruckCurrentStatus = (truck: TruckData) => {
+    const latestRecord = loadingRecords
+      .filter(record => record.truckId === truck.id || record.truckPlate === truck.plateNumber)
+      .sort((a, b) => {
+        const aTime = new Date(a.unloadingDateTime || a.loadingDateTime).getTime();
+        const bTime = new Date(b.unloadingDateTime || b.loadingDateTime).getTime();
+        return bTime - aTime;
+      })[0];
+
+    return normalizeOperationalStatus(latestRecord?.unloadingTruckStatus || latestRecord?.truckStatus || truck.status);
+  };
+  const filteredTrucks = trucks.filter(t =>
+    (filter === 'ALL' || getTruckCurrentStatus(t) === filter) &&
+    vehicleHasActivityInRange(t)
+  );
   const totalPages = Math.ceil(filteredTrucks.length / ITEMS_PER_PAGE);
   const paginatedTrucks = filteredTrucks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -118,19 +170,15 @@ export default function FleetPage() {
         ...currentDrivers.filter(driver => !syncedDrivers.some(syncedDriver => syncedDriver.id === driver.id)),
       ]);
     });
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, dateRange.from, dateRange.to]);
 
   const persistLocalTrucks = (records: TruckData[]) => {
     saveSyncedValue(LOCAL_TRUCKS_KEY, records.filter(t => t.id.startsWith('local-truck-')));
-  };
-
-  const persistTruckStatusOverrides = (records: TruckData[]) => {
-    if (typeof window === 'undefined') return;
-    const overrides = records.reduce<Record<string, TruckStatus>>((acc, truck) => {
-      acc[truck.id] = truck.status;
-      return acc;
-    }, {});
-    saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, overrides);
   };
 
   const persistLocalDrivers = (records: DriverData[]) => {
@@ -184,7 +232,8 @@ export default function FleetPage() {
           assignedDriverLicense: driverForVehicle?.licenseNumber,
           assignedDriverAadhar: driverForVehicle?.aadharNumber,
           health: 100,
-          status: vehicleForm.status,
+          status: 'RECEIVED',
+          onboardedAt: new Date().toISOString(),
         }
       : null;
 
@@ -231,13 +280,6 @@ export default function FleetPage() {
     setReassigningTruck(null);
   };
 
-  const handleTruckStatusChange = (truckId: string, status: TruckStatus) => {
-    const nextTrucks = trucks.map(truck => truck.id === truckId ? { ...truck, status } : truck);
-    setTrucks(nextTrucks);
-    persistLocalTrucks(nextTrucks);
-    persistTruckStatusOverrides(nextTrucks);
-  };
-
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -259,7 +301,7 @@ export default function FleetPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aggregate Utilization</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">
-              {Math.round((trucks.filter(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
+              {Math.round((trucks.filter(t => getTruckCurrentStatus(t) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
             </span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">+2.4% vs last week</span>
           </div>
@@ -274,7 +316,7 @@ export default function FleetPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Action Required</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => normalizeOperationalStatus(t.status) === 'ACTION').length} Vehicle</span>
+            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => getTruckCurrentStatus(t) === 'ACTION').length} Vehicle</span>
             <span className="text-[10px] text-amber-600 font-semibold">Needs follow-up</span>
           </div>
         </div>
@@ -282,9 +324,35 @@ export default function FleetPage() {
 
       {/* Grid List */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Fleet Registry</h3>
-          <div className="flex gap-2">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Date Range</span>
+                <input
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(event) => setDateRange({ ...dateRange, from: event.target.value })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:border-brand-primary"
+                />
+                <span className="text-[10px] font-bold text-slate-400">to</span>
+                <input
+                  type="date"
+                  value={dateRange.to}
+                  onChange={(event) => setDateRange({ ...dateRange, to: event.target.value })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:border-brand-primary"
+                />
+                {hasDateFilter && (
+                  <button
+                    onClick={() => setDateRange({ from: '', to: '' })}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-50"
+                  >
+                    CLEAR
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
             <button onClick={() => { setFilter('ALL'); setCurrentPage(1); }} className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === 'ALL' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>ALL</button>
             {TRUCK_STATUS_OPTIONS.map(option => (
               <button
@@ -295,6 +363,8 @@ export default function FleetPage() {
                 {option.label.toUpperCase()}
               </button>
             ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -371,15 +441,9 @@ export default function FleetPage() {
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
-                      <select
-                        value={normalizeOperationalStatus(truck.status)}
-                        onChange={(e) => handleTruckStatusChange(truck.id, e.target.value as TruckStatus)}
-                        className={`rounded-full border px-2.5 py-1 text-[9px] font-bold outline-none ${getOperationalStatusClasses(truck.status)}`}
-                      >
-                        {TRUCK_STATUS_OPTIONS.map(option => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
+                      <span className={`inline-block rounded-full border px-2.5 py-1 text-[9px] font-bold ${getOperationalStatusClasses(getTruckCurrentStatus(truck))}`}>
+                        {getOperationalStatusLabel(getTruckCurrentStatus(truck))}
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -477,11 +541,6 @@ export default function FleetPage() {
                     <Field label="Fleet Category">
                       <select value={vehicleForm.fleetCategory} onChange={(e) => setVehicleForm({...vehicleForm, fleetCategory: e.target.value as FleetCategory})} className="fleet-input">
                         {FLEET_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Truck Status">
-                      <select value={vehicleForm.status} onChange={(e) => setVehicleForm({...vehicleForm, status: e.target.value as TruckStatus})} className="fleet-input">
-                        {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </Field>
                     <Field label="Wheeler">
