@@ -75,6 +75,7 @@ export default function FleetFinanceWorkspace({
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [entries, setEntries] = useState<FleetFinanceEntry[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState('');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [form, setForm] = useState({
     type: (fleetCategory === 'OWNED_FLEET' ? 'DIESEL_ENTRY' : 'REPAIR_MAINTENANCE') as FinanceEntryType,
     amount: '',
@@ -96,7 +97,23 @@ export default function FleetFinanceWorkspace({
     });
   }, []);
 
-  const unloadedVehicles = useMemo(() => loadingRecords
+  const hasDateFilter = Boolean(dateRange.from || dateRange.to);
+  const isWithinDateRange = (dateValue?: string) => {
+    if (!dateValue) return false;
+    const value = new Date(dateValue);
+    if (Number.isNaN(value.getTime())) return false;
+    if (dateRange.from) {
+      const from = new Date(`${dateRange.from}T00:00:00`);
+      if (value < from) return false;
+    }
+    if (dateRange.to) {
+      const to = new Date(`${dateRange.to}T23:59:59`);
+      if (value > to) return false;
+    }
+    return true;
+  };
+
+  const allUnloadedVehicles = useMemo(() => loadingRecords
     .filter(record => Boolean(record.unloadingDateTime))
     .map((record) => {
       const truck = trucks.find(item => item.id === record.truckId || item.plateNumber === record.truckPlate);
@@ -110,8 +127,14 @@ export default function FleetFinanceWorkspace({
     })
     .filter(record => record.fleetCategory === fleetCategory), [fleetCategory, loadingRecords, trucks]);
 
+  const unloadedVehicles = allUnloadedVehicles.filter(record =>
+    !hasDateFilter || isWithinDateRange(record.unloadingDateTime)
+  );
   const selectedRecord = unloadedVehicles.find(record => record.id === selectedRecordId) || unloadedVehicles[0];
-  const filteredEntries = entries.filter(entry => entry.fleetCategory === fleetCategory);
+  const filteredEntries = entries.filter(entry =>
+    entry.fleetCategory === fleetCategory &&
+    (!hasDateFilter || isWithinDateRange(entry.entryDate))
+  );
   const repairTotal = filteredEntries
     .filter(entry => entry.type === 'REPAIR_MAINTENANCE')
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -205,9 +228,38 @@ export default function FleetFinanceWorkspace({
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm xl:col-span-2">
           <div className="border-b border-slate-100 px-6 py-4">
-            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
-              <PackageOpen className="h-4 w-4 text-brand-primary" /> Unloaded Vehicles
-            </h3>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
+                <PackageOpen className="h-4 w-4 text-brand-primary" /> Unloaded Vehicles
+              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unloading Date</span>
+                <input
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(event) => setDateRange({ ...dateRange, from: event.target.value })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:border-brand-primary"
+                />
+                <span className="text-[10px] font-bold text-slate-400">to</span>
+                <input
+                  type="date"
+                  value={dateRange.to}
+                  onChange={(event) => setDateRange({ ...dateRange, to: event.target.value })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:border-brand-primary"
+                />
+                {hasDateFilter && (
+                  <button
+                    onClick={() => {
+                      setDateRange({ from: '', to: '' });
+                      setSelectedRecordId('');
+                    }}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-50"
+                  >
+                    CLEAR
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
@@ -224,7 +276,9 @@ export default function FleetFinanceWorkspace({
                 {unloadedVehicles.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
-                      No unloaded {getFleetLabel(fleetCategory).toLowerCase()} vehicles yet.
+                      {hasDateFilter
+                        ? 'No unloaded vehicles found for this date range.'
+                        : `No unloaded ${getFleetLabel(fleetCategory).toLowerCase()} vehicles yet.`}
                     </td>
                   </tr>
                 ) : unloadedVehicles.map(record => (
