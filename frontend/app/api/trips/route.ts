@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 import { getPagination, getSearchParam } from '@/lib/apiQuery';
+import { normalizeOperationalStatus } from '@/lib/operationalStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,12 @@ export async function GET(req: NextRequest) {
     if (user?.role === 'VENDOR') {
       where.vendorName = user.vendorName || '';
     }
-    if (status) where.status = status;
+    if (status) {
+      const normalizedStatus = normalizeOperationalStatus(status);
+      where.status = normalizedStatus === 'IN_TRANSIT'
+        ? { in: ['IN_TRANSIT', 'EN_ROUTE'] as any }
+        : normalizedStatus;
+    }
     if (search) {
       where.OR = [
         { tripNumber: { contains: search, mode: 'insensitive' } },
@@ -48,7 +54,12 @@ export async function GET(req: NextRequest) {
       prisma.trip.count({ where }),
     ]);
 
-    return NextResponse.json({ data: trips, total, page, limit });
+    return NextResponse.json({
+      data: trips.map(trip => ({ ...trip, status: normalizeOperationalStatus(trip.status) })),
+      total,
+      page,
+      limit,
+    });
   } catch (error) {
     console.error('Get trips error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -103,7 +114,7 @@ export async function POST(req: NextRequest) {
         estimatedQuantityTons: body.estimatedQuantityTons || 0,
         vendorName: body.vendorName || null,
         vehicleType: body.vehicleType || null,
-        status: body.status || 'SCHEDULED',
+        status: normalizeOperationalStatus(body.status) as any,
         scheduledStartDate: new Date(body.scheduledStartDate),
       },
       include: {

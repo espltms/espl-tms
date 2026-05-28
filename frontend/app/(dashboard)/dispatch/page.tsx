@@ -15,12 +15,13 @@ import {
 } from 'lucide-react';
 
 import { getTrips } from '@/app/data/dataHelper';
+import { normalizeOperationalStatus } from '@/lib/operationalStatus';
 
 export default function DispatchMapPage() {
   const [simulationActive, setSimulationActive] = useState(false);
   
   // Find first active trip in the dataset
-  const activeTripObj = getTrips().find(t => t.status === 'EN_ROUTE') || getTrips()[0];
+  const activeTripObj = getTrips().find(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT') || getTrips()[0];
   
   const [gpsStats, setGpsStats] = useState({
     latitude: 19.7118,
@@ -33,7 +34,7 @@ export default function DispatchMapPage() {
   });
 
   const [activeFeeds, setActiveFeeds] = useState(() => {
-    const rawActive = getTrips().filter(t => t.status === 'EN_ROUTE');
+    const rawActive = getTrips().filter(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT');
     return rawActive.slice(0, 5).map((t, idx) => ({
       id: String(idx + 1),
       tripNumber: t.tripNumber,

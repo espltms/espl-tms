@@ -3,9 +3,14 @@
 import { useEffect, useState } from 'react';
 import { PackageOpen, X } from 'lucide-react';
 import { getTrucks } from '@/app/data/dataHelper';
+import {
+  OPERATIONAL_STATUS_OPTIONS,
+  OperationalStatus,
+  getOperationalStatusClasses,
+} from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 
-type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+type TruckStatus = OperationalStatus;
 
 interface TruckData {
   id: string;
@@ -32,11 +37,7 @@ interface LoadingRecord {
   unloadingTruckStatus?: TruckStatus;
 }
 
-const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
-  { value: 'IN_TRANSIT', label: 'In transit' },
-  { value: 'RECEIVED', label: 'Received' },
-  { value: 'ACTION', label: 'Action' },
-];
+const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 
@@ -55,20 +56,6 @@ export default function UnloadingVehiclePage() {
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
   }, []);
-
-  const normalizeTruckStatus = (status: TruckStatus) => {
-    if (status === 'ON_TRIP') return 'IN_TRANSIT';
-    if (status === 'MAINTENANCE') return 'ACTION';
-    if (status === 'AVAILABLE') return 'RECEIVED';
-    return status;
-  };
-
-  const getTruckStatusStyle = (status: TruckStatus) => {
-    const normalized = normalizeTruckStatus(status);
-    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    return 'bg-amber-50 text-amber-700 border-amber-200';
-  };
 
   const formatTurnaround = (minutes?: number) => {
     if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return 'Pending';
@@ -192,7 +179,7 @@ export default function UnloadingVehiclePage() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
               <Field label="Truck Status *">
-                <select required value={form.truckStatus} onChange={(e) => setForm({ ...form, truckStatus: e.target.value as TruckStatus })} className={`unload-input ${getTruckStatusStyle(form.truckStatus)}`}>
+                <select required value={form.truckStatus} onChange={(e) => setForm({ ...form, truckStatus: e.target.value as TruckStatus })} className={`unload-input ${getOperationalStatusClasses(form.truckStatus)}`}>
                   {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </Field>

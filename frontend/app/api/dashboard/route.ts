@@ -68,10 +68,10 @@ export async function GET(req: NextRequest) {
       pos,
     ] = await Promise.all([
       prisma.truck.count(),
-      prisma.truck.count({ where: { status: 'ON_TRIP' } }),
+      prisma.truck.count({ where: { status: { in: ['ON_TRIP', 'IN_TRANSIT'] as any } } }),
       prisma.driver.count(),
       prisma.trip.count(),
-      prisma.trip.count({ where: { status: { in: ['EN_ROUTE', 'LOADING'] } } }),
+      prisma.trip.count({ where: { status: { in: ['IN_TRANSIT', 'EN_ROUTE'] as any } } }),
       prisma.trip.count({ where: { status: 'COMPLETED' } }),
       prisma.$queryRaw<{ revenue: unknown }[]>`
         SELECT COALESCE(SUM(COALESCE(t."actualDeliveredTons", t."estimatedQuantityTons", 0) * po."ratePerTon"), 0) AS revenue

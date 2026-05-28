@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useApiData } from '@/lib/useApiData';
+import { getOperationalStatusClasses, getOperationalStatusLabel } from '@/lib/operationalStatus';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
   ssr: false,
@@ -23,7 +24,7 @@ const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
 
 export default function DashboardPage() {
   const { data: dashboardData, loading: dashboardLoading } = useApiData('/api/dashboard', null);
-  const { data: tripsData, loading: tripsLoading } = useApiData('/api/trips?limit=5&status=EN_ROUTE', { data: [] });
+  const { data: tripsData, loading: tripsLoading } = useApiData('/api/trips?limit=5&status=IN_TRANSIT', { data: [] });
 
   const loading = dashboardLoading || tripsLoading;
   
@@ -141,8 +142,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="inline-block rounded-full bg-brand-success/15 border border-brand-success/20 px-2.5 py-0.5 text-[9px] font-bold text-brand-success tracking-wide">
-                    {trip.status}
+                  <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold tracking-wide ${getOperationalStatusClasses(trip.status)}`}>
+                    {getOperationalStatusLabel(trip.status)}
                   </span>
                   <div className="text-[10px] text-slate-500 mt-1">{trip.quantity}</div>
                 </div>

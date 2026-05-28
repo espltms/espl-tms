@@ -48,6 +48,7 @@ interface Trip {
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
@@ -70,6 +71,7 @@ export default function TripsPage() {
   const [vendorName, setVendorName] = useState(VENDOR_OPTIONS[0]);
   const [vehicleType, setVehicleType] = useState('Tipper');
   const [commodity, setCommodity] = useState('Fly Ash');
+  const [tripStatus, setTripStatus] = useState<OperationalStatus>('SCHEDULED');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
   const [error, setError] = useState('');
@@ -200,7 +202,7 @@ export default function TripsPage() {
       vehicleType,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
-      status: 'SCHEDULED',
+      status: tripStatus,
       scheduledStartDate: new Date().toISOString(),
       driver: { fullName: selectedDriver.fullName, phone: selectedDriver.phone },
       truck: { plateNumber: selectedTruck.plateNumber, model: selectedTruck.model },
@@ -231,6 +233,7 @@ export default function TripsPage() {
       vendorName,
       vehicleType,
       commodity,
+      status: tripStatus,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
       scheduledStartDate: new Date().toISOString(),
@@ -415,14 +418,8 @@ export default function TripsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                      trip.status === 'COMPLETED' 
-                        ? 'bg-brand-success/10 text-brand-success border border-brand-success/20' 
-                        : trip.status === 'EN_ROUTE' 
-                        ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20' 
-                        : 'bg-brand-warning/10 text-brand-warning border border-brand-warning/20'
-                    }`}>
-                      {trip.status}
+                    <span className={`inline-block rounded-full border px-2 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(trip.status)}`}>
+                      {getOperationalStatusLabel(trip.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -518,6 +515,28 @@ export default function TripsPage() {
                     onChange={(e) => setEstimatedQuantity(e.target.value)}
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Trip Status</label>
+                  <select
+                    required
+                    value={tripStatus}
+                    onChange={(e) => setTripStatus(e.target.value as OperationalStatus)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  >
+                    {OPERATIONAL_STATUS_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Current Status Preview</label>
+                  <div className={`flex min-h-[46px] items-center rounded-xl border px-3 text-xs font-bold ${getOperationalStatusClasses(tripStatus)}`}>
+                    {getOperationalStatusLabel(tripStatus)}
+                  </div>
                 </div>
               </div>
 

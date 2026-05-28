@@ -40,10 +40,16 @@ interface DriverData {
 }
 
 import { getDrivers, getTrucks } from '@/app/data/dataHelper';
+import {
+  OPERATIONAL_STATUS_OPTIONS,
+  OperationalStatus,
+  getOperationalStatusClasses,
+  normalizeOperationalStatus,
+} from '@/lib/operationalStatus';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 type OnboardingMode = 'vehicle' | 'driver' | 'both';
-type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+type TruckStatus = OperationalStatus;
 type FleetCategory = 'OWNED_FLEET' | 'ATTACHED_FLEET';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
@@ -52,11 +58,7 @@ const FLEET_CATEGORY_OPTIONS: { value: FleetCategory; label: string }[] = [
   { value: 'OWNED_FLEET', label: 'Owned Fleet' },
   { value: 'ATTACHED_FLEET', label: 'Attached Fleet' },
 ];
-const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
-  { value: 'IN_TRANSIT', label: 'In transit' },
-  { value: 'RECEIVED', label: 'Received' },
-  { value: 'ACTION', label: 'Action' },
-];
+const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const LOCAL_TRUCKS_KEY = 'tms_local_trucks';
 const LOCAL_DRIVERS_KEY = 'tms_local_drivers';
 const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
@@ -99,21 +101,7 @@ export default function FleetPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 15;
 
-  const normalizeTruckStatus = (status: TruckStatus) => {
-    if (status === 'ON_TRIP') return 'IN_TRANSIT';
-    if (status === 'MAINTENANCE') return 'ACTION';
-    if (status === 'AVAILABLE') return 'RECEIVED';
-    return status;
-  };
-
-  const getStatusClasses = (status: TruckStatus) => {
-    const normalized = normalizeTruckStatus(status);
-    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    return 'bg-amber-50 text-amber-700 border-amber-200';
-  };
-
-  const filteredTrucks = filter === 'ALL' ? trucks : trucks.filter(t => normalizeTruckStatus(t.status) === filter);
+  const filteredTrucks = filter === 'ALL' ? trucks : trucks.filter(t => normalizeOperationalStatus(t.status) === filter);
   const totalPages = Math.ceil(filteredTrucks.length / ITEMS_PER_PAGE);
   const paginatedTrucks = filteredTrucks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -271,7 +259,7 @@ export default function FleetPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aggregate Utilization</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">
-              {Math.round((trucks.filter(t => normalizeTruckStatus(t.status) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
+              {Math.round((trucks.filter(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT').length / trucks.length) * 100) || 0}%
             </span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">+2.4% vs last week</span>
           </div>
@@ -286,7 +274,7 @@ export default function FleetPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Action Required</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => normalizeTruckStatus(t.status) === 'ACTION').length} Vehicle</span>
+            <span className="text-2xl font-extrabold text-amber-600">{trucks.filter(t => normalizeOperationalStatus(t.status) === 'ACTION').length} Vehicle</span>
             <span className="text-[10px] text-amber-600 font-semibold">Needs follow-up</span>
           </div>
         </div>
@@ -302,7 +290,7 @@ export default function FleetPage() {
               <button
                 key={option.value}
                 onClick={() => { setFilter(option.value); setCurrentPage(1); }}
-                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === option.value ? `${getStatusClasses(option.value)} border` : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all ${filter === option.value ? `${getOperationalStatusClasses(option.value)} border` : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
               >
                 {option.label.toUpperCase()}
               </button>
@@ -384,9 +372,9 @@ export default function FleetPage() {
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
                       <select
-                        value={normalizeTruckStatus(truck.status)}
+                        value={normalizeOperationalStatus(truck.status)}
                         onChange={(e) => handleTruckStatusChange(truck.id, e.target.value as TruckStatus)}
-                        className={`rounded-full border px-2.5 py-1 text-[9px] font-bold outline-none ${getStatusClasses(truck.status)}`}
+                        className={`rounded-full border px-2.5 py-1 text-[9px] font-bold outline-none ${getOperationalStatusClasses(truck.status)}`}
                       >
                         {TRUCK_STATUS_OPTIONS.map(option => (
                           <option key={option.value} value={option.value}>{option.label}</option>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 import { getPagination, getSearchParam } from '@/lib/apiQuery';
+import { normalizeOperationalStatus } from '@/lib/operationalStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,12 @@ export async function GET(req: NextRequest) {
         { model: { contains: search, mode: 'insensitive' } },
       ];
     }
-    if (status) where.status = status;
+    if (status) {
+      const normalizedStatus = normalizeOperationalStatus(status);
+      where.status = normalizedStatus === 'IN_TRANSIT'
+        ? { in: ['IN_TRANSIT', 'ON_TRIP'] as any }
+        : normalizedStatus;
+    }
 
     const [trucks, total] = await Promise.all([
       prisma.truck.findMany({
@@ -30,7 +36,12 @@ export async function GET(req: NextRequest) {
       prisma.truck.count({ where }),
     ]);
 
-    return NextResponse.json({ data: trucks, total, page, limit });
+    return NextResponse.json({
+      data: trucks.map(truck => ({ ...truck, status: normalizeOperationalStatus(truck.status) })),
+      total,
+      page,
+      limit,
+    });
   } catch (error) {
     console.error('Get trucks error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -52,7 +63,7 @@ export async function POST(req: NextRequest) {
         fleetCategory: body.fleetCategory || 'OWNED_FLEET',
         fuelCard: body.fuelCard || null,
         health: body.health || 100,
-        status: body.status || 'AVAILABLE',
+        status: normalizeOperationalStatus(body.status || 'RECEIVED') as any,
       },
     });
 

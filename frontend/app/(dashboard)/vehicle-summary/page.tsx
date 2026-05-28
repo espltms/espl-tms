@@ -3,10 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, CalendarDays, Truck } from 'lucide-react';
 import { getTrips, getTrucks, getWeighTickets } from '@/app/data/dataHelper';
+import {
+  OperationalStatus,
+  getOperationalStatusClasses,
+  getOperationalStatusLabel,
+  normalizeOperationalStatus,
+} from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 
-type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+type TruckStatus = OperationalStatus;
 
 interface LoadingRecord {
   id: string;
@@ -126,7 +132,7 @@ export default function VehicleSummaryPage() {
       activityDateTime: record.loadingDateTime,
       referenceNo: record.challanNo || record.ticketNo,
       uom: record.uom || 'Metric Ton',
-      status: record.truckStatus,
+      status: normalizeOperationalStatus(record.truckStatus),
       turnaroundMinutes: record.turnaroundMinutes,
     }));
 
@@ -158,7 +164,7 @@ export default function VehicleSummaryPage() {
           activityDateTime: trip.scheduledStartDate,
           referenceNo: ticket?.ticketNo || trip.purchaseOrder?.poNumber,
           uom: 'Metric Ton',
-          status: trip.status,
+          status: normalizeOperationalStatus(trip.status),
         };
       });
 
@@ -215,7 +221,7 @@ export default function VehicleSummaryPage() {
         totalTare: 0,
         completedUnloads: 0,
         turnaroundMinutes: 0,
-        latestStatus: record.status,
+        latestStatus: normalizeOperationalStatus(record.status),
         uom: record.uom,
         challans: [],
       };
@@ -226,7 +232,7 @@ export default function VehicleSummaryPage() {
     acc[key].totalReceivedQty += record.receivedQty || 0;
     acc[key].totalGross += record.grossWeight || 0;
     acc[key].totalTare += record.tareWeight || 0;
-    acc[key].latestStatus = record.status;
+    acc[key].latestStatus = normalizeOperationalStatus(record.status);
     acc[key].uom = record.uom || acc[key].uom;
     if (record.referenceNo) acc[key].challans.push(record.referenceNo);
     if (record.turnaroundMinutes) {
@@ -340,8 +346,8 @@ export default function VehicleSummaryPage() {
                   <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(summary.avgTurnaround)}</td>
                   <td className="px-6 py-4 text-[10px] text-slate-500">{summary.challans.slice(0, 3).join(', ') || '-'}</td>
                   <td className="px-6 py-4 text-right">
-                    <span className="inline-block rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[9px] font-bold text-blue-700">
-                      {summary.latestStatus.replace('_', ' ')}
+                    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(summary.latestStatus)}`}>
+                      {getOperationalStatusLabel(summary.latestStatus)}
                     </span>
                   </td>
                 </tr>

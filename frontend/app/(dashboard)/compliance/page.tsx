@@ -14,6 +14,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { getDrivers, getTrucks } from '@/app/data/dataHelper';
+import { normalizeOperationalStatus } from '@/lib/operationalStatus';
 
 interface ComplianceRecord {
   id: string;
@@ -32,7 +33,7 @@ export default function CompliancePage() {
   const datasetDrivers = getDrivers();
   const datasetTrucks = getTrucks();
   const compliantDrivers = datasetDrivers.filter(driver => driver.verified).length;
-  const compliantTrucks = datasetTrucks.filter(truck => truck.status !== 'MAINTENANCE').length;
+  const compliantTrucks = datasetTrucks.filter(truck => normalizeOperationalStatus(truck.status) !== 'ACTION').length;
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
     drivers: {

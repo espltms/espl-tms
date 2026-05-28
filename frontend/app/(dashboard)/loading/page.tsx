@@ -3,9 +3,16 @@
 import { useEffect, useState } from 'react';
 import { PackageCheck, Plus, Truck, X } from 'lucide-react';
 import { getTrips, getTrucks } from '@/app/data/dataHelper';
+import {
+  OPERATIONAL_STATUS_OPTIONS,
+  OperationalStatus,
+  getOperationalStatusClasses,
+  getOperationalStatusLabel,
+  normalizeOperationalStatus,
+} from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 
-type TruckStatus = 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+type TruckStatus = OperationalStatus;
 
 interface TruckData {
   id: string;
@@ -48,11 +55,7 @@ interface AssignedTrip {
 }
 
 const UOM_OPTIONS = ['Kg', 'Bags', 'Cases', 'Metric Ton', 'No.', 'Bulk'];
-const TRUCK_STATUS_OPTIONS: { value: TruckStatus; label: string }[] = [
-  { value: 'IN_TRANSIT', label: 'In transit' },
-  { value: 'RECEIVED', label: 'Received' },
-  { value: 'ACTION', label: 'Action' },
-];
+const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
@@ -92,22 +95,8 @@ export default function LoadingVehiclePage() {
     : undefined;
   const availableTrips = assignedTrips.filter(trip =>
     !records.some(record => record.tripId === trip.id) &&
-    !['COMPLETED', 'CANCELLED'].includes(trip.status || '')
+    normalizeOperationalStatus(trip.status) !== 'COMPLETED'
   );
-
-  const normalizeTruckStatus = (status: TruckStatus) => {
-    if (status === 'ON_TRIP') return 'IN_TRANSIT';
-    if (status === 'MAINTENANCE') return 'ACTION';
-    if (status === 'AVAILABLE') return 'RECEIVED';
-    return status;
-  };
-
-  const getTruckStatusStyle = (status: TruckStatus) => {
-    const normalized = normalizeTruckStatus(status);
-    if (normalized === 'IN_TRANSIT') return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (normalized === 'RECEIVED') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    return 'bg-amber-50 text-amber-700 border-amber-200';
-  };
 
   const persistTruckStatusOverrides = (nextTrucks: TruckData[]) => {
     if (typeof window === 'undefined') return;
@@ -168,7 +157,7 @@ export default function LoadingVehiclePage() {
     setForm({
       ...emptyLoadingForm,
       tripId,
-      truckStatus: truck ? normalizeTruckStatus(truck.status) : emptyLoadingForm.truckStatus,
+      truckStatus: truck ? normalizeOperationalStatus(truck.status) : emptyLoadingForm.truckStatus,
     });
     setShowModal(true);
   };
@@ -268,7 +257,7 @@ export default function LoadingVehiclePage() {
                   <td className="px-6 py-4 font-mono"><div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div><div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div></td>
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
                   <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                  <td className="px-6 py-4 text-right"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getTruckStatusStyle(record.truckStatus)}`}>{TRUCK_STATUS_OPTIONS.find(option => option.value === normalizeTruckStatus(record.truckStatus))?.label || record.truckStatus}</span></td>
+                  <td className="px-6 py-4 text-right"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.truckStatus)}`}>{getOperationalStatusLabel(record.truckStatus)}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -289,7 +278,7 @@ export default function LoadingVehiclePage() {
                   <select required value={form.tripId} onChange={(e) => {
                     const trip = assignedTrips.find(item => item.id === e.target.value);
                     const truck = trip ? trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber) : undefined;
-                    setForm({ ...form, tripId: e.target.value, truckStatus: truck ? normalizeTruckStatus(truck.status) : form.truckStatus });
+                    setForm({ ...form, tripId: e.target.value, truckStatus: truck ? normalizeOperationalStatus(truck.status) : form.truckStatus });
                   }} className="load-input">
                     <option value="">Choose assigned trip...</option>
                     {availableTrips.map(trip => (

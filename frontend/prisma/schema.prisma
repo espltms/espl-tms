@@ -29,6 +29,11 @@ enum DriverStatus {
 }
 
 enum TruckStatus {
+  SCHEDULED
+  IN_TRANSIT
+  RECEIVED
+  ACTION
+  COMPLETED
   AVAILABLE
   ON_TRIP
   MAINTENANCE
@@ -41,6 +46,9 @@ enum FleetCategory {
 }
 
 enum TripStatus {
+  IN_TRANSIT
+  RECEIVED
+  ACTION
   SCHEDULED
   GATE_IN_LOADING
   LOADING

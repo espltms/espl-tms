@@ -1,4 +1,5 @@
 import tmsData from './tms_data_client.json';
+import { OperationalStatus, normalizeOperationalStatus } from '@/lib/operationalStatus';
 
 // NOTE: This file is kept for backwards compatibility or fallback during development.
 // In production, components should use the /api routes via the useApiData hook.
@@ -12,7 +13,7 @@ export interface TruckData {
   capacity: string;
   fuelCard: string;
   health: number;
-  status: 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTION';
+  status: OperationalStatus;
   vendor?: string;
   subVendor?: string;
   wheeler?: string;
@@ -133,7 +134,7 @@ export const getTrucks = (): TruckData[] => {
   ].map(truck => ({
     ...truck,
     fleetCategory: truck.fleetCategory || 'OWNED_FLEET',
-    status: statusOverrides[truck.id] || truck.status
+    status: normalizeOperationalStatus(statusOverrides[truck.id] || truck.status)
   }));
 };
 export const getDrivers = (): DriverData[] => [
@@ -144,7 +145,7 @@ export const getPurchaseOrders = (): PurchaseOrder[] => isRegionalAdmin() ? [] :
 export const getTrips = (): Trip[] => [
   ...(isRegionalAdmin() ? [] : getLocalItems<Trip>('tms_assigned_trips')),
   ...(isRegionalAdmin() ? [] : (tmsData.trips as Trip[]))
-];
+].map(trip => ({ ...trip, status: normalizeOperationalStatus(trip.status) }));
 export const getWeighTickets = (): WeighTicket[] => isRegionalAdmin() ? [] : tmsData.weighTickets as WeighTicket[];
 
 // 2. HR employees are not present in the imported dataset.
@@ -162,9 +163,9 @@ export const getDashboardStats = () => {
     totalRevenue += (trip.actualDeliveredTons || trip.estimatedQuantityTons) * rate;
   });
 
-  const activeTripsCount = trips.filter(t => t.status === 'EN_ROUTE' || t.status === 'LOADING').length;
+  const activeTripsCount = trips.filter(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT').length;
   const totalTrucks = trucks.length;
-  const activeTrucks = trucks.filter(t => t.status === 'ON_TRIP' || t.status === 'IN_TRANSIT').length;
+  const activeTrucks = trucks.filter(t => normalizeOperationalStatus(t.status) === 'IN_TRANSIT').length;
   const fleetUtilization = parseFloat(((activeTrucks / totalTrucks) * 100).toFixed(1));
 
   const totalExpenses = totalRevenue * 0.42; // standard 42% cost structure
