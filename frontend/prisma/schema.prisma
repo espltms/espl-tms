@@ -178,6 +178,8 @@ model Trip {
   estimatedQuantityTons Decimal    @db.Decimal(10, 2)
   actualLoadedTons      Decimal?   @db.Decimal(10, 2)
   actualDeliveredTons   Decimal?   @db.Decimal(10, 2)
+  vendorName            String?
+  vehicleType           String?
   status                TripStatus @default(SCHEDULED)
   scheduledStartDate    DateTime
   actualStartDate       DateTime?

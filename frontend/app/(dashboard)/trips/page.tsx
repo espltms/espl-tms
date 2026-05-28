@@ -51,6 +51,7 @@ import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
+const VENDOR_OPTIONS = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
 
 export default function TripsPage() {
@@ -66,7 +67,7 @@ export default function TripsPage() {
   const [truckId, setTruckId] = useState('');
   const [source, setSource] = useState('Vedanta Lanjigarh Plant');
   const [destination, setDestination] = useState('Paramanandpur Stockyard');
-  const [vendorName, setVendorName] = useState('');
+  const [vendorName, setVendorName] = useState(VENDOR_OPTIONS[0]);
   const [vehicleType, setVehicleType] = useState('Tipper');
   const [commodity, setCommodity] = useState('Fly Ash');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
@@ -187,9 +188,10 @@ export default function TripsPage() {
       return;
     }
 
+    const tripNumber = `TRIP-${10000 + trips.length + 1}`;
     const newTrip: Trip = {
       id: `trip-local-${Date.now()}`,
-      tripNumber: `TRIP-${10000 + trips.length + 1}`,
+      tripNumber,
       truckId,
       driverId,
       source,
@@ -216,9 +218,14 @@ export default function TripsPage() {
     };
 
     const payload = {
+      tripNumber,
       purchaseOrderId: poId,
+      poNumber: targetPO.poNumber,
       driverId,
+      driverName: selectedDriver.fullName,
+      driverPhone: selectedDriver.phone,
       truckId,
+      truckPlate: selectedTruck.plateNumber,
       source,
       destination,
       vendorName,
@@ -548,13 +555,16 @@ export default function TripsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vendor</label>
-                  <input
-                    type="text"
+                  <select
+                    required
                     value={vendorName}
                     onChange={(e) => setVendorName(e.target.value)}
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
-                    placeholder="Enter vendor name"
-                  />
+                  >
+                    {VENDOR_OPTIONS.map(vendor => (
+                      <option key={vendor} value={vendor}>{vendor}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Distance (Km)</label>

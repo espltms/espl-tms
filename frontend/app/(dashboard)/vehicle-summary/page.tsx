@@ -79,13 +79,32 @@ export default function VehicleSummaryPage() {
     new Date().getDate() <= 15 ? 'FIRST' : 'SECOND'
   ));
   const trucks = useMemo(() => getTrucks(), []);
-  const trips = useMemo(() => getTrips(), []);
+  const [trips, setTrips] = useState(() => getTrips());
   const weighTickets = useMemo(() => getWeighTickets(), []);
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== 'VENDOR') return;
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('tms_token') : null;
+    if (!token) return;
+
+    fetch('/api/trips?limit=1000', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(response => response.ok ? response.json() : { data: [] })
+      .then((payload) => {
+        const apiTrips = (payload.data || []) as ReturnType<typeof getTrips>;
+        setTrips((currentTrips) => [
+          ...apiTrips,
+          ...currentTrips.filter(trip => !apiTrips.some(apiTrip => apiTrip.id === trip.id || apiTrip.tripNumber === trip.tripNumber)),
+        ]);
+      })
+      .catch(() => {});
+  }, [user?.role]);
 
   const activityRecords = useMemo<VehicleActivityRecord[]>(() => {
     const loadedTripKeys = new Set(

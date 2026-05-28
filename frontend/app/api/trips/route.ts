@@ -18,6 +18,9 @@ export async function GET(req: NextRequest) {
     const search = getSearchParam(req, 'search');
 
     const where: any = {};
+    if (user?.role === 'VENDOR') {
+      where.vendorName = user.vendorName || '';
+    }
     if (status) where.status = status;
     if (search) {
       where.OR = [
@@ -58,16 +61,48 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
+    const purchaseOrder = await prisma.purchaseOrder.findFirst({
+      where: {
+        OR: [
+          body.purchaseOrderId ? { id: body.purchaseOrderId } : undefined,
+          body.poNumber ? { poNumber: body.poNumber } : undefined,
+        ].filter(Boolean) as any,
+      },
+    });
+    const driver = await prisma.driver.findFirst({
+      where: {
+        OR: [
+          body.driverId ? { id: body.driverId } : undefined,
+          body.driverPhone ? { phone: body.driverPhone } : undefined,
+          body.driverName ? { fullName: body.driverName } : undefined,
+        ].filter(Boolean) as any,
+      },
+    });
+    const truck = await prisma.truck.findFirst({
+      where: {
+        OR: [
+          body.truckId ? { id: body.truckId } : undefined,
+          body.truckPlate ? { plateNumber: body.truckPlate } : undefined,
+        ].filter(Boolean) as any,
+      },
+    });
+
+    if (!purchaseOrder || !driver || !truck) {
+      return NextResponse.json({ error: 'Could not match PO, driver, or truck in master database' }, { status: 400 });
+    }
+
     const trip = await prisma.trip.create({
       data: {
-        tripNumber: body.tripNumber,
-        purchaseOrderId: body.purchaseOrderId,
-        driverId: body.driverId,
-        truckId: body.truckId,
+        tripNumber: body.tripNumber || `TRIP-${Date.now()}`,
+        purchaseOrderId: purchaseOrder.id,
+        driverId: driver.id,
+        truckId: truck.id,
         source: body.source,
         destination: body.destination,
         distanceKm: body.distanceKm || 0,
         estimatedQuantityTons: body.estimatedQuantityTons || 0,
+        vendorName: body.vendorName || null,
+        vehicleType: body.vehicleType || null,
         status: body.status || 'SCHEDULED',
         scheduledStartDate: new Date(body.scheduledStartDate),
       },
