@@ -100,6 +100,7 @@ export default function LoadingVehiclePage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyLoadingForm);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
@@ -412,34 +413,62 @@ export default function LoadingVehiclePage() {
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <PackageCheck className="h-4 w-4 text-brand-primary" /> Loading Records
           </h3>
-          {selectedIds.length > 0 && (
-            <button
-              onClick={() => deleteRecords(selectedIds)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete Selected ({selectedIds.length})
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {isDeleteMode ? (
+              <>
+                {selectedIds.length > 0 && (
+                  <button
+                    onClick={() => {
+                      deleteRecords(selectedIds);
+                      setIsDeleteMode(false);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete Selected ({selectedIds.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsDeleteMode(false);
+                    setSelectedIds([]);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsDeleteMode(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                Select to Delete
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="w-10 px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={records.length > 0 && selectedIds.length === records.length}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedIds(records.map(r => r.id));
-                      } else {
-                        setSelectedIds([]);
-                      }
-                    }}
-                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
-                  />
-                </th>
+                {isDeleteMode && (
+                  <th className="w-10 px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={records.length > 0 && selectedIds.length === records.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(records.map(r => r.id));
+                        } else {
+                          setSelectedIds([]);
+                        }
+                      }}
+                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-4">Trip / Vehicle</th>
                 <th className="px-6 py-4">Ticket / Challan</th>
                 <th className="px-6 py-4">Weights</th>
@@ -451,23 +480,25 @@ export default function LoadingVehiclePage() {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {records.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
+                <tr><td colSpan={isDeleteMode ? 8 : 7} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
               ) : records.map(record => (
                 <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
-                  <td className="w-10 px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(record.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedIds([...selectedIds, record.id]);
-                        } else {
-                          setSelectedIds(selectedIds.filter(id => id !== record.id));
-                        }
-                      }}
-                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
-                    />
-                  </td>
+                  {isDeleteMode && (
+                    <td className="w-10 px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(record.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIds([...selectedIds, record.id]);
+                          } else {
+                            setSelectedIds(selectedIds.filter(id => id !== record.id));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="font-mono font-extrabold text-slate-800">{record.tripNumber || 'TRIP-REF'}</div>
                     <div className="mt-0.5 text-[10px] text-slate-500 font-mono">{record.truckPlate}</div>

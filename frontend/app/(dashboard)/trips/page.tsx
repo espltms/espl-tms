@@ -103,6 +103,7 @@ export default function TripsPage() {
   const [distance, setDistance] = useState('120');
   const [error, setError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   const [activeGatepass, setActiveGatepass] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -477,41 +478,69 @@ export default function TripsPage() {
       <div className="glass-panel rounded-2xl border border-brand-slate overflow-hidden">
         <div className="border-b border-[#e2e8f0] bg-white/60 px-6 py-4 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Trip dispatches</h3>
-          {selectedIds.length > 0 && (
-            <button
-              onClick={() => deleteTrips(selectedIds)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete Selected ({selectedIds.length})
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {isDeleteMode ? (
+              <>
+                {selectedIds.length > 0 && (
+                  <button
+                    onClick={() => {
+                      deleteTrips(selectedIds);
+                      setIsDeleteMode(false);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete Selected ({selectedIds.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsDeleteMode(false);
+                    setSelectedIds([]);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsDeleteMode(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                Select to Delete
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
-                <th className="w-10 px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={paginatedTrips.length > 0 && paginatedTrips.every(t => selectedIds.includes(t.id))}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        const newSelections = [...selectedIds];
-                        paginatedTrips.forEach(t => {
-                          if (!newSelections.includes(t.id)) {
-                            newSelections.push(t.id);
-                          }
-                        });
-                        setSelectedIds(newSelections);
-                      } else {
-                        setSelectedIds(selectedIds.filter(id => !paginatedTrips.some(t => t.id === id)));
-                      }
-                    }}
-                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
-                  />
-                </th>
+                {isDeleteMode && (
+                  <th className="w-10 px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={paginatedTrips.length > 0 && paginatedTrips.every(t => selectedIds.includes(t.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSelections = [...selectedIds];
+                          paginatedTrips.forEach(t => {
+                            if (!newSelections.includes(t.id)) {
+                              newSelections.push(t.id);
+                            }
+                          });
+                          setSelectedIds(newSelections);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => !paginatedTrips.some(t => t.id === id)));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-4">Trip details</th>
                 <th className="px-6 py-4">Contracts Reference</th>
                 <th className="px-6 py-4">Assigned Crew</th>
@@ -524,20 +553,22 @@ export default function TripsPage() {
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
               {paginatedTrips.map(trip => (
                 <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
-                  <td className="w-10 px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(trip.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedIds([...selectedIds, trip.id]);
-                        } else {
-                          setSelectedIds(selectedIds.filter(id => id !== trip.id));
-                        }
-                      }}
-                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
-                    />
-                  </td>
+                  {isDeleteMode && (
+                    <td className="w-10 px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(trip.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIds([...selectedIds, trip.id]);
+                          } else {
+                            setSelectedIds(selectedIds.filter(id => id !== trip.id));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div>
                       <span className="font-bold text-slate-800 font-mono">{trip.tripNumber}</span>
@@ -598,7 +629,7 @@ export default function TripsPage() {
               ))}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 8 : 7} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
