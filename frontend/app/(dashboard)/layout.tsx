@@ -77,7 +77,7 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
-  REGION_ADMIN: allNavItems.filter(item => item.path !== '/settings').map(item => item.path),
+  REGION_ADMIN: allNavItems.map(item => item.path),
   VENDOR: ['/vehicle-summary'],
 };
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest, hashPassword } from '@/lib/auth';
 
-// 1. List all users (Super Admin only)
+// 1. List all users (Super Admin or Regional Admin only)
 export async function GET(req: NextRequest) {
   try {
     const operator = await getUserFromRequest(req);
@@ -10,11 +10,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (operator.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can manage accounts.' }, { status: 403 });
+    if (operator.role !== 'SUPER_ADMIN' && operator.role !== 'REGION_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only Admins can manage accounts.' }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
+      where: operator.role === 'REGION_ADMIN' ? { role: 'VENDOR' } : undefined,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 2. Create a new user (Super Admin only)
+// 2. Create a new user (Super Admin or Regional Admin only)
 export async function POST(req: NextRequest) {
   try {
     const operator = await getUserFromRequest(req);
@@ -43,11 +44,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (operator.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can create user accounts.' }, { status: 403 });
+    if (operator.role !== 'SUPER_ADMIN' && operator.role !== 'REGION_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only Admins can create user accounts.' }, { status: 403 });
     }
 
     const { email, password, fullName, role, phone, regionName, vendorName } = await req.json();
+
+    if (operator.role === 'REGION_ADMIN' && role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden. Regional Admins can only create VENDOR accounts.' }, { status: 403 });
+    }
 
     if (!email || !password || !fullName || !role) {
       return NextResponse.json({ error: 'Email, password, fullName, and role are required' }, { status: 400 });

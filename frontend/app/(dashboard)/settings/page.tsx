@@ -32,8 +32,10 @@ const ROLES = [
 export default function SettingsPage() {
   const { user: currentUser, token } = useAuthStore();
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const isRegionAdmin = currentUser?.role === 'REGION_ADMIN';
+  const canManageUsers = isSuperAdmin || isRegionAdmin;
 
-  const [activeTab, setActiveTab] = useState<'logs' | 'users'>(isSuperAdmin ? 'users' : 'logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'users'>(canManageUsers ? 'users' : 'logs');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   
@@ -41,7 +43,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState(ROLES[3]); // Default SYS_ADMIN
+  const [role, setRole] = useState('VENDOR');
   const [phone, setPhone] = useState('');
   const [regionName, setRegionName] = useState('');
   const [vendorName, setVendorName] = useState('');
@@ -52,8 +54,16 @@ export default function SettingsPage() {
   
   const logs: Array<{ id: string; operator: string; action: string; payload: string; timestamp: string; ip: string }> = [];
 
+  useEffect(() => {
+    if (isSuperAdmin) {
+      setRole('SYS_ADMIN');
+    } else if (isRegionAdmin) {
+      setRole('VENDOR');
+    }
+  }, [isSuperAdmin, isRegionAdmin]);
+
   const fetchUsers = async () => {
-    if (!isSuperAdmin) return;
+    if (!canManageUsers) return;
     setLoadingUsers(true);
     try {
       const response = await fetch('/api/auth/register', {
@@ -73,7 +83,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [isSuperAdmin]);
+  }, [canManageUsers]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +167,7 @@ export default function SettingsPage() {
 
       {/* Tabs Menu */}
       <div className="flex border-b border-slate-200">
-        {isSuperAdmin && (
+        {canManageUsers && (
           <button
             onClick={() => setActiveTab('users')}
             className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
@@ -183,7 +193,7 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {activeTab === 'users' && isSuperAdmin && (
+      {activeTab === 'users' && canManageUsers && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           
           {/* User Provisioning Form */}
@@ -251,9 +261,13 @@ export default function SettingsPage() {
                   onChange={(e) => setRole(e.target.value)}
                   className="settings-input cursor-pointer"
                 >
-                  {ROLES.map(r => (
-                    <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
-                  ))}
+                  {isSuperAdmin ? (
+                    ROLES.map(r => (
+                      <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                    ))
+                  ) : (
+                    <option value="VENDOR">VENDOR</option>
+                  )}
                 </select>
               </div>
 
@@ -356,7 +370,7 @@ export default function SettingsPage() {
                         {!u.regionName && !u.vendorName && <span className="text-slate-400">Global Admin</span>}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {u.id !== currentUser?.id ? (
+                        {isSuperAdmin && u.id !== currentUser?.id ? (
                           <button
                             onClick={() => handleDeleteUser(u.id)}
                             className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -364,9 +378,9 @@ export default function SettingsPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                        ) : (
+                        ) : u.id === currentUser?.id ? (
                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-2">Self</span>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   ))}
