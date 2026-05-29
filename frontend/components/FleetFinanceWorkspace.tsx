@@ -86,20 +86,6 @@ export default function FleetFinanceWorkspace({
     entryDate: new Date().toISOString().split('T')[0],
     status: 'COMPLETED' as OperationalStatus,
   });
-
-  useEffect(() => {
-    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
-    fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {
-      setTrucks((currentTrucks) => [
-        ...syncedTrucks,
-        ...currentTrucks.filter(truck => !syncedTrucks.some(syncedTruck => syncedTruck.id === truck.id)),
-      ]);
-    });
-    fetchSyncedValue<FleetFinanceEntry[]>(FLEET_FINANCE_ENTRIES_KEY, []).then((syncedEntries) => {
-      setEntries(syncedEntries.filter(entry => entry.loadingRecordId && entry.truckPlate) as FleetFinanceEntry[]);
-    });
-  }, []);
-
   const hasDateFilter = Boolean(dateRange.from || dateRange.to);
   const isWithinDateRange = (dateValue?: string) => {
     if (!dateValue) return false;
@@ -134,6 +120,58 @@ export default function FleetFinanceWorkspace({
     !hasDateFilter || isWithinDateRange(record.unloadingDateTime)
   );
   const selectedRecord = unloadedVehicles.find(record => record.id === selectedRecordId) || unloadedVehicles[0];
+
+  const dropdownVehicles = useMemo(() => {
+    return unloadedVehicles.filter(record =>
+      record.currentStatus !== 'COMPLETED' || record.id === selectedRecordId
+    );
+  }, [unloadedVehicles, selectedRecordId]);
+
+  const isEdit = useMemo(() => {
+    if (!selectedRecord) return false;
+    return entries.some(e => e.loadingRecordId === selectedRecord.id);
+  }, [entries, selectedRecord]);
+
+  useEffect(() => {
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
+    fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {
+      setTrucks((currentTrucks) => [
+        ...syncedTrucks,
+        ...currentTrucks.filter(truck => !syncedTrucks.some(syncedTruck => syncedTruck.id === truck.id)),
+      ]);
+    });
+    fetchSyncedValue<FleetFinanceEntry[]>(FLEET_FINANCE_ENTRIES_KEY, []).then((syncedEntries) => {
+      setEntries(syncedEntries.filter(entry => entry.loadingRecordId && entry.truckPlate) as FleetFinanceEntry[]);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRecord) {
+      setForm({
+        dieselAmount: '',
+        dieselDescription: '',
+        repairAmount: '',
+        repairDescription: '',
+        entryDate: new Date().toISOString().split('T')[0],
+        status: 'COMPLETED',
+      });
+      return;
+    }
+
+    const recordEntries = entries.filter(e => e.loadingRecordId === selectedRecord.id);
+    const dieselEntry = recordEntries.find(e => e.type === 'DIESEL_ENTRY');
+    const repairEntry = recordEntries.find(e => e.type === 'REPAIR_MAINTENANCE');
+
+    setForm({
+      dieselAmount: dieselEntry ? String(dieselEntry.amount) : '',
+      dieselDescription: dieselEntry ? dieselEntry.description : '',
+      repairAmount: repairEntry ? String(repairEntry.amount) : '',
+      repairDescription: repairEntry ? repairEntry.description : '',
+      entryDate: recordEntries[0]?.entryDate || new Date().toISOString().split('T')[0],
+      status: selectedRecord.currentStatus || 'COMPLETED',
+    });
+  }, [selectedRecordId, entries, selectedRecord]);
+
   const filteredEntries = entries.filter(entry =>
     entry.fleetCategory === fleetCategory &&
     (!hasDateFilter || isWithinDateRange(entry.entryDate))
@@ -174,25 +212,31 @@ export default function FleetFinanceWorkspace({
       entryDate: form.entryDate,
       status: form.status,
     };
-    const now = Date.now();
-    const createdEntries: FleetFinanceEntry[] = [];
+
+    const otherEntries = entries.filter(entry => entry.loadingRecordId !== selectedRecord.id);
+    const recordEntries = entries.filter(entry => entry.loadingRecordId === selectedRecord.id);
+
+    const updatedEntries: FleetFinanceEntry[] = [];
     if (fleetCategory === 'OWNED_FLEET') {
-      createdEntries.push({
+      const existingDiesel = recordEntries.find(e => e.type === 'DIESEL_ENTRY');
+      updatedEntries.push({
         ...baseEntry,
-        id: `fleet-finance-diesel-${now}`,
+        id: existingDiesel?.id || `fleet-finance-diesel-${Date.now()}`,
         type: 'DIESEL_ENTRY',
         description: form.dieselDescription,
         amount: parseFloat(form.dieselAmount) || 0,
       });
     }
-    createdEntries.push({
+    const existingRepair = recordEntries.find(e => e.type === 'REPAIR_MAINTENANCE');
+    updatedEntries.push({
       ...baseEntry,
-      id: `fleet-finance-repair-${now}`,
+      id: existingRepair?.id || `fleet-finance-repair-${Date.now()}`,
       type: 'REPAIR_MAINTENANCE',
       description: form.repairDescription,
       amount: parseFloat(form.repairAmount) || 0,
     });
-    const nextEntries = [...createdEntries, ...entries];
+
+    const nextEntries = [...updatedEntries, ...otherEntries];
     const nextRecords = loadingRecords.map(record => record.id === selectedRecord.id
       ? {
           ...record,
@@ -208,6 +252,8 @@ export default function FleetFinanceWorkspace({
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextRecords, form.status, selectedRecord.truckId);
     updateAssignedTripStatus(selectedRecord.tripId, selectedRecord.tripNumber, form.status);
+    
+    setSelectedRecordId('');
     setForm({
       dieselAmount: '',
       dieselDescription: '',
@@ -334,9 +380,13 @@ export default function FleetFinanceWorkspace({
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Finance Entry</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+            {isEdit ? 'Edit Finance Entry' : 'Finance Entry'}
+          </h3>
           <p className="mt-1 text-[10px] font-semibold text-slate-400">
-            Select an unloaded vehicle, add amount, then choose the status.
+            {isEdit
+              ? 'Modify existing finance details and status for this vehicle.'
+              : 'Select an unloaded vehicle, add amount, then choose the status.'}
           </p>
 
           <div className="mt-5 space-y-4 text-xs">
@@ -347,7 +397,7 @@ export default function FleetFinanceWorkspace({
                 onChange={(event) => setSelectedRecordId(event.target.value)}
                 className="fleet-finance-input"
               >
-                {unloadedVehicles.map(record => (
+                {dropdownVehicles.map(record => (
                   <option key={record.id} value={record.id}>
                     {record.truckPlate} - {record.challanNo || record.ticketNo}
                   </option>
@@ -436,7 +486,7 @@ export default function FleetFinanceWorkspace({
               disabled={!selectedRecord}
               className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-4 py-3 text-xs font-extrabold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save Entry & Update Status
+              {isEdit ? 'Update Finance Entry' : 'Save Entry & Update Status'}
             </button>
           </div>
         </form>
