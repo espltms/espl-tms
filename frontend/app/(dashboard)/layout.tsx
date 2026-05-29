@@ -283,13 +283,13 @@ export default function DashboardLayout({
       {/* 3. Mobile Sidebar overlay drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] flex bg-black/30 backdrop-blur-sm md:hidden">
-          <div className="flex h-full w-[86vw] max-w-80 flex-col justify-between overflow-y-auto border-r border-[#e2e8f0] bg-white shadow-2xl">
-            <div className="min-h-0 flex-1">
-              <div className="flex h-16 items-center gap-3 px-5 border-b border-[#e2e8f0]">
+          <div className="flex h-full w-[86vw] max-w-80 flex-col justify-between border-r border-[#e2e8f0] bg-white shadow-2xl overflow-hidden">
+            <div className="flex flex-col min-h-0 flex-1">
+              <div className="flex h-16 items-center gap-3 px-5 border-b border-[#e2e8f0] shrink-0">
                 <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
                 <span className="font-sans text-xl font-extrabold text-slate-800">ESPL TMS</span>
               </div>
-              <nav className="space-y-5 px-4 py-5">
+              <nav className="flex-1 overflow-y-auto space-y-5 px-4 py-5">
                 {allowedDivisions.map((division) => (
                   <div key={division.title} className="space-y-2">
                     <span className="px-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
@@ -318,11 +318,28 @@ export default function DashboardLayout({
                 ))}
               </nav>
             </div>
-            <div className="p-4 border-t border-[#e2e8f0]">
+            
+            {/* User Card & Logout bottom pane */}
+            <div className="p-4 border-t border-[#e2e8f0] shrink-0">
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 p-3 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-600 border border-slate-200">
+                  <UserIcon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-semibold text-slate-800 truncate">{user?.fullName}</div>
+                  <div className="mt-1 flex">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${getRoleBadgeStyle(user?.role || '')}`}>
+                      {user?.role?.replace('_', ' ')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={handleSignOut}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-danger/10 py-2.5 text-xs font-bold text-brand-danger"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-danger/20 bg-brand-danger/5 py-2.5 text-xs font-bold text-brand-danger hover:bg-brand-danger/10 active:scale-[0.98] transition-all"
               >
+                <LogOut className="h-4 w-4" />
                 Sign Out
               </button>
             </div>

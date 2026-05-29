@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Download, FileSpreadsheet, Filter, RefreshCw, X } from 'lucide-react';
 
 interface ExportTable {
@@ -62,6 +63,11 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
   const [selectedTableId, setSelectedTableId] = useState('');
   const [search, setSearch] = useState('');
   const [columnFilters, setColumnFilters] = useState<Record<number, string>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const collectTables = () => {
     const extracted = Array.from(document.querySelectorAll('main table')).map((table, index) => {
@@ -130,7 +136,7 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
         <span className="hidden sm:inline">Export Excel</span>
       </button>
 
-      {open && (
+      {mounted && typeof document !== 'undefined' && open && createPortal(
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="max-h-[92dvh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-xl sm:rounded-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
@@ -218,7 +224,8 @@ export default function SectionExcelExport({ sectionName }: { sectionName: strin
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
