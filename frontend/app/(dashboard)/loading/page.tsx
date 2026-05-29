@@ -475,12 +475,11 @@ export default function LoadingVehiclePage() {
                 <th className="px-6 py-4">U.O.M</th>
                 <th className="px-6 py-4">Loading Time</th>
                 <th className="px-6 py-4">Truck Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {records.length === 0 ? (
-                <tr><td colSpan={isDeleteMode ? 8 : 7} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
+                <tr><td colSpan={isDeleteMode ? 7 : 6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
               ) : records.map(record => (
                 <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
                   {isDeleteMode && (
@@ -508,15 +507,6 @@ export default function LoadingVehiclePage() {
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
                   <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                   <td className="px-6 py-4"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.truckStatus)}`}>{getOperationalStatusLabel(record.truckStatus)}</span></td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => deleteRecords([record.id])}
-                      className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Delete Loading Entry"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>

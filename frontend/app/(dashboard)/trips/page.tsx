@@ -547,7 +547,6 @@ export default function TripsPage() {
                 <th className="px-6 py-4">Vendor</th>
                 <th className="px-6 py-4">Tonnages</th>
                 <th className="px-6 py-4">Trip Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
@@ -609,27 +608,11 @@ export default function TripsPage() {
                       {getOperationalStatusLabel(trip.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => getGatepassToken(trip)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-brand-slate bg-white px-2.5 py-1.5 hover:border-brand-primary/30 text-slate-600 hover:text-slate-900 transition-colors"
-                    >
-                      <QrCode className="h-4 w-4 text-brand-primary" />
-                      <span>QR Gatepass</span>
-                    </button>
-                    <button
-                      onClick={() => deleteTrips([trip.id])}
-                      className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Delete Trip"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
                 </tr>
               ))}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={isDeleteMode ? 8 : 7} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 7 : 6} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
