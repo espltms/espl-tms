@@ -361,8 +361,8 @@ export default function WeighbridgePage() {
       {/* Log Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90dvh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
                   Log Weighment - Step {step} of 2
@@ -374,7 +374,7 @@ export default function WeighbridgePage() {
             </div>
 
             {step === 1 ? (
-              <form onSubmit={handleNextStep} className="p-6 space-y-4 text-xs">
+              <form onSubmit={handleNextStep} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Plate No.</label>
@@ -410,7 +410,7 @@ export default function WeighbridgePage() {
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-2 flex items-center justify-between">
                   <div>
                     <div className="font-mono text-xs font-bold text-slate-800">{ticketData.truckPlate}</div>

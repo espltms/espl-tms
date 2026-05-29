@@ -255,8 +255,8 @@ export default function YardPage() {
       {/* Allocation Modal */}
       {showAllocateModal && selectedBay && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90dvh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Allocate Bay: {selectedBay.bayNumber}</h3>
                 <p className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">{selectedBay.type.replace('_', ' ')}</p>
@@ -266,7 +266,7 @@ export default function YardPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAllocate} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleAllocate} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
               <div>
                 <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Plate Number *</label>
                 <input 

@@ -495,12 +495,12 @@ export default function LoadingVehiclePage() {
 
       {showModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90dvh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50 shrink-0">
               <div><h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Loading Vehicle</h3></div>
               <button onClick={() => { setShowModal(false); setForm(emptyLoadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all"><X className="h-4 w-4" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Assigned Trip *">
                   <select required value={form.tripId} onChange={(e) => {

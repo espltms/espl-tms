@@ -176,15 +176,15 @@ export default function UnloadingVehiclePage() {
 
       {activeRecord && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90dvh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Unloading Vehicle</h3>
                 <p className="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">{activeRecord.truckPlate}</p>
               </div>
               <button onClick={() => { setActiveRecord(null); setForm(emptyUnloadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all"><X className="h-4 w-4" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
               <Field label="Truck Status *">
                 <select required value={form.truckStatus} onChange={(e) => setForm({ ...form, truckStatus: e.target.value as TruckStatus })} className={`unload-input ${getOperationalStatusClasses(form.truckStatus)}`}>
                   {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}

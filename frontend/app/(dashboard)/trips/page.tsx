@@ -634,8 +634,8 @@ export default function TripsPage() {
       {/* Modal - Create Trip */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="glass-panel w-full max-w-lg rounded-2xl p-6 border border-brand-slate shadow-glass shadow-glass-glow animate-scale-up">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 mb-4">
+          <div className="glass-panel w-full max-w-lg rounded-2xl p-6 border border-brand-slate shadow-glass shadow-glass-glow animate-scale-up max-h-[90dvh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 mb-4 shrink-0">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Assign Trip Dispatch</h3>
               <button 
                 onClick={() => setModalOpen(false)}
@@ -645,7 +645,7 @@ export default function TripsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTrip} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateTrip} className="space-y-4 text-xs overflow-y-auto min-h-0 flex-1 pr-1">
               {error && (
                 <div className="flex items-center gap-2 rounded-xl bg-brand-danger/10 border border-brand-danger/20 p-4 text-brand-danger">
                   <AlertTriangle className="h-4.5 w-4.5 flex-shrink-0" />
