@@ -541,75 +541,55 @@ export default function TripsPage() {
                     />
                   </th>
                 )}
-                <th className="px-6 py-4">Trip details</th>
-                <th className="px-6 py-4">Contracts Reference</th>
-                <th className="px-6 py-4">Assigned Crew</th>
-                <th className="px-6 py-4">Vendor</th>
-                <th className="px-6 py-4">Tonnages</th>
-                <th className="px-6 py-4">Trip Status</th>
+                <th className="px-6 py-4">PO</th>
+                <th className="px-6 py-4">Commodity</th>
+                <th className="px-6 py-4">Source</th>
+                <th className="px-6 py-4">Destination</th>
+                <th className="px-6 py-4">Vehicle no</th>
+                <th className="px-6 py-4">health index</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
-              {paginatedTrips.map(trip => (
-                <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
-                  {isDeleteMode && (
-                    <td className="w-10 px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(trip.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedIds([...selectedIds, trip.id]);
-                          } else {
-                            setSelectedIds(selectedIds.filter(id => id !== trip.id));
-                          }
-                        }}
-                        className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
-                      />
+              {paginatedTrips.map(trip => {
+                const matchedTruck = trucks.find(t => t.plateNumber.toUpperCase() === trip.truck.plateNumber.toUpperCase());
+                const health = matchedTruck ? matchedTruck.health : 90;
+
+                return (
+                  <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
+                    {isDeleteMode && (
+                      <td className="w-10 px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(trip.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds([...selectedIds, trip.id]);
+                            } else {
+                              setSelectedIds(selectedIds.filter(id => id !== trip.id));
+                            }
+                          }}
+                          className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                        />
+                      </td>
+                    )}
+                    <td className="px-6 py-4 font-semibold text-slate-800 font-mono">{trip.purchaseOrder.poNumber}</td>
+                    <td className="px-6 py-4 text-slate-600">{trip.purchaseOrder.commodity || '—'}</td>
+                    <td className="px-6 py-4 text-slate-600 font-medium">{trip.source}</td>
+                    <td className="px-6 py-4 text-slate-600 font-medium">{trip.destination}</td>
+                    <td className="px-6 py-4 font-mono font-bold text-slate-800 tracking-wider">{trip.truck.plateNumber}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-12 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${health > 80 ? 'bg-emerald-500' : health > 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${health}%` }} />
+                        </div>
+                        <span className={`font-bold text-[10px] ${health > 80 ? 'text-emerald-600' : health > 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {health}%
+                        </span>
+                      </div>
                     </td>
-                  )}
-                  <td className="px-6 py-4">
-                    <div>
-                      <span className="font-bold text-slate-800 font-mono">{trip.tripNumber}</span>
-                      <div className="text-[10px] text-slate-400 mt-1">{trip.source} → {trip.destination}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <span className="text-slate-800 font-semibold">{trip.purchaseOrder.poNumber}</span>
-                      <div className="text-[10px] text-brand-primary mt-0.5">{trip.purchaseOrder.clientName}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{trip.purchaseOrder.commodity}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{trip.driver.fullName}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
-                        <Truck className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{trip.truck.plateNumber}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{trip.vehicleType || trip.truck.model}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-slate-500">{trip.vendorName || '—'}</td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <span>Est: {trip.estimatedQuantityTons} Tons</span>
-                      {trip.actualLoadedTons && (
-                        <div className="text-[10px] text-slate-500 mt-0.5">Loaded: {trip.actualLoadedTons} Tons</div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-block rounded-full border px-2 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(trip.status)}`}>
-                      {getOperationalStatusLabel(trip.status)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
               {paginatedTrips.length === 0 && (
                 <tr>
                   <td colSpan={isDeleteMode ? 7 : 6} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
