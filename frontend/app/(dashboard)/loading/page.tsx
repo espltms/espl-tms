@@ -174,7 +174,7 @@ export default function LoadingVehiclePage() {
         const driverName = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner']);
         const driverPhone = getCellValue(detail.import.headers, row, ['driver phone', 'driver mobile', 'mobile', 'phone']);
         const sourceValue = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading point', 'loading_point', 'source loading']);
-        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading point', 'unloading_point', 'destination unloading', 'dest', 'to']);
+        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading point', 'unloading_point', 'destination unloading', 'dest', 'to', 'location', 'location name', 'place']);
 
         const netWeight = qtyValue !== '-' ? parseNumberCell(qtyValue) : (grossValue !== '-' && tareValue !== '-' ? Math.max(0, parseNumberCell(grossValue) - parseNumberCell(tareValue)) : 0);
         const tareWeight = tareValue !== '-' ? parseNumberCell(tareValue) : 15.0;

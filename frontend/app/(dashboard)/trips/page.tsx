@@ -247,7 +247,7 @@ export default function TripsPage() {
         const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate']);
         const truckModel = getCellValue(detail.import.headers, row, ['truck model', 'model', 'vehicle model']);
         const sourceValue = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading', 'loading point', 'source loading']);
-        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading', 'unloading point', 'destination unloading']);
+        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading', 'unloading point', 'destination unloading', 'location', 'location name', 'place']);
         const vendorValue = getCellValue(detail.import.headers, row, ['vendor', 'vendor name']);
         const vehicleTypeValue = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
         const statusValue = getCellValue(detail.import.headers, row, ['status', 'trip status']);
