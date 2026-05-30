@@ -20,6 +20,8 @@ interface UserRecord {
 const ROLES = [
   'SUPER_ADMIN',
   'REGION_ADMIN',
+  'PARAMANANDPUR_ADMIN',
+  'DHARAMGARH_ADMIN',
   'VENDOR',
   'SYS_ADMIN',
   'LOGISTICS_MANAGER',
@@ -33,7 +35,7 @@ const ROLES = [
 export default function SettingsPage() {
   const { user: currentUser, token } = useAuthStore();
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-  const isRegionAdmin = currentUser?.role === 'REGION_ADMIN';
+  const isRegionAdmin = currentUser?.role === 'REGION_ADMIN' || currentUser?.role === 'PARAMANANDPUR_ADMIN' || currentUser?.role === 'DHARAMGARH_ADMIN';
   const canManageUsers = isSuperAdmin || isRegionAdmin;
 
   const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'reset'>(canManageUsers ? 'users' : 'logs');
@@ -339,7 +341,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {role === 'REGION_ADMIN' && (
+              {(role === 'REGION_ADMIN' || role === 'PARAMANANDPUR_ADMIN' || role === 'DHARAMGARH_ADMIN') && (
                 <div>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Assigned Region / Place</label>
                   <input

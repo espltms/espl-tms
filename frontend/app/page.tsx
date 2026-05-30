@@ -21,6 +21,20 @@ const portalRoles = [
     chip: 'bg-brand-primary/10 text-brand-primary',
   },
   {
+    label: 'Paramanandpur Admin',
+    value: 'PARAMANANDPUR_ADMIN',
+    icon: Building2,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
+    label: 'Dharamgarh Admin',
+    value: 'DHARAMGARH_ADMIN',
+    icon: Building2,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
     label: 'Vendor',
     value: 'VENDOR',
     icon: Truck,

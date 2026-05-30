@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (operator.role !== 'SUPER_ADMIN' && operator.role !== 'REGION_ADMIN') {
+    const isRegAdmin = operator.role === 'REGION_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+
+    if (operator.role !== 'SUPER_ADMIN' && !isRegAdmin) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can manage accounts.' }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
-      where: operator.role === 'REGION_ADMIN' ? { role: 'VENDOR' } : undefined,
+      where: isRegAdmin ? { role: 'VENDOR' } : undefined,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -44,13 +46,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (operator.role !== 'SUPER_ADMIN' && operator.role !== 'REGION_ADMIN') {
+    const isRegAdmin = operator.role === 'REGION_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+
+    if (operator.role !== 'SUPER_ADMIN' && !isRegAdmin) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can create user accounts.' }, { status: 403 });
     }
 
     const { email, password, fullName, role, phone, regionName, vendorName } = await req.json();
 
-    if (operator.role === 'REGION_ADMIN' && role !== 'VENDOR') {
+    if (isRegAdmin && role !== 'VENDOR') {
       return NextResponse.json({ error: 'Forbidden. Regional Admins can only create VENDOR accounts.' }, { status: 403 });
     }
 

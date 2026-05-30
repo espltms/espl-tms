@@ -30,7 +30,7 @@ const isRegionalAdmin = () => {
   if (typeof window === 'undefined') return false;
   try {
     const user = JSON.parse(window.localStorage.getItem('tms_user') || 'null') as { role?: string } | null;
-    return user?.role === 'REGION_ADMIN';
+    return user?.role === 'REGION_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
   } catch {
     return false;
   }

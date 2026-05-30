@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromRequest(req);
-    if (user?.role === 'REGION_ADMIN') {
+    const isRegAdmin = user?.role === 'REGION_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
+    if (isRegAdmin) {
       const { page, limit } = getPagination(req);
       return NextResponse.json({ data: [], total: 0, page, limit });
     }

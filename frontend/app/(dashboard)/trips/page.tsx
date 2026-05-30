@@ -180,8 +180,12 @@ export default function TripsPage() {
     setSelectedIds(prev => prev.filter(id => !tripIds.includes(id)));
   };
 
-  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
-  const userRegion = user?.regionName;
+  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
+  const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' 
+    ? 'Paramanandpur' 
+    : user?.role === 'DHARAMGARH_ADMIN' 
+      ? 'Dharamgarh' 
+      : user?.regionName;
 
   const filteredTrips = trips.filter(trip => {
     if (isRegionalUser && userRegion) {

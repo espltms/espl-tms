@@ -16,6 +16,20 @@ async function main() {
       role: 'SUPER_ADMIN',
     },
     {
+      email: 'paramanandpur.admin@espl.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Paramanandpur Admin',
+      role: 'PARAMANANDPUR_ADMIN',
+      regionName: 'Paramanandpur',
+    },
+    {
+      email: 'dharamgarh.admin@espl.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Dharamgarh Admin',
+      role: 'DHARAMGARH_ADMIN',
+      regionName: 'Dharamgarh',
+    },
+    {
       email: 'place1.admin@espl.com',
       password: 'TMSAdminPassword2026!',
       fullName: 'Place 1 Admin',

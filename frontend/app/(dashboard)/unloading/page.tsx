@@ -168,8 +168,12 @@ export default function UnloadingVehiclePage() {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {(() => {
-                const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
-                const userRegion = user?.regionName;
+                const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
+                const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' 
+                  ? 'Paramanandpur' 
+                  : user?.role === 'DHARAMGARH_ADMIN' 
+                    ? 'Dharamgarh' 
+                    : user?.regionName;
 
                 const filteredRecords = records.filter(record => {
                   if (isRegionalUser && userRegion) {

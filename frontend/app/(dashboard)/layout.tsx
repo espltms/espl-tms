@@ -79,6 +79,8 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
   REGION_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
+  PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
+  DHARAMGARH_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   VENDOR: ['/fleet', '/vehicle-summary'],
 };
 
@@ -155,6 +157,8 @@ export default function DashboardLayout({
     switch (role) {
       case 'SUPER_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'REGION_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'PARAMANANDPUR_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'DHARAMGARH_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'VENDOR': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'FINANCE_OFFICER': return 'bg-amber-50 text-amber-700 border-amber-200';
