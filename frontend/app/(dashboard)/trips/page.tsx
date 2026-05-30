@@ -541,6 +541,16 @@ export default function TripsPage() {
       const route = getPoSourceDestination(selectedPo.poNumber);
       setSource(route.source);
       setDestination(route.destination);
+      
+      const poNum = selectedPo.poNumber.toUpperCase();
+      if (poNum.includes('KORBA')) {
+        setDistance('1350');
+      } else if (poNum.includes('JAIPUR')) {
+        setDistance('650');
+      } else {
+        setDistance('120');
+      }
+
       const generatedChallan = getNextChallanNumber(route.destination, []);
       setChallanNo(generatedChallan);
     }
@@ -727,10 +737,10 @@ export default function TripsPage() {
     setDestination('Paramanandpur Stockyard');
     setEstimatedQuantity('40.00');
     setDistance('120');
-    setTareWeight('');
+    setTareWeight('15.00');
     setGrossWeight('');
     setNetWeight('');
-    setTicketNo('');
+    setTicketNo(`TK-${Math.floor(100000 + Math.random() * 900000)}`);
     setChallanNo('');
     setLoadingDateTime(new Date().toISOString().slice(0, 16));
     setError('');
@@ -1128,14 +1138,12 @@ export default function TripsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Distance (Km) *</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Distance (Km) <span className="text-[9px] text-brand-primary font-normal font-sans">(PO Auto-resolved)</span></label>
                   <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={distance}
-                    onChange={(e) => setDistance(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                    type="text"
+                    disabled
+                    value={distance ? `${distance} Km` : '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
                   />
                 </div>
               </div>
