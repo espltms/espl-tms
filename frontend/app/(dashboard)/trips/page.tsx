@@ -132,6 +132,76 @@ export default function TripsPage() {
         ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
       ]);
     });
+
+    const getCapacityFromWheeler = (wheeler: string) => {
+      const w = String(wheeler || '').toLowerCase();
+      if (w.includes('6')) return '15.00';
+      if (w.includes('10')) return '25.00';
+      if (w.includes('12')) return '31.00';
+      if (w.includes('14')) return '37.00';
+      if (w.includes('16')) return '42.00';
+      if (w.includes('18')) return '49.00';
+      if (w.includes('22')) return '55.00';
+      return '25.00';
+    };
+
+    fetchSyncedValue<any[]>('tms_fleet_master', []).then((fleetMasterRecords) => {
+      if (fleetMasterRecords && fleetMasterRecords.length > 0) {
+        const fleetTrucks = fleetMasterRecords.map(r => ({
+          id: r.id || `fm-${r.plateNumber}`,
+          plateNumber: r.plateNumber,
+          model: r.vehicleType || 'Tipper',
+          type: r.vehicleType || 'Tipper',
+          fleetCategory: r.fleetCategory || 'OWNED_FLEET',
+          capacity: getCapacityFromWheeler(r.wheeler),
+          fuelCard: '-',
+          health: 100,
+          status: 'SCHEDULED' as any,
+          vendor: r.vendor || 'Vendor 1',
+          subVendor: r.subVendor || '-',
+          wheeler: r.wheeler || '12 Wheeler',
+          assignedDriverName: r.driverName || '-',
+        }));
+
+        setTrucks((prev) => {
+          const merged = [...prev];
+          fleetTrucks.forEach(ft => {
+            const index = merged.findIndex(m => m.plateNumber.toUpperCase() === ft.plateNumber.toUpperCase());
+            if (index >= 0) {
+              merged[index] = { ...merged[index], ...ft };
+            } else {
+              merged.push(ft);
+            }
+          });
+          return merged;
+        });
+
+        const fleetDrivers = fleetMasterRecords
+          .filter(r => r.driverName && r.driverName !== '-')
+          .map((r, idx) => ({
+            id: `fm-driver-${r.plateNumber}-${idx}`,
+            fullName: r.driverName,
+            phone: r.driverMobile || '-',
+            licenseNumber: r.driverDL || '-',
+            status: 'ACTIVE',
+            verified: true,
+            assignedTruckPlate: r.plateNumber,
+          }));
+
+        setDrivers((prev) => {
+          const merged = [...prev];
+          fleetDrivers.forEach(fd => {
+            const index = merged.findIndex(m => m.fullName.toLowerCase() === fd.fullName.toLowerCase());
+            if (index >= 0) {
+              merged[index] = { ...merged[index], ...fd };
+            } else {
+              merged.push(fd);
+            }
+          });
+          return merged;
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
