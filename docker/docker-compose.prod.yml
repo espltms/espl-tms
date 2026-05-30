@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: tms_cache_prod
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - tms_redis_data_prod:/data
+    # Note: Port 6379 is not exposed to the public internet for security. 
+    # It is internal to the docker network for NestJS to use.
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: backend.Dockerfile
+    container_name: tms_backend_prod
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 4000
+    depends_on:
+      - redis
+
+volumes:
+  tms_redis_data_prod:

@@ -29,7 +29,8 @@ import {
   PackageCheck,
   PackageOpen,
   BarChart3,
-  Fuel
+  Fuel,
+  Database
 } from 'lucide-react';
 
 const navigationDivisions = [
@@ -44,6 +45,7 @@ const navigationDivisions = [
   {
     title: "Fleet & Crew",
     items: [
+      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },

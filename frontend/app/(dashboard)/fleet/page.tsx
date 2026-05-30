@@ -50,6 +50,14 @@ import {
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
 type OnboardingMode = 'vehicle' | 'driver' | 'both';
 type TruckStatus = OperationalStatus;
 type FleetCategory = 'OWNED_FLEET' | 'ATTACHED_FLEET';
@@ -191,6 +199,64 @@ export default function FleetPage() {
       ]);
     });
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
+  }, []);
+
+  useEffect(() => {
+    const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '-';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'Fleet Control Specs') return;
+
+      const importedTrucks = detail.import.rows.map((row, index): TruckData => {
+        const plateNumber = getCellValue(detail.import.headers, row, ['vehicle no', 'vehicle_no', 'plate number', 'vehicle number', 'truck number', 'plate', 'vehicle no.']).toUpperCase();
+        const model = getCellValue(detail.import.headers, row, ['model', 'truck model', 'vehicle model']);
+        const vendor = getCellValue(detail.import.headers, row, ['vendor', 'vendor name', 'vendor company', 'vendor_name']);
+        const subVendor = getCellValue(detail.import.headers, row, ['sub vendor', 'sub_vendor', 'subvendor', 'owner', 'owner name', 'sub-vendor']);
+        const type = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
+        const fleetCategoryVal = getCellValue(detail.import.headers, row, ['fleet category', 'category']);
+        const wheeler = getCellValue(detail.import.headers, row, ['wheeler', 'wheelers', 'no of wheels', 'tyres', 'wheels']);
+        const capacity = getCellValue(detail.import.headers, row, ['capacity', 'max capacity', 'tonnage', 'tons', 'qty']);
+        const fuelCard = getCellValue(detail.import.headers, row, ['fuel card', 'fuel_card', 'fuel card no']);
+
+        return {
+          id: `local-truck-import-${Date.now()}-${index}`,
+          plateNumber: plateNumber === '-' ? `PLATE-${Date.now()}-${index}` : plateNumber,
+          model: model === '-' ? 'Unknown Model' : model,
+          type: type === '-' ? 'Tipper' : type,
+          fleetCategory: (fleetCategoryVal.toLowerCase().includes('attached') ? 'ATTACHED_FLEET' : 'OWNED_FLEET') as FleetCategory,
+          capacity: capacity === '-' ? '35.0 Tons' : (capacity.toLowerCase().includes('ton') ? capacity : `${capacity} Tons`),
+          fuelCard: fuelCard === '-' ? 'PENDING' : fuelCard.toUpperCase(),
+          health: 100,
+          status: 'RECEIVED',
+          vendor: vendor === '-' ? '' : vendor,
+          subVendor: subVendor === '-' ? '' : subVendor,
+          wheeler: wheeler === '-' ? '12 Wheeler' : wheeler,
+          onboardedAt: new Date().toISOString(),
+        };
+      }).filter(t => t.plateNumber !== '-');
+
+      if (importedTrucks.length === 0) return;
+
+      setTrucks(prev => {
+        const next = [
+          ...importedTrucks,
+          ...prev.filter(truck => !importedTrucks.some(importedTruck => importedTruck.plateNumber === truck.plateNumber)),
+        ];
+        persistLocalTrucks(next);
+        return next;
+      });
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
   }, []);
 
   useEffect(() => {
@@ -409,8 +475,7 @@ export default function FleetPage() {
                 <tr key={truck.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 font-extrabold text-slate-800 font-mono tracking-wider">{truck.plateNumber}</td>
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-slate-700">{truck.model} <span className="text-slate-400 font-normal">({truck.type})</span></div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{truck.wheeler || 'Wheeler not set'}</div>
+                    <div className="font-semibold text-slate-700">{truck.wheeler || 'Wheeler not set'} <span className="text-slate-400 font-normal">({truck.type})</span></div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${
