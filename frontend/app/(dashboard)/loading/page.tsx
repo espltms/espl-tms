@@ -271,13 +271,37 @@ export default function LoadingVehiclePage() {
       }
 
       newLoadingRecords.forEach(record => {
-        updateAssignedTripStatus(record.tripId, record.tripNumber, record.truckStatus);
-        upsertTruckStatusOverride(record.truckId, record.truckStatus);
+        const existing = records.find(r => r.truckPlate.toUpperCase().trim() === record.truckPlate.toUpperCase().trim());
+        const finalStatus = (record.unloadingDateTime || (existing && existing.unloadingDateTime)) ? 'RECEIVED' : record.truckStatus;
+        updateAssignedTripStatus(record.tripId, record.tripNumber, finalStatus);
+        upsertTruckStatusOverride(record.truckId, finalStatus);
       });
 
-      const nextRecords = [...newLoadingRecords, ...records];
-      setRecords(nextRecords);
-      persistRecords(nextRecords);
+      setRecords(prev => {
+        const next = [...prev];
+        newLoadingRecords.forEach(nr => {
+          const idx = next.findIndex(r => r.truckPlate.toUpperCase().trim() === nr.truckPlate.toUpperCase().trim());
+          if (idx >= 0) {
+            const merged = { ...next[idx] };
+            Object.keys(nr).forEach(key => {
+              const val = nr[key as keyof LoadingRecord];
+              if (val !== undefined && val !== '-' && val !== '') {
+                (merged as any)[key] = val;
+              }
+            });
+            if (merged.loadingDateTime && merged.unloadingDateTime) {
+              merged.turnaroundMinutes = Math.max(0, Math.round((new Date(merged.unloadingDateTime).getTime() - new Date(merged.loadingDateTime).getTime()) / 60000));
+              merged.truckStatus = 'RECEIVED';
+              merged.unloadingTruckStatus = 'RECEIVED';
+            }
+            next[idx] = merged;
+          } else {
+            next.unshift(nr);
+          }
+        });
+        persistRecords(next);
+        return next;
+      });
     };
 
     window.addEventListener('tms:excel-imported', handleExcelImport);

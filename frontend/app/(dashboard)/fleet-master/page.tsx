@@ -144,10 +144,22 @@ export default function FleetMasterPage() {
       if (importedRecords.length === 0) return;
 
       setRecords(prev => {
-        const next = [
-          ...importedRecords,
-          ...prev.filter(r => !importedRecords.some(ir => ir.plateNumber === r.plateNumber)),
-        ];
+        const next = [...prev];
+        importedRecords.forEach(ir => {
+          const idx = next.findIndex(r => r.plateNumber.toUpperCase() === ir.plateNumber.toUpperCase());
+          if (idx >= 0) {
+            const merged = { ...next[idx] };
+            Object.keys(ir).forEach(key => {
+              const val = ir[key as keyof FleetMasterRecord];
+              if (val !== undefined && val !== '-' && val !== '') {
+                (merged as any)[key] = val;
+              }
+            });
+            next[idx] = merged;
+          } else {
+            next.push(ir);
+          }
+        });
         persistRecords(next);
         return next;
       });
