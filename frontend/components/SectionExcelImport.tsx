@@ -107,9 +107,45 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       }
 
       const maxColumns = Math.max(...nonEmptyRows.map(row => row.length));
-      const firstRow = nonEmptyRows[0] || [];
-      const headers = Array.from({ length: maxColumns }, (_, idx) => firstRow[idx] || `Column ${idx + 1}`);
-      const rows = nonEmptyRows.slice(1).map(row => headers.map((_, idx) => row[idx] || ''));
+      const row0 = nonEmptyRows[0] || [];
+      const row1 = nonEmptyRows[1] || [];
+      
+      const isSubHeaderRow = row1.some(val => {
+        const v = String(val).toLowerCase();
+        return v === 'from' || v === 'to' || v.includes('validity') || v.includes('upto') || v === 'till';
+      });
+
+      let headers: string[] = [];
+      let startRowIndex = 1;
+
+      if (isSubHeaderRow) {
+        startRowIndex = 2; // skips the sub-header row as data
+        let lastParentHeader = '';
+        for (let idx = 0; idx < maxColumns; idx++) {
+          const parent = (row0[idx] || '').trim();
+          const child = (row1[idx] || '').trim();
+          
+          if (parent) {
+            lastParentHeader = parent;
+          }
+          
+          let combined = '';
+          if (lastParentHeader && child) {
+            if (child.toLowerCase() === lastParentHeader.toLowerCase()) {
+              combined = lastParentHeader;
+            } else {
+              combined = `${lastParentHeader} ${child}`;
+            }
+          } else {
+            combined = child || lastParentHeader || `Column ${idx + 1}`;
+          }
+          headers.push(combined);
+        }
+      } else {
+        headers = Array.from({ length: maxColumns }, (_, idx) => row0[idx] || `Column ${idx + 1}`);
+      }
+
+      const rows = nonEmptyRows.slice(startRowIndex).map(row => headers.map((_, idx) => row[idx] || ''));
 
       const importedSheet: ImportedSheet = {
         id: `${Date.now()}-${file.name}`,
