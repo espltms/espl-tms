@@ -23,6 +23,9 @@ export async function GET(req: NextRequest) {
     if (user?.role === 'VENDOR') {
       where.vendorName = user.vendorName || '';
     }
+    if (user?.role === 'LANJIGARH_LOADER') {
+      where.source = { contains: 'lanjigarh', mode: 'insensitive' };
+    }
     if (status) {
       const normalizedStatus = normalizeOperationalStatus(status);
       where.status = normalizedStatus === 'IN_TRANSIT'
@@ -73,6 +76,11 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
+    if (user?.role === 'LANJIGARH_LOADER') {
+      if (!body.source || !body.source.toLowerCase().includes('lanjigarh')) {
+        return NextResponse.json({ error: 'Lanjigarh Loader can only create trips with source Lanjigarh' }, { status: 403 });
+      }
+    }
     const purchaseOrder = await prisma.purchaseOrder.findFirst({
       where: {
         OR: [

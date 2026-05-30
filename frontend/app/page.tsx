@@ -35,6 +35,13 @@ const portalRoles = [
     chip: 'bg-blue-500/10 text-blue-600',
   },
   {
+    label: 'Lanjigarh Loader',
+    value: 'LANJIGARH_LOADER',
+    icon: Truck,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
     label: 'Vendor',
     value: 'VENDOR',
     icon: Truck,
@@ -77,7 +84,12 @@ export default function LoginPage() {
 
       const data = await response.json();
       login(data.user, data.token);
-      router.push(data.user.role === 'VENDOR' ? '/vehicle-summary' : '/dashboard');
+      const targetPath = data.user.role === 'VENDOR' 
+        ? '/vehicle-summary' 
+        : data.user.role === 'LANJIGARH_LOADER' 
+          ? '/trips' 
+          : '/dashboard';
+      router.push(targetPath);
     } catch (err: any) {
       console.error('login failed:', err);
       setError(err.message || 'Unable to complete request. Please check the details and try again.');

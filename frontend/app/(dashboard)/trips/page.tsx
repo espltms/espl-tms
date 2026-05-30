@@ -181,6 +181,7 @@ export default function TripsPage() {
   };
 
   const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
+  const isLanjigarhLoader = user?.role === 'LANJIGARH_LOADER';
   const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' 
     ? 'Paramanandpur' 
     : user?.role === 'DHARAMGARH_ADMIN' 
@@ -188,6 +189,9 @@ export default function TripsPage() {
       : user?.regionName;
 
   const filteredTrips = trips.filter(trip => {
+    if (isLanjigarhLoader) {
+      return trip.source && trip.source.toLowerCase().includes('lanjigarh');
+    }
     if (isRegionalUser && userRegion) {
       return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
     }
@@ -383,6 +387,12 @@ export default function TripsPage() {
         const finalDestination = locationVal !== '-' ? locationVal : route.destination;
         const finalSource = sourceVal !== '-' ? sourceVal : route.source;
 
+        if (isLanjigarhLoader) {
+          if (!finalSource || !finalSource.toLowerCase().includes('lanjigarh')) {
+            return;
+          }
+        }
+
         // Resolve truck details
         const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
         const vendor = matchedMasterTruck?.vendor || 'Vendor 1';
@@ -476,7 +486,7 @@ export default function TripsPage() {
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
-  }, [purchaseOrders, loadingRecords, trucks]);
+  }, [purchaseOrders, loadingRecords, trucks, isLanjigarhLoader]);
 
   const applyTruckSelection = (selectedTruck: typeof trucks[number]) => {
     setTruckId(selectedTruck.id);
@@ -581,6 +591,13 @@ export default function TripsPage() {
     if (isRegionalUser && userRegion) {
       if (!destination.toLowerCase().includes(userRegion.toLowerCase())) {
         setError(`You can only dispatch trips to your region destination (${userRegion})`);
+        return;
+      }
+    }
+
+    if (isLanjigarhLoader) {
+      if (!source.toLowerCase().includes('lanjigarh')) {
+        setError('You can only create trips with source Lanjigarh');
         return;
       }
     }
@@ -779,7 +796,9 @@ export default function TripsPage() {
         </h3>
         
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {purchaseOrders.map(po => {
+          {purchaseOrders
+            .filter(po => !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh'))
+            .map(po => {
             const usagePercentage = (Number(po.allocatedQuantityTons) / Number(po.totalQuantityTons)) * 100;
             return (
               <div key={po.id} className="rounded-xl bg-white border border-[#e2e8f0] p-4 flex flex-col justify-between">
@@ -1047,8 +1066,10 @@ export default function TripsPage() {
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   >
                     <option value="">Choose active PO...</option>
-                    {purchaseOrders.map(po => (
-                      <option key={po.id} value={po.id}>{po.poNumber} ({po.clientName})</option>
+                    {purchaseOrders
+                      .filter(po => !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh'))
+                      .map(po => (
+                        <option key={po.id} value={po.id}>{po.poNumber} ({po.clientName})</option>
                     ))}
                   </select>
                 </div>

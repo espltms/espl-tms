@@ -30,6 +30,13 @@ async function main() {
       regionName: 'Dharamgarh',
     },
     {
+      email: 'lanjigarh.loader@espl.com',
+      password: 'TMSAdminPassword2026!',
+      fullName: 'Lanjigarh Loader',
+      role: 'LANJIGARH_LOADER',
+      regionName: 'Lanjigarh',
+    },
+    {
       email: 'place1.admin@espl.com',
       password: 'TMSAdminPassword2026!',
       fullName: 'Place 1 Admin',
