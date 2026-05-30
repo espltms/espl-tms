@@ -1,7 +1,7420 @@
 {
-  "trucks": [],
-  "drivers": [],
-  "purchaseOrders": [],
+  "trucks": [
+    {
+      "id": "trk-1",
+      "plateNumber": "6OD08X6788",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10000",
+      "health": 82,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-2",
+      "plateNumber": "CG04GV8763",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10001",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-3",
+      "plateNumber": "CG04GV8764",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10002",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-4",
+      "plateNumber": "CG04PJ4077",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10003",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-5",
+      "plateNumber": "CG04PJ6077",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10004",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-6",
+      "plateNumber": "CG04PK8423",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10005",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-7",
+      "plateNumber": "CG04PN8010",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10006",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-8",
+      "plateNumber": "CG04Q8763",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10007",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-9",
+      "plateNumber": "CG04QN8763",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10008",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-10",
+      "plateNumber": "CG04QN8764",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10009",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-11",
+      "plateNumber": "CG04QV4763",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10010",
+      "health": 89,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-12",
+      "plateNumber": "CG04QV4764",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10011",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-13",
+      "plateNumber": "CG04QV8763",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10012",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-14",
+      "plateNumber": "CG04QV8764",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10013",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-15",
+      "plateNumber": "CG08T7670",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10014",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-16",
+      "plateNumber": "CG10R1685",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10015",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-17",
+      "plateNumber": "CG13AF2144",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10016",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-18",
+      "plateNumber": "CG22C0282",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10017",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-19",
+      "plateNumber": "CG22T2736",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10018",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-20",
+      "plateNumber": "CG22T2763",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10019",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-21",
+      "plateNumber": "CG27H3300",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10020",
+      "health": 85,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-22",
+      "plateNumber": "FY 26-27",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10021",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-23",
+      "plateNumber": "JH16J0649",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10022",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-24",
+      "plateNumber": "JH16J1604",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10023",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-25",
+      "plateNumber": "JH16J2168",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10024",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-26",
+      "plateNumber": "JH16J4953",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10025",
+      "health": 75,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-27",
+      "plateNumber": "JH16J5442",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10026",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-28",
+      "plateNumber": "JH16J8642",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10027",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-29",
+      "plateNumber": "OD02BL6265",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10028",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-30",
+      "plateNumber": "OD02BY3352",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10029",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-31",
+      "plateNumber": "OD02G2496",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10030",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-32",
+      "plateNumber": "OD03M3019",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10031",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-33",
+      "plateNumber": "OD03Q9511",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10032",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-34",
+      "plateNumber": "OD03Q9611",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10033",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-35",
+      "plateNumber": "OD03V1283",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10034",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-36",
+      "plateNumber": "OD03V2283",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10035",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-37",
+      "plateNumber": "OD03X7999",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10036",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-38",
+      "plateNumber": "OD03Z4999",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10037",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-39",
+      "plateNumber": "OD04U0432",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10038",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-40",
+      "plateNumber": "OD04U3132",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10039",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-41",
+      "plateNumber": "OD04U8340",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10040",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-42",
+      "plateNumber": "OD04V0432",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10041",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-43",
+      "plateNumber": "OD04V2232",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10042",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-44",
+      "plateNumber": "OD04X1332",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10043",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-45",
+      "plateNumber": "OD08A32839",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10044",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-46",
+      "plateNumber": "OD08A7868",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10045",
+      "health": 77,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-47",
+      "plateNumber": "OD08AA0980",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10046",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-48",
+      "plateNumber": "OD08AA2609",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10047",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-49",
+      "plateNumber": "OD08AA2640",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10048",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-50",
+      "plateNumber": "OD08AA2690",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10049",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-51",
+      "plateNumber": "OD08AA2699",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10050",
+      "health": 77,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-52",
+      "plateNumber": "OD08AA2899",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10051",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-53",
+      "plateNumber": "OD08AA3509",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10052",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-54",
+      "plateNumber": "OD08AA3529",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10053",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-55",
+      "plateNumber": "OD08AA3599",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10054",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-56",
+      "plateNumber": "OD08AA5264",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10055",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-57",
+      "plateNumber": "OD08AA5460",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10056",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-58",
+      "plateNumber": "OD08AA5925",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10057",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-59",
+      "plateNumber": "OD08AA6005",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10058",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-60",
+      "plateNumber": "OD08AA6725",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10059",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-61",
+      "plateNumber": "OD08AA6727",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10060",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-62",
+      "plateNumber": "OD08AA6773",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10061",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-63",
+      "plateNumber": "OD08AA6775",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10062",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-64",
+      "plateNumber": "OD08AA6787",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10063",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-65",
+      "plateNumber": "OD08AA7899",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10064",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-66",
+      "plateNumber": "OD08AA9664",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10065",
+      "health": 95,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-67",
+      "plateNumber": "OD08AA9669",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10066",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-68",
+      "plateNumber": "OD08AA9690",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10067",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-69",
+      "plateNumber": "OD08AA9699",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10068",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-70",
+      "plateNumber": "OD08AA9869",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10069",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-71",
+      "plateNumber": "OD08AB1823",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10070",
+      "health": 78,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-72",
+      "plateNumber": "OD08AB2229",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10071",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-73",
+      "plateNumber": "OD08AB2690",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10072",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-74",
+      "plateNumber": "OD08AB2839",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10073",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-75",
+      "plateNumber": "OD08AB3529",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10074",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-76",
+      "plateNumber": "OD08AB3589",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10075",
+      "health": 75,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-77",
+      "plateNumber": "OD08AB3599",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10076",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-78",
+      "plateNumber": "OD08AB5160",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10077",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-79",
+      "plateNumber": "OD08AB5682",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10078",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-80",
+      "plateNumber": "OD08AB6124",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10079",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-81",
+      "plateNumber": "OD08AB6193",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10080",
+      "health": 89,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-82",
+      "plateNumber": "OD08AB6775",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10081",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-83",
+      "plateNumber": "OD08AB9099",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10082",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-84",
+      "plateNumber": "OD08AC0421",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10083",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-85",
+      "plateNumber": "OD08AC0491",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10084",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-86",
+      "plateNumber": "OD08AC2231",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10085",
+      "health": 77,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-87",
+      "plateNumber": "OD08AC4221",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10086",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-88",
+      "plateNumber": "OD08AC4865",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10087",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-89",
+      "plateNumber": "OD08AC4921",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10088",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-90",
+      "plateNumber": "OD08AC6265",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10089",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-91",
+      "plateNumber": "OD08AC6285",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10090",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-92",
+      "plateNumber": "OD08AD2229",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10091",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-93",
+      "plateNumber": "OD08AM6775",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10092",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-94",
+      "plateNumber": "OD08AM9690",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10093",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-95",
+      "plateNumber": "OD08AV2839",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10094",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-96",
+      "plateNumber": "OD08B3344",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10095",
+      "health": 77,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-97",
+      "plateNumber": "OD08D1901",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10096",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-98",
+      "plateNumber": "OD08E6469",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10097",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-99",
+      "plateNumber": "OD08F2059",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10098",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-100",
+      "plateNumber": "OD08F2347",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10099",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-101",
+      "plateNumber": "OD08K5480",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10100",
+      "health": 89,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-102",
+      "plateNumber": "OD08K6035",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10101",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-103",
+      "plateNumber": "OD08K6333",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10102",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-104",
+      "plateNumber": "OD08K8333",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10103",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-105",
+      "plateNumber": "OD08L1666",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10104",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-106",
+      "plateNumber": "OD08M3779",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10105",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-107",
+      "plateNumber": "OD08M4042",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10106",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-108",
+      "plateNumber": "OD08M4043",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10107",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-109",
+      "plateNumber": "OD08M4824",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10108",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-110",
+      "plateNumber": "OD08M4840",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10109",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-111",
+      "plateNumber": "OD08M4842",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10110",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-112",
+      "plateNumber": "OD08M5463",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10111",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-113",
+      "plateNumber": "OD08M5483",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10112",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-114",
+      "plateNumber": "OD08M5995",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10113",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-115",
+      "plateNumber": "OD08M9951",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10114",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-116",
+      "plateNumber": "OD08N3320",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10115",
+      "health": 91,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-117",
+      "plateNumber": "OD08N5062",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10116",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-118",
+      "plateNumber": "OD08P0018",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10117",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-119",
+      "plateNumber": "OD08P2570",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10118",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-120",
+      "plateNumber": "OD08P2613",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10119",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-121",
+      "plateNumber": "OD08P8211",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10120",
+      "health": 85,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-122",
+      "plateNumber": "OD08Q1596",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10121",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-123",
+      "plateNumber": "OD08Q4288",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10122",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-124",
+      "plateNumber": "OD08Q6409",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10123",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-125",
+      "plateNumber": "OD08Q7026",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10124",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-126",
+      "plateNumber": "OD08Q9511",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10125",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-127",
+      "plateNumber": "OD08R0164",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10126",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-128",
+      "plateNumber": "OD08R0265",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10127",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-129",
+      "plateNumber": "OD08R0764",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10128",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-130",
+      "plateNumber": "OD08R1722",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10129",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-131",
+      "plateNumber": "OD08R1961",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10130",
+      "health": 92,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-132",
+      "plateNumber": "OD08R2614",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10131",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-133",
+      "plateNumber": "OD08R2674",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10132",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-134",
+      "plateNumber": "OD08R3097",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10133",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-135",
+      "plateNumber": "OD08R5858",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10134",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-136",
+      "plateNumber": "OD08R9265",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10135",
+      "health": 94,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-137",
+      "plateNumber": "OD08R9625",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10136",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-138",
+      "plateNumber": "OD08T1641",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10137",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-139",
+      "plateNumber": "OD08T1797",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10138",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-140",
+      "plateNumber": "OD08T2451",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10139",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-141",
+      "plateNumber": "OD08T7670",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10140",
+      "health": 80,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-142",
+      "plateNumber": "OD08U3200",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10141",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-143",
+      "plateNumber": "OD08U3900",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10142",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-144",
+      "plateNumber": "OD08U4664",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10143",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-145",
+      "plateNumber": "OD08U4930",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10144",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-146",
+      "plateNumber": "OD08U5206",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10145",
+      "health": 96,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-147",
+      "plateNumber": "OD08U5208",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10146",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-148",
+      "plateNumber": "OD08U5418",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10147",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-149",
+      "plateNumber": "OD08U5908",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10148",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-150",
+      "plateNumber": "OD08U5951",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10149",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-151",
+      "plateNumber": "OD08U6677",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10150",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-152",
+      "plateNumber": "OD08U7688",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10151",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-153",
+      "plateNumber": "OD08U9664",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10152",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-154",
+      "plateNumber": "OD08U9684",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10153",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-155",
+      "plateNumber": "OD08U9930",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10154",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-156",
+      "plateNumber": "OD08V1876",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10155",
+      "health": 95,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-157",
+      "plateNumber": "OD08V2283",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10156",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-158",
+      "plateNumber": "OD08V3326",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10157",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-159",
+      "plateNumber": "OD08V4424",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10158",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-160",
+      "plateNumber": "OD08V5418",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10159",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-161",
+      "plateNumber": "OD08V5951",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10160",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-162",
+      "plateNumber": "OD08V6508",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10161",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-163",
+      "plateNumber": "OD08V6996",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10162",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-164",
+      "plateNumber": "OD08V7077",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10163",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-165",
+      "plateNumber": "OD08V7688",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10164",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-166",
+      "plateNumber": "OD08V8865",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10165",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-167",
+      "plateNumber": "OD08V9664",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10166",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-168",
+      "plateNumber": "OD08W1596",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10167",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-169",
+      "plateNumber": "OD08W1641",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10168",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-170",
+      "plateNumber": "OD08W2356",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10169",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-171",
+      "plateNumber": "OD08W3320",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10170",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-172",
+      "plateNumber": "OD08W3324",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10171",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-173",
+      "plateNumber": "OD08W3326",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10172",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-174",
+      "plateNumber": "OD08W3354",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10173",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-175",
+      "plateNumber": "OD08W3529",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10174",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-176",
+      "plateNumber": "OD08W3599",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10175",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-177",
+      "plateNumber": "OD08W3784",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10176",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-178",
+      "plateNumber": "OD08W5867",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10177",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-179",
+      "plateNumber": "OD08W6677",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10178",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-180",
+      "plateNumber": "OD08W6697",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10179",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-181",
+      "plateNumber": "OD08W6867",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10180",
+      "health": 80,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-182",
+      "plateNumber": "OD08W6996",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10181",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-183",
+      "plateNumber": "OD08W7356",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10182",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-184",
+      "plateNumber": "OD08W7402",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10183",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-185",
+      "plateNumber": "OD08W7707",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10184",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-186",
+      "plateNumber": "OD08W8088",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10185",
+      "health": 81,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-187",
+      "plateNumber": "OD08W8865",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10186",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-188",
+      "plateNumber": "OD08W9930",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10187",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-189",
+      "plateNumber": "OD08W9962",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10188",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-190",
+      "plateNumber": "OD08X0200",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10189",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-191",
+      "plateNumber": "OD08X0462",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10190",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-192",
+      "plateNumber": "OD08X1332",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10191",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-193",
+      "plateNumber": "OD08X2451",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10192",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-194",
+      "plateNumber": "OD08X2473",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10193",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-195",
+      "plateNumber": "OD08X2690",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10194",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-196",
+      "plateNumber": "OD08X2699",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10195",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-197",
+      "plateNumber": "OD08X3270",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10196",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-198",
+      "plateNumber": "OD08X3529",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10197",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-199",
+      "plateNumber": "OD08X3589",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10198",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-200",
+      "plateNumber": "OD08X4286",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10199",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-201",
+      "plateNumber": "OD08X4288",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10200",
+      "health": 85,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-202",
+      "plateNumber": "OD08X4520",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10201",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-203",
+      "plateNumber": "OD08X4582",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10202",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-204",
+      "plateNumber": "OD08X4932",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10203",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-205",
+      "plateNumber": "OD08X4939",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10204",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-206",
+      "plateNumber": "OD08X5409",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10205",
+      "health": 89,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-207",
+      "plateNumber": "OD08X5480",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10206",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-208",
+      "plateNumber": "OD08X5589",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10207",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-209",
+      "plateNumber": "OD08X5681",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10208",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-210",
+      "plateNumber": "OD08X6788",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10209",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-211",
+      "plateNumber": "OD08X7131",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10210",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-212",
+      "plateNumber": "OD08X7446",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10211",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-213",
+      "plateNumber": "OD08X7688",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10212",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-214",
+      "plateNumber": "OD08X8273",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10213",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-215",
+      "plateNumber": "OD08X8690",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10214",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-216",
+      "plateNumber": "OD08X8922",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10215",
+      "health": 80,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-217",
+      "plateNumber": "OD08X8929",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10216",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-218",
+      "plateNumber": "OD08X9582",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10217",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-219",
+      "plateNumber": "OD08X9669",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10218",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-220",
+      "plateNumber": "OD08X9809",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10219",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-221",
+      "plateNumber": "OD08X9869",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10220",
+      "health": 81,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-222",
+      "plateNumber": "OD08X9991",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10221",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-223",
+      "plateNumber": "OD08Y0200",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10222",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-224",
+      "plateNumber": "OD08Y0420",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10223",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-225",
+      "plateNumber": "OD08Y0436",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10224",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-226",
+      "plateNumber": "OD08Y0462",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10225",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-227",
+      "plateNumber": "OD08Y1876",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10226",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-228",
+      "plateNumber": "OD08Y2690",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10227",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-229",
+      "plateNumber": "OD08Y5111",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10228",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-230",
+      "plateNumber": "OD08Y5152",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10229",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-231",
+      "plateNumber": "OD08Y5154",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10230",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-232",
+      "plateNumber": "OD08Y5155",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10231",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-233",
+      "plateNumber": "OD08Y5156",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10232",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-234",
+      "plateNumber": "OD08Y5157",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10233",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-235",
+      "plateNumber": "OD08Y5158",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10234",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-236",
+      "plateNumber": "OD08Y5418",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10235",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-237",
+      "plateNumber": "OD08Y6508",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10236",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-238",
+      "plateNumber": "OD08Y6788",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10237",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-239",
+      "plateNumber": "OD08Y7077",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10238",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-240",
+      "plateNumber": "OD08Y7688",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10239",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-241",
+      "plateNumber": "OD08Y8088",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10240",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-242",
+      "plateNumber": "OD08Y8447",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10241",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-243",
+      "plateNumber": "OD08Y9436",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10242",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-244",
+      "plateNumber": "OD08Z2119",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10243",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-245",
+      "plateNumber": "OD08Z2214",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10244",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-246",
+      "plateNumber": "OD08Z2216",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10245",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-247",
+      "plateNumber": "OD08Z2991",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10246",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-248",
+      "plateNumber": "OD08Z4632",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10247",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-249",
+      "plateNumber": "OD08Z4887",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10248",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-250",
+      "plateNumber": "OD08Z6293",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10249",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-251",
+      "plateNumber": "OD08Z6368",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10250",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-252",
+      "plateNumber": "OD08Z6376",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10251",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-253",
+      "plateNumber": "OD08Z6393",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10252",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-254",
+      "plateNumber": "OD08Z6465",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10253",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-255",
+      "plateNumber": "OD08Z7067",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10254",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-256",
+      "plateNumber": "OD08Z7087",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10255",
+      "health": 86,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-257",
+      "plateNumber": "OD08Z7788",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10256",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-258",
+      "plateNumber": "OD08Z8445",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10257",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-259",
+      "plateNumber": "OD08Z8446",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10258",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-260",
+      "plateNumber": "OD08Z8619",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10259",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-261",
+      "plateNumber": "OD08Z8649",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10260",
+      "health": 92,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-262",
+      "plateNumber": "OD08Z8656",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10261",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-263",
+      "plateNumber": "OD08Z8672",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10262",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-264",
+      "plateNumber": "OD08Z8674",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10263",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-265",
+      "plateNumber": "OD08Z8691",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10264",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-266",
+      "plateNumber": "OD08Z8699",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10265",
+      "health": 77,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-267",
+      "plateNumber": "OD08Z9991",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10266",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-268",
+      "plateNumber": "OD09C6589",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10267",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-269",
+      "plateNumber": "OD09P1933",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10268",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-270",
+      "plateNumber": "OD09V7706",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10269",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-271",
+      "plateNumber": "OD09Y4824",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10270",
+      "health": 83,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-272",
+      "plateNumber": "OD09Z5511",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10271",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-273",
+      "plateNumber": "OD10A582",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10272",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-274",
+      "plateNumber": "OD10AA2690",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10273",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-275",
+      "plateNumber": "OD10AA3529",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10274",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-276",
+      "plateNumber": "OD10AA5387",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10275",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-277",
+      "plateNumber": "OD10AA5402",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10276",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-278",
+      "plateNumber": "OD10AA5407",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10277",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-279",
+      "plateNumber": "OD10AA5415",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10278",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-280",
+      "plateNumber": "OD10AA5421",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10279",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-281",
+      "plateNumber": "OD10AA5439",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10280",
+      "health": 92,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-282",
+      "plateNumber": "OD10AA5440",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10281",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-283",
+      "plateNumber": "OD10AA5468",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10282",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-284",
+      "plateNumber": "OD10AA5470",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10283",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-285",
+      "plateNumber": "OD10AA5482",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10284",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-286",
+      "plateNumber": "OD10AA5574",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10285",
+      "health": 91,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-287",
+      "plateNumber": "OD10AA5575",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10286",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-288",
+      "plateNumber": "OD10AA5587",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10287",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-289",
+      "plateNumber": "OD10AA5631",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10288",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-290",
+      "plateNumber": "OD10AA5634",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10289",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-291",
+      "plateNumber": "OD10AA5636",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10290",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-292",
+      "plateNumber": "OD10AA5657",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10291",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-293",
+      "plateNumber": "OD10AA5674",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10292",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-294",
+      "plateNumber": "OD10AA5834",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10293",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-295",
+      "plateNumber": "OD10AA5925",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10294",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-296",
+      "plateNumber": "OD10AA6298",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10295",
+      "health": 91,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-297",
+      "plateNumber": "OD10AQ6033",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10296",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-298",
+      "plateNumber": "OD14Y2012",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10297",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-299",
+      "plateNumber": "OD15AA5574",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10298",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-300",
+      "plateNumber": "OD15AE1134",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10299",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-301",
+      "plateNumber": "OD15AF1215",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10300",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-302",
+      "plateNumber": "OD15AF1221",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10301",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-303",
+      "plateNumber": "OD15AF1267",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10302",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-304",
+      "plateNumber": "OD15H5575",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10303",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-305",
+      "plateNumber": "OD15Q4117",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10304",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-306",
+      "plateNumber": "OD15S2637",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10305",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-307",
+      "plateNumber": "OD16G4551",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10306",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-308",
+      "plateNumber": "OD16J8203",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10307",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-309",
+      "plateNumber": "OD16Q4551",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10308",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-310",
+      "plateNumber": "OD18A1171",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10309",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-311",
+      "plateNumber": "OD18D1901",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10310",
+      "health": 85,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-312",
+      "plateNumber": "OD18D4789",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10311",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-313",
+      "plateNumber": "OD18D7766",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10312",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-314",
+      "plateNumber": "OD18E6373",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10313",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-315",
+      "plateNumber": "OD18F1999",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10314",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-316",
+      "plateNumber": "OD18G3738",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10315",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-317",
+      "plateNumber": "OD18G4932",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10316",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-318",
+      "plateNumber": "OD18G5463",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10317",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-319",
+      "plateNumber": "OD18G6579",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10318",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-320",
+      "plateNumber": "OD18H1022",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10319",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-321",
+      "plateNumber": "OD18H1033",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10320",
+      "health": 86,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-322",
+      "plateNumber": "OD18H1044",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10321",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-323",
+      "plateNumber": "OD18H1055",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10322",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-324",
+      "plateNumber": "OD18H1066",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10323",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-325",
+      "plateNumber": "OD18H1077",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10324",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-326",
+      "plateNumber": "OD18H1088",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10325",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-327",
+      "plateNumber": "OD18H7303",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10326",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-328",
+      "plateNumber": "OD18K6755",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10327",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-329",
+      "plateNumber": "OD18K6785",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10328",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-330",
+      "plateNumber": "OD18K7766",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10329",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-331",
+      "plateNumber": "OD18K8326",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10330",
+      "health": 75,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-332",
+      "plateNumber": "OD18K8785",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10331",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-333",
+      "plateNumber": "OD18K9873",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10332",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-334",
+      "plateNumber": "OD18L0569",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10333",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-335",
+      "plateNumber": "OD18L2809",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10334",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-336",
+      "plateNumber": "OD18L2845",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10335",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-337",
+      "plateNumber": "OD18L2966",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10336",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-338",
+      "plateNumber": "OD18L4794",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10337",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-339",
+      "plateNumber": "OD18L8680",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10338",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-340",
+      "plateNumber": "OD18M0143",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10339",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-341",
+      "plateNumber": "OD18M0193",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10340",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-342",
+      "plateNumber": "OD18M4546",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10341",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-343",
+      "plateNumber": "OD18M4824",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10342",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-344",
+      "plateNumber": "OD18M7951",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10343",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-345",
+      "plateNumber": "OD18M8886",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10344",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-346",
+      "plateNumber": "OD18N0193",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10345",
+      "health": 98,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-347",
+      "plateNumber": "OD18N0465",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10346",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-348",
+      "plateNumber": "OD18N1023",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10347",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-349",
+      "plateNumber": "OD18N1448",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10348",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-350",
+      "plateNumber": "OD18N2215",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10349",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-351",
+      "plateNumber": "OD18N3743",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10350",
+      "health": 82,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-352",
+      "plateNumber": "OD18N3757",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10351",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-353",
+      "plateNumber": "OD18N3779",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10352",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-354",
+      "plateNumber": "OD18N4546",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10353",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-355",
+      "plateNumber": "OD18N4663",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10354",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-356",
+      "plateNumber": "OD18N4932",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10355",
+      "health": 81,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-357",
+      "plateNumber": "OD18N6447",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10356",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-358",
+      "plateNumber": "OD18N6722",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10357",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-359",
+      "plateNumber": "OD18N7602",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10358",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-360",
+      "plateNumber": "OD18N7603",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10359",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-361",
+      "plateNumber": "OD18N7759",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10360",
+      "health": 79,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-362",
+      "plateNumber": "OD18N7794",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10361",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-363",
+      "plateNumber": "OD18N7824",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10362",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-364",
+      "plateNumber": "OD18N7876",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10363",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-365",
+      "plateNumber": "OD18N8447",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10364",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-366",
+      "plateNumber": "OD18N8701",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10365",
+      "health": 91,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-367",
+      "plateNumber": "OD18N8886",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10366",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-368",
+      "plateNumber": "OD18N8888",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10367",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-369",
+      "plateNumber": "OD18N9189",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10368",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-370",
+      "plateNumber": "OD18N9819",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10369",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-371",
+      "plateNumber": "OD18N9873",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10370",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-372",
+      "plateNumber": "OD18P0480",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10371",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-373",
+      "plateNumber": "OD18P1640",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10372",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-374",
+      "plateNumber": "OD18P1674",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10373",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-375",
+      "plateNumber": "OD18P1678",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10374",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-376",
+      "plateNumber": "OD18P1840",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10375",
+      "health": 92,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-377",
+      "plateNumber": "OD18P4683",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10376",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-378",
+      "plateNumber": "OD18P4784",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10377",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-379",
+      "plateNumber": "OD18P5099",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10378",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-380",
+      "plateNumber": "OD18P6033",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10379",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-381",
+      "plateNumber": "OD18P6633",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10380",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-382",
+      "plateNumber": "OD18P7190",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10381",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-383",
+      "plateNumber": "OD18P7422",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10382",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-384",
+      "plateNumber": "OD18P7766",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10383",
+      "health": 89,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-385",
+      "plateNumber": "OD18P8211",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10384",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-386",
+      "plateNumber": "OD18P8421",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10385",
+      "health": 85,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-387",
+      "plateNumber": "OD18P8701",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10386",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-388",
+      "plateNumber": "OD18P8920",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10387",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-389",
+      "plateNumber": "OD18P9910",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10388",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-390",
+      "plateNumber": "OD18Q0365",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10389",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-391",
+      "plateNumber": "OD18Q0569",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10390",
+      "health": 96,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-392",
+      "plateNumber": "OD18Q2226",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10391",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-393",
+      "plateNumber": "OD18Q3128",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10392",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-394",
+      "plateNumber": "OD18Q3198",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10393",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-395",
+      "plateNumber": "OD18Q4230",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10394",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-396",
+      "plateNumber": "OD18Q4234",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10395",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-397",
+      "plateNumber": "OD18Q4288",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10396",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-398",
+      "plateNumber": "OD18Q4633",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10397",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-399",
+      "plateNumber": "OD18Q4683",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10398",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-400",
+      "plateNumber": "OD18Q4932",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10399",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-401",
+      "plateNumber": "OD18Q4933",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10400",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-402",
+      "plateNumber": "OD18Q4934",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10401",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-403",
+      "plateNumber": "OD18Q4935",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10402",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-404",
+      "plateNumber": "OD18Q4939",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10403",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-405",
+      "plateNumber": "OD18Q5003",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10404",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-406",
+      "plateNumber": "OD18Q5032",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10405",
+      "health": 81,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-407",
+      "plateNumber": "OD18Q5101",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10406",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-408",
+      "plateNumber": "OD18Q5141",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10407",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-409",
+      "plateNumber": "OD18Q5463",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10408",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-410",
+      "plateNumber": "OD18Q5701",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10409",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-411",
+      "plateNumber": "OD18Q6033",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10410",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-412",
+      "plateNumber": "OD18Q6064",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10411",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-413",
+      "plateNumber": "OD18Q6464",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10412",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-414",
+      "plateNumber": "OD18Q6469",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10413",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-415",
+      "plateNumber": "OD18Q6827",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10414",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-416",
+      "plateNumber": "OD18Q7026",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10415",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-417",
+      "plateNumber": "OD18Q7720",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10416",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-418",
+      "plateNumber": "OD18Q7756",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10417",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-419",
+      "plateNumber": "OD18Q7766",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10418",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-420",
+      "plateNumber": "OD18Q7768",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10419",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-421",
+      "plateNumber": "OD18Q8621",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10420",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-422",
+      "plateNumber": "OD18Q8701",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10421",
+      "health": 87,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-423",
+      "plateNumber": "OD18Q8827",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10422",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-424",
+      "plateNumber": "OD18Q8847",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10423",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-425",
+      "plateNumber": "OD18Q9670",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10424",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-426",
+      "plateNumber": "OD18QR1718",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10425",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-427",
+      "plateNumber": "OD18R1171",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10426",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-428",
+      "plateNumber": "OD18R1675",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10427",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-429",
+      "plateNumber": "OD18R1718",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10428",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-430",
+      "plateNumber": "OD18R1722",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10429",
+      "health": 86,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-431",
+      "plateNumber": "OD18R3405",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10430",
+      "health": 89,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-432",
+      "plateNumber": "OD18R4155",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10431",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-433",
+      "plateNumber": "OD18R4230",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10432",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-434",
+      "plateNumber": "OD18R4718",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10433",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-435",
+      "plateNumber": "OD18R5055",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10434",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-436",
+      "plateNumber": "OD18R5999",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10435",
+      "health": 81,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-437",
+      "plateNumber": "OD18R7779",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10436",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-438",
+      "plateNumber": "OD18S1899",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10437",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-439",
+      "plateNumber": "OD18S1999",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10438",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-440",
+      "plateNumber": "OD18T3738",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10439",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-441",
+      "plateNumber": "OD18V5418",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10440",
+      "health": 97,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-442",
+      "plateNumber": "OD18W1596",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10441",
+      "health": 83,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-443",
+      "plateNumber": "OD18X4288",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10442",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-444",
+      "plateNumber": "OD18X6785",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10443",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-445",
+      "plateNumber": "OD18Y7688",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10444",
+      "health": 94,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-446",
+      "plateNumber": "OD18Z3738",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10445",
+      "health": 98,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-447",
+      "plateNumber": "OD19Q0569",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10446",
+      "health": 93,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-448",
+      "plateNumber": "OD19T3073",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10447",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-449",
+      "plateNumber": "OD19V7706",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10448",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-450",
+      "plateNumber": "OD19Y3312",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10449",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-451",
+      "plateNumber": "OD19Y3324",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10450",
+      "health": 96,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-452",
+      "plateNumber": "OD19Y3340",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10451",
+      "health": 91,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-453",
+      "plateNumber": "OD19Y3365",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10452",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-454",
+      "plateNumber": "OD19Y3369",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10453",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-455",
+      "plateNumber": "OD19Y3373",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10454",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-456",
+      "plateNumber": "OD19Y3378",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10455",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-457",
+      "plateNumber": "OD19Y3390",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10456",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-458",
+      "plateNumber": "OD19Y3394",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10457",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-459",
+      "plateNumber": "OD21Q3051",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10458",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-460",
+      "plateNumber": "OD21Q4371",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10459",
+      "health": 97,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-461",
+      "plateNumber": "OD21R4049",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10460",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-462",
+      "plateNumber": "OD21R4083",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10461",
+      "health": 78,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-463",
+      "plateNumber": "OD21R4102",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10462",
+      "health": 96,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-464",
+      "plateNumber": "OD21R4158",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10463",
+      "health": 79,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-465",
+      "plateNumber": "OD21R4570",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10464",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-466",
+      "plateNumber": "OD21R4578",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10465",
+      "health": 92,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-467",
+      "plateNumber": "OD21R4596",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10466",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-468",
+      "plateNumber": "OD21S5112",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10467",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-469",
+      "plateNumber": "OD21S5131",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10468",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-470",
+      "plateNumber": "OD21S5153",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10469",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-471",
+      "plateNumber": "OD21S5568",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10470",
+      "health": 90,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-472",
+      "plateNumber": "OD21S5575",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10471",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-473",
+      "plateNumber": "OD21S6311",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10472",
+      "health": 81,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-474",
+      "plateNumber": "OD21S6389",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10473",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-475",
+      "plateNumber": "OD21S6724",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10474",
+      "health": 85,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-476",
+      "plateNumber": "OD21S8638",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10475",
+      "health": 84,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-477",
+      "plateNumber": "OD21S9121",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10476",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-478",
+      "plateNumber": "OD22AA5252",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10477",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-479",
+      "plateNumber": "OD22AA9918",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10478",
+      "health": 77,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-480",
+      "plateNumber": "OD22AB4004",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10479",
+      "health": 95,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-481",
+      "plateNumber": "OD22AC5252",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10480",
+      "health": 93,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-482",
+      "plateNumber": "OD22F6345",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10481",
+      "health": 82,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-483",
+      "plateNumber": "OD22N0485",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10482",
+      "health": 92,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-484",
+      "plateNumber": "OD22S7361",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10483",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-485",
+      "plateNumber": "OD22S7393",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10484",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-486",
+      "plateNumber": "OD22U0782",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10485",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-487",
+      "plateNumber": "OD22U6782",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10486",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-488",
+      "plateNumber": "OD23S7343",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "38.0 Tons",
+      "fuelCard": "CARD-OD-10487",
+      "health": 88,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-489",
+      "plateNumber": "OD23S7361",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "39.0 Tons",
+      "fuelCard": "CARD-OD-10488",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-490",
+      "plateNumber": "OD23S7393",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "40.0 Tons",
+      "fuelCard": "CARD-OD-10489",
+      "health": 76,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-491",
+      "plateNumber": "OD26G2496",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "41.0 Tons",
+      "fuelCard": "CARD-OD-10490",
+      "health": 87,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-492",
+      "plateNumber": "OD29M4713",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "42.0 Tons",
+      "fuelCard": "CARD-OD-10491",
+      "health": 90,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-493",
+      "plateNumber": "OD29N4713",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "31.0 Tons",
+      "fuelCard": "CARD-OD-10492",
+      "health": 80,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-494",
+      "plateNumber": "OD35C6737",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "32.0 Tons",
+      "fuelCard": "CARD-OD-10493",
+      "health": 98,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-495",
+      "plateNumber": "OD35D9677",
+      "model": "Volvo FMX 460",
+      "type": "Tipper",
+      "capacity": "33.0 Tons",
+      "fuelCard": "CARD-OD-10494",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-496",
+      "plateNumber": "OD35E7537",
+      "model": "Tata Prima 4028.S",
+      "type": "Tipper",
+      "capacity": "34.0 Tons",
+      "fuelCard": "CARD-OD-10495",
+      "health": 76,
+      "status": "ON_TRIP"
+    },
+    {
+      "id": "trk-497",
+      "plateNumber": "OR02BL6265",
+      "model": "Ashok Leyland U-4019",
+      "type": "Tipper",
+      "capacity": "35.0 Tons",
+      "fuelCard": "CARD-OD-10496",
+      "health": 75,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-498",
+      "plateNumber": "OR22F6345",
+      "model": "BharatBenz 4023T",
+      "type": "Tipper",
+      "capacity": "36.0 Tons",
+      "fuelCard": "CARD-OD-10497",
+      "health": 84,
+      "status": "AVAILABLE"
+    },
+    {
+      "id": "trk-499",
+      "plateNumber": "VEHICLE NO.",
+      "model": "Mahindra Blazo X 49",
+      "type": "Tipper",
+      "capacity": "37.0 Tons",
+      "fuelCard": "CARD-OD-10498",
+      "health": 93,
+      "status": "AVAILABLE"
+    }
+  ],
+  "drivers": [
+    {
+      "id": "drv-1",
+      "fullName": "Vijay Kumar",
+      "phone": "+919896233790",
+      "licenseNumber": "DL-2181241943",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-2",
+      "fullName": "Suresh Solanki",
+      "phone": "+919895285932",
+      "licenseNumber": "DL-9963334018",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-3",
+      "fullName": "Sanjay Yadav",
+      "phone": "+919334760738",
+      "licenseNumber": "DL-3585650756",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-4",
+      "fullName": "Devendra Mishra",
+      "phone": "+919336696312",
+      "licenseNumber": "DL-4733616459",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-5",
+      "fullName": "Vikram Bhati",
+      "phone": "+919553778756",
+      "licenseNumber": "DL-6756332150",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-6",
+      "fullName": "Gurpreet Sharma",
+      "phone": "+919199585092",
+      "licenseNumber": "DL-2631775357",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-7",
+      "fullName": "Manpreet Rao",
+      "phone": "+919384027113",
+      "licenseNumber": "DL-4466589567",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-8",
+      "fullName": "Devendra Sharma",
+      "phone": "+919506448196",
+      "licenseNumber": "DL-9928378856",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-9",
+      "fullName": "Naveen Shinde",
+      "phone": "+919488302652",
+      "licenseNumber": "DL-3479708607",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-10",
+      "fullName": "Ramesh Solanki",
+      "phone": "+919344703907",
+      "licenseNumber": "DL-8615270538",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-11",
+      "fullName": "Amit Jadhav",
+      "phone": "+919208449460",
+      "licenseNumber": "DL-6927597015",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-12",
+      "fullName": "Harpreet Patel",
+      "phone": "+919497478786",
+      "licenseNumber": "DL-2525876051",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-13",
+      "fullName": "Sunil Rao",
+      "phone": "+919781802744",
+      "licenseNumber": "DL-4131575764",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-14",
+      "fullName": "Jaspreet Nair",
+      "phone": "+919787194506",
+      "licenseNumber": "DL-1240251661",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-15",
+      "fullName": "Ashok Gupta",
+      "phone": "+919387484583",
+      "licenseNumber": "DL-1284277889",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-16",
+      "fullName": "Joginder Shinde",
+      "phone": "+919870854579",
+      "licenseNumber": "DL-2351531223",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-17",
+      "fullName": "Karan Shinde",
+      "phone": "+919790256940",
+      "licenseNumber": "DL-2970753705",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-18",
+      "fullName": "Sandip Naik",
+      "phone": "+919702764446",
+      "licenseNumber": "DL-7609857128",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-19",
+      "fullName": "Karthik Shinde",
+      "phone": "+919726563708",
+      "licenseNumber": "DL-7010379415",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-20",
+      "fullName": "Manoj Gill",
+      "phone": "+919629908599",
+      "licenseNumber": "DL-1470939445",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-21",
+      "fullName": "Karthik Rao",
+      "phone": "+919168212356",
+      "licenseNumber": "DL-6947530309",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-22",
+      "fullName": "Ravindra Gill",
+      "phone": "+919369953851",
+      "licenseNumber": "DL-9639245200",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-23",
+      "fullName": "Devendra Swamy",
+      "phone": "+919386501362",
+      "licenseNumber": "DL-2461042543",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-24",
+      "fullName": "Vikram Pandey",
+      "phone": "+919103484630",
+      "licenseNumber": "DL-4919706735",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-25",
+      "fullName": "Deepak Patil",
+      "phone": "+919786066793",
+      "licenseNumber": "DL-1854316681",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-26",
+      "fullName": "Vikram Dhillon",
+      "phone": "+919936043811",
+      "licenseNumber": "DL-4944899549",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-27",
+      "fullName": "Sukhdev Kumar",
+      "phone": "+919220117054",
+      "licenseNumber": "DL-9285415473",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-28",
+      "fullName": "Deepak Raja",
+      "phone": "+919162196678",
+      "licenseNumber": "DL-1338258951",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-29",
+      "fullName": "Sunil Swamy",
+      "phone": "+919671988889",
+      "licenseNumber": "DL-4289233844",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-30",
+      "fullName": "Balwinder Dhillon",
+      "phone": "+919277303722",
+      "licenseNumber": "DL-6633778586",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-31",
+      "fullName": "Harpreet Pandey",
+      "phone": "+919655742829",
+      "licenseNumber": "DL-2939118223",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-32",
+      "fullName": "Sunil Joshi",
+      "phone": "+919122585366",
+      "licenseNumber": "DL-1945826486",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-33",
+      "fullName": "Anil Raja",
+      "phone": "+919172370545",
+      "licenseNumber": "DL-4888749350",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-34",
+      "fullName": "Sunil Gill",
+      "phone": "+919355555531",
+      "licenseNumber": "DL-3084839399",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-35",
+      "fullName": "Joginder Saini",
+      "phone": "+919607526654",
+      "licenseNumber": "DL-2748309234",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-36",
+      "fullName": "Karthik Choudhary",
+      "phone": "+919554814084",
+      "licenseNumber": "DL-7060638140",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-37",
+      "fullName": "Anil Solanki",
+      "phone": "+919801642483",
+      "licenseNumber": "DL-1422701550",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-38",
+      "fullName": "Gurpreet Pillai",
+      "phone": "+919217326729",
+      "licenseNumber": "DL-2067970820",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-39",
+      "fullName": "Hari Verma",
+      "phone": "+919552991960",
+      "licenseNumber": "DL-6083042422",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-40",
+      "fullName": "Sunil Pandey",
+      "phone": "+919967607278",
+      "licenseNumber": "DL-3363629219",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-41",
+      "fullName": "Devendra Patil",
+      "phone": "+919115846122",
+      "licenseNumber": "DL-5161807235",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-42",
+      "fullName": "Sandip Patel",
+      "phone": "+919536383774",
+      "licenseNumber": "DL-7380780055",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-43",
+      "fullName": "Anil Patel",
+      "phone": "+919506919288",
+      "licenseNumber": "DL-6971815972",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-44",
+      "fullName": "Ravindra Das",
+      "phone": "+919554200826",
+      "licenseNumber": "DL-3090237817",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-45",
+      "fullName": "Manish Singh",
+      "phone": "+919721890096",
+      "licenseNumber": "DL-9851745355",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-46",
+      "fullName": "Anil Saini",
+      "phone": "+919611947770",
+      "licenseNumber": "DL-1676168421",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-47",
+      "fullName": "Dinesh Jadhav",
+      "phone": "+919299528037",
+      "licenseNumber": "DL-9884231465",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-48",
+      "fullName": "Sandip Gupta",
+      "phone": "+919228727266",
+      "licenseNumber": "DL-3446737272",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-49",
+      "fullName": "Ramesh Rao",
+      "phone": "+919188029013",
+      "licenseNumber": "DL-7540301973",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-50",
+      "fullName": "Manish Solanki",
+      "phone": "+919869005091",
+      "licenseNumber": "DL-2349409434",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-51",
+      "fullName": "Manoj Solanki",
+      "phone": "+919793101194",
+      "licenseNumber": "DL-6583444930",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-52",
+      "fullName": "Sunil Kumar",
+      "phone": "+919592080329",
+      "licenseNumber": "DL-1429416213",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-53",
+      "fullName": "Jagdish Nair",
+      "phone": "+919242224154",
+      "licenseNumber": "DL-9303285822",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-54",
+      "fullName": "Sandip Choudhary",
+      "phone": "+919406002884",
+      "licenseNumber": "DL-5972484792",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-55",
+      "fullName": "Deepak Rao",
+      "phone": "+919966616964",
+      "licenseNumber": "DL-9623534576",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-56",
+      "fullName": "Deepak Deshmukh",
+      "phone": "+919812308209",
+      "licenseNumber": "DL-4771526597",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-57",
+      "fullName": "Suresh Naik",
+      "phone": "+919694019365",
+      "licenseNumber": "DL-5962610986",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-58",
+      "fullName": "Manish Bhati",
+      "phone": "+919468164906",
+      "licenseNumber": "DL-7393195616",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-59",
+      "fullName": "Anil Yadav",
+      "phone": "+919781057736",
+      "licenseNumber": "DL-2188332531",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-60",
+      "fullName": "Manoj Rathore",
+      "phone": "+919381272327",
+      "licenseNumber": "DL-8325785916",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-61",
+      "fullName": "Vijay Yadav",
+      "phone": "+919841976666",
+      "licenseNumber": "DL-4882343658",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-62",
+      "fullName": "Harpreet Saini",
+      "phone": "+919693269304",
+      "licenseNumber": "DL-5931025271",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-63",
+      "fullName": "Deepak Choudhary",
+      "phone": "+919954829815",
+      "licenseNumber": "DL-2536778950",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-64",
+      "fullName": "Suresh Choudhary",
+      "phone": "+919937643439",
+      "licenseNumber": "DL-9051829827",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-65",
+      "fullName": "Rahul Deshmukh",
+      "phone": "+919354194771",
+      "licenseNumber": "DL-4713453204",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-66",
+      "fullName": "Ajay Shinde",
+      "phone": "+919542697755",
+      "licenseNumber": "DL-1106456634",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-67",
+      "fullName": "Arjun Pillai",
+      "phone": "+919819307302",
+      "licenseNumber": "DL-4482141802",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-68",
+      "fullName": "Suresh Gupta",
+      "phone": "+919141580226",
+      "licenseNumber": "DL-8982597239",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-69",
+      "fullName": "Ravindra Choudhary",
+      "phone": "+919427696198",
+      "licenseNumber": "DL-4742303947",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-70",
+      "fullName": "Santosh Gupta",
+      "phone": "+919452468587",
+      "licenseNumber": "DL-8616379926",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-71",
+      "fullName": "Jagdish Gupta",
+      "phone": "+919829627019",
+      "licenseNumber": "DL-7597996327",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-72",
+      "fullName": "Vijay Shinde",
+      "phone": "+919380477683",
+      "licenseNumber": "DL-2140169349",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-73",
+      "fullName": "Ashok Mishra",
+      "phone": "+919750911797",
+      "licenseNumber": "DL-5791662169",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-74",
+      "fullName": "Santosh Nair",
+      "phone": "+919147659674",
+      "licenseNumber": "DL-8339176912",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-75",
+      "fullName": "Devendra Solanki",
+      "phone": "+919872482077",
+      "licenseNumber": "DL-6141226746",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-76",
+      "fullName": "Gurpreet Rao",
+      "phone": "+919437064353",
+      "licenseNumber": "DL-9160639027",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-77",
+      "fullName": "Arjun Joshi",
+      "phone": "+919532074125",
+      "licenseNumber": "DL-8289454630",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-78",
+      "fullName": "Santosh Mishra",
+      "phone": "+919813962536",
+      "licenseNumber": "DL-9333798503",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-79",
+      "fullName": "Ajay Rao",
+      "phone": "+919711072118",
+      "licenseNumber": "DL-6587537178",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-80",
+      "fullName": "Rajesh Das",
+      "phone": "+919408071259",
+      "licenseNumber": "DL-6197695041",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-81",
+      "fullName": "Mohan Rathore",
+      "phone": "+919446012478",
+      "licenseNumber": "DL-7292076361",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-82",
+      "fullName": "Manish Gill",
+      "phone": "+919608079792",
+      "licenseNumber": "DL-4160930353",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-83",
+      "fullName": "Pankaj Gill",
+      "phone": "+919812807629",
+      "licenseNumber": "DL-2439622619",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-84",
+      "fullName": "Sandip Solanki",
+      "phone": "+919433310361",
+      "licenseNumber": "DL-1855256552",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-85",
+      "fullName": "Sandip Mehta",
+      "phone": "+919756350429",
+      "licenseNumber": "DL-5607762160",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-86",
+      "fullName": "Joginder Reddy",
+      "phone": "+919871318048",
+      "licenseNumber": "DL-8285786023",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-87",
+      "fullName": "Sandip Verma",
+      "phone": "+919804436922",
+      "licenseNumber": "DL-3953315788",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-88",
+      "fullName": "Suresh Swamy",
+      "phone": "+919556497252",
+      "licenseNumber": "DL-1939915527",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-89",
+      "fullName": "Mahendra Pandey",
+      "phone": "+919153921577",
+      "licenseNumber": "DL-3394039673",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-90",
+      "fullName": "Vijay Pandey",
+      "phone": "+919243171768",
+      "licenseNumber": "DL-8737025391",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-91",
+      "fullName": "Kiran Rao",
+      "phone": "+919440696084",
+      "licenseNumber": "DL-9123612497",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-92",
+      "fullName": "Jagdish Mishra",
+      "phone": "+919991816852",
+      "licenseNumber": "DL-8995059760",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-93",
+      "fullName": "Sandip Patil",
+      "phone": "+919784683755",
+      "licenseNumber": "DL-6322520473",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-94",
+      "fullName": "Pankaj Raja",
+      "phone": "+919391751878",
+      "licenseNumber": "DL-6737421496",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-95",
+      "fullName": "Dinesh Verma",
+      "phone": "+919261953189",
+      "licenseNumber": "DL-6288227800",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-96",
+      "fullName": "Manish Yadav",
+      "phone": "+919545461013",
+      "licenseNumber": "DL-7045593274",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-97",
+      "fullName": "Arjun Singh",
+      "phone": "+919322086735",
+      "licenseNumber": "DL-8872207630",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-98",
+      "fullName": "Lalit Bhati",
+      "phone": "+919120972273",
+      "licenseNumber": "DL-6928691380",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-99",
+      "fullName": "Manpreet Das",
+      "phone": "+919909037759",
+      "licenseNumber": "DL-8884394611",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-100",
+      "fullName": "Devendra Pillai",
+      "phone": "+919747737533",
+      "licenseNumber": "DL-4856070374",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-101",
+      "fullName": "Satish Mishra",
+      "phone": "+919621454127",
+      "licenseNumber": "DL-5419627962",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-102",
+      "fullName": "Karan Naik",
+      "phone": "+919277215428",
+      "licenseNumber": "DL-8904911624",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-103",
+      "fullName": "Naveen Dhillon",
+      "phone": "+919128955006",
+      "licenseNumber": "DL-9190197115",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-104",
+      "fullName": "Karthik Verma",
+      "phone": "+919595744935",
+      "licenseNumber": "DL-1780520225",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-105",
+      "fullName": "Ashok Reddy",
+      "phone": "+919588229686",
+      "licenseNumber": "DL-6698759353",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-106",
+      "fullName": "Arjun Nair",
+      "phone": "+919996478772",
+      "licenseNumber": "DL-5646751885",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-107",
+      "fullName": "Devendra Singh",
+      "phone": "+919475767056",
+      "licenseNumber": "DL-2062073697",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-108",
+      "fullName": "Naveen Verma",
+      "phone": "+919356135680",
+      "licenseNumber": "DL-5837082260",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-109",
+      "fullName": "Ravindra Bhati",
+      "phone": "+919375139575",
+      "licenseNumber": "DL-8588769565",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-110",
+      "fullName": "Mohan Naik",
+      "phone": "+919871330207",
+      "licenseNumber": "DL-4518871744",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-111",
+      "fullName": "Suresh Saini",
+      "phone": "+919127571992",
+      "licenseNumber": "DL-9284507318",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-112",
+      "fullName": "Jaspreet Gupta",
+      "phone": "+919867741192",
+      "licenseNumber": "DL-1851819913",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-113",
+      "fullName": "Sandip Sharma",
+      "phone": "+919848605284",
+      "licenseNumber": "DL-8612747444",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-114",
+      "fullName": "Mohan Pillai",
+      "phone": "+919229981882",
+      "licenseNumber": "DL-5471357886",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-115",
+      "fullName": "Harpreet Yadav",
+      "phone": "+919643271261",
+      "licenseNumber": "DL-8076144396",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-116",
+      "fullName": "Arjun Patil",
+      "phone": "+919626350075",
+      "licenseNumber": "DL-5748253283",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-117",
+      "fullName": "Rahul Mishra",
+      "phone": "+919289125618",
+      "licenseNumber": "DL-7371573279",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-118",
+      "fullName": "Lalit Nair",
+      "phone": "+919446071904",
+      "licenseNumber": "DL-4658080160",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-119",
+      "fullName": "Dinesh Nair",
+      "phone": "+919584044963",
+      "licenseNumber": "DL-6922713963",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-120",
+      "fullName": "Ashok Patel",
+      "phone": "+919623502759",
+      "licenseNumber": "DL-6206015111",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-121",
+      "fullName": "Gurpreet Nair",
+      "phone": "+919740116562",
+      "licenseNumber": "DL-9633533290",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-122",
+      "fullName": "Dinesh Raja",
+      "phone": "+919873174285",
+      "licenseNumber": "DL-7040562787",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-123",
+      "fullName": "Sandip Bhati",
+      "phone": "+919611201082",
+      "licenseNumber": "DL-7403028869",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-124",
+      "fullName": "Dinesh Das",
+      "phone": "+919337937327",
+      "licenseNumber": "DL-6339955011",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-125",
+      "fullName": "Harpreet Mehta",
+      "phone": "+919694287057",
+      "licenseNumber": "DL-7575259637",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-126",
+      "fullName": "Kiran Joshi",
+      "phone": "+919477753674",
+      "licenseNumber": "DL-8313706299",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-127",
+      "fullName": "Pradeep Raja",
+      "phone": "+919229553265",
+      "licenseNumber": "DL-4097892639",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-128",
+      "fullName": "Ajay Reddy",
+      "phone": "+919332341238",
+      "licenseNumber": "DL-8467250120",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-129",
+      "fullName": "Lalit Swamy",
+      "phone": "+919663324548",
+      "licenseNumber": "DL-7858164010",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-130",
+      "fullName": "Santosh Das",
+      "phone": "+919344258191",
+      "licenseNumber": "DL-2549972386",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-131",
+      "fullName": "Devendra Verma",
+      "phone": "+919394539550",
+      "licenseNumber": "DL-9824122054",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-132",
+      "fullName": "Sukhdev Sharma",
+      "phone": "+919113169872",
+      "licenseNumber": "DL-7760554363",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-133",
+      "fullName": "Hari Joshi",
+      "phone": "+919297958983",
+      "licenseNumber": "DL-5146780827",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-134",
+      "fullName": "Balwinder Sharma",
+      "phone": "+919982739959",
+      "licenseNumber": "DL-5575615203",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-135",
+      "fullName": "Joginder Rathore",
+      "phone": "+919837071174",
+      "licenseNumber": "DL-1230249217",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-136",
+      "fullName": "Joginder Das",
+      "phone": "+919191462297",
+      "licenseNumber": "DL-5268845844",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-137",
+      "fullName": "Arjun Rao",
+      "phone": "+919740086326",
+      "licenseNumber": "DL-7539399243",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-138",
+      "fullName": "Hari Das",
+      "phone": "+919731924051",
+      "licenseNumber": "DL-9547119184",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-139",
+      "fullName": "Naveen Singh",
+      "phone": "+919754586204",
+      "licenseNumber": "DL-4275930923",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-140",
+      "fullName": "Pradeep Solanki",
+      "phone": "+919187174381",
+      "licenseNumber": "DL-1674555072",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-141",
+      "fullName": "Sunil Patel",
+      "phone": "+919102873038",
+      "licenseNumber": "DL-7049536909",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-142",
+      "fullName": "Balwinder Das",
+      "phone": "+919135046782",
+      "licenseNumber": "DL-6289150149",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-143",
+      "fullName": "Ravindra Yadav",
+      "phone": "+919838073939",
+      "licenseNumber": "DL-6144594354",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-144",
+      "fullName": "Amit Rathore",
+      "phone": "+919259976144",
+      "licenseNumber": "DL-9196564761",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-145",
+      "fullName": "Sunil Singh",
+      "phone": "+919278158234",
+      "licenseNumber": "DL-8699281063",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-146",
+      "fullName": "Joginder Deshmukh",
+      "phone": "+919409893263",
+      "licenseNumber": "DL-2886149718",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-147",
+      "fullName": "Deepak Bhati",
+      "phone": "+919532190231",
+      "licenseNumber": "DL-9343730920",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-148",
+      "fullName": "Sukhdev Pandey",
+      "phone": "+919186373782",
+      "licenseNumber": "DL-3568547910",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-149",
+      "fullName": "Ashok Rao",
+      "phone": "+919368830491",
+      "licenseNumber": "DL-1111088881",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-150",
+      "fullName": "Sanjay Swamy",
+      "phone": "+919821856853",
+      "licenseNumber": "DL-8822944679",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-151",
+      "fullName": "Ajay Mehta",
+      "phone": "+919657233178",
+      "licenseNumber": "DL-8093179263",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-152",
+      "fullName": "Ajay Saini",
+      "phone": "+919568027936",
+      "licenseNumber": "DL-5686850445",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-153",
+      "fullName": "Gurpreet Joshi",
+      "phone": "+919819550381",
+      "licenseNumber": "DL-5985704790",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-154",
+      "fullName": "Sukhdev Das",
+      "phone": "+919811443654",
+      "licenseNumber": "DL-9354542654",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-155",
+      "fullName": "Kiran Singh",
+      "phone": "+919588365604",
+      "licenseNumber": "DL-5673181221",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-156",
+      "fullName": "Vijay Swamy",
+      "phone": "+919533979662",
+      "licenseNumber": "DL-9594878379",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-157",
+      "fullName": "Ravindra Mishra",
+      "phone": "+919158201193",
+      "licenseNumber": "DL-8543865915",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-158",
+      "fullName": "Anil Reddy",
+      "phone": "+919386749454",
+      "licenseNumber": "DL-3358880404",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-159",
+      "fullName": "Hari Shinde",
+      "phone": "+919849740261",
+      "licenseNumber": "DL-3081821325",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-160",
+      "fullName": "Vikram Das",
+      "phone": "+919691458887",
+      "licenseNumber": "DL-9648665968",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-161",
+      "fullName": "Amit Patil",
+      "phone": "+919221827951",
+      "licenseNumber": "DL-4574027737",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-162",
+      "fullName": "Balwinder Mehta",
+      "phone": "+919361704064",
+      "licenseNumber": "DL-5916199809",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-163",
+      "fullName": "Mohan Gill",
+      "phone": "+919901325519",
+      "licenseNumber": "DL-4776677517",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-164",
+      "fullName": "Satish Swamy",
+      "phone": "+919948262678",
+      "licenseNumber": "DL-8964640525",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-165",
+      "fullName": "Lalit Saini",
+      "phone": "+919808605988",
+      "licenseNumber": "DL-5933179746",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-166",
+      "fullName": "Manpreet Joshi",
+      "phone": "+919692616814",
+      "licenseNumber": "DL-6915072151",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-167",
+      "fullName": "Santosh Bhati",
+      "phone": "+919356415500",
+      "licenseNumber": "DL-7750819485",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-168",
+      "fullName": "Ashok Naik",
+      "phone": "+919607854378",
+      "licenseNumber": "DL-8779941999",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-169",
+      "fullName": "Rahul Mehta",
+      "phone": "+919139749508",
+      "licenseNumber": "DL-8924383984",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-170",
+      "fullName": "Ravindra Kumar",
+      "phone": "+919875718152",
+      "licenseNumber": "DL-5914110094",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-171",
+      "fullName": "Rahul Yadav",
+      "phone": "+919604111692",
+      "licenseNumber": "DL-6433231472",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-172",
+      "fullName": "Karan Rathore",
+      "phone": "+919186237917",
+      "licenseNumber": "DL-8953271391",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-173",
+      "fullName": "Devendra Gupta",
+      "phone": "+919440012324",
+      "licenseNumber": "DL-3323646093",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-174",
+      "fullName": "Sandip Rathore",
+      "phone": "+919834868441",
+      "licenseNumber": "DL-9250327663",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-175",
+      "fullName": "Dinesh Mishra",
+      "phone": "+919205702499",
+      "licenseNumber": "DL-5726642606",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-176",
+      "fullName": "Deepak Shinde",
+      "phone": "+919131081879",
+      "licenseNumber": "DL-5492496998",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-177",
+      "fullName": "Pankaj Choudhary",
+      "phone": "+919502482554",
+      "licenseNumber": "DL-2849785671",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-178",
+      "fullName": "Arjun Saini",
+      "phone": "+919832077572",
+      "licenseNumber": "DL-4403845222",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-179",
+      "fullName": "Dinesh Rao",
+      "phone": "+919510753814",
+      "licenseNumber": "DL-6329323383",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-180",
+      "fullName": "Rahul Raja",
+      "phone": "+919595155950",
+      "licenseNumber": "DL-8034746821",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-181",
+      "fullName": "Rajesh Shinde",
+      "phone": "+919963968184",
+      "licenseNumber": "DL-3347621138",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-182",
+      "fullName": "Manpreet Saini",
+      "phone": "+919421214426",
+      "licenseNumber": "DL-6369130994",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-183",
+      "fullName": "Joginder Choudhary",
+      "phone": "+919717199615",
+      "licenseNumber": "DL-8298348088",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-184",
+      "fullName": "Karan Nair",
+      "phone": "+919108695125",
+      "licenseNumber": "DL-4431078106",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-185",
+      "fullName": "Manpreet Raja",
+      "phone": "+919783563240",
+      "licenseNumber": "DL-5464285982",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-186",
+      "fullName": "Ramesh Saini",
+      "phone": "+919491766764",
+      "licenseNumber": "DL-4145461251",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-187",
+      "fullName": "Pankaj Joshi",
+      "phone": "+919902601465",
+      "licenseNumber": "DL-2784572192",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-188",
+      "fullName": "Devendra Shinde",
+      "phone": "+919492836532",
+      "licenseNumber": "DL-9218363978",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-189",
+      "fullName": "Pradeep Deshmukh",
+      "phone": "+919985503942",
+      "licenseNumber": "DL-9350223102",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-190",
+      "fullName": "Pankaj Naik",
+      "phone": "+919463692735",
+      "licenseNumber": "DL-4454152476",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-191",
+      "fullName": "Sunil Verma",
+      "phone": "+919909763993",
+      "licenseNumber": "DL-5151086814",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-192",
+      "fullName": "Karan Jadhav",
+      "phone": "+919963919401",
+      "licenseNumber": "DL-7688606771",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-193",
+      "fullName": "Karan Kumar",
+      "phone": "+919383960237",
+      "licenseNumber": "DL-3304560537",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-194",
+      "fullName": "Pradeep Saini",
+      "phone": "+919509123009",
+      "licenseNumber": "DL-9333490239",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-195",
+      "fullName": "Amit Mehta",
+      "phone": "+919126870011",
+      "licenseNumber": "DL-3620283102",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-196",
+      "fullName": "Ravindra Deshmukh",
+      "phone": "+919852775879",
+      "licenseNumber": "DL-2753617371",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-197",
+      "fullName": "Ramesh Das",
+      "phone": "+919628951656",
+      "licenseNumber": "DL-1498733671",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-198",
+      "fullName": "Jaspreet Pandey",
+      "phone": "+919498370582",
+      "licenseNumber": "DL-9381721143",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-199",
+      "fullName": "Harpreet Reddy",
+      "phone": "+919576078963",
+      "licenseNumber": "DL-2557724698",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-200",
+      "fullName": "Harpreet Dhillon",
+      "phone": "+919792377512",
+      "licenseNumber": "DL-2540492440",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-201",
+      "fullName": "Santosh Sharma",
+      "phone": "+919984968439",
+      "licenseNumber": "DL-2952996248",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-202",
+      "fullName": "Mohan Kumar",
+      "phone": "+919154308262",
+      "licenseNumber": "DL-8674224347",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-203",
+      "fullName": "Manoj Pillai",
+      "phone": "+919706210987",
+      "licenseNumber": "DL-1881351238",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-204",
+      "fullName": "Kiran Reddy",
+      "phone": "+919729624046",
+      "licenseNumber": "DL-4735313433",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-205",
+      "fullName": "Rahul Pillai",
+      "phone": "+919739930411",
+      "licenseNumber": "DL-5307145891",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-206",
+      "fullName": "Rahul Verma",
+      "phone": "+919680051935",
+      "licenseNumber": "DL-1749459431",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-207",
+      "fullName": "Sanjay Verma",
+      "phone": "+919115956152",
+      "licenseNumber": "DL-4386287675",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-208",
+      "fullName": "Sanjay Patel",
+      "phone": "+919384936197",
+      "licenseNumber": "DL-1225052083",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-209",
+      "fullName": "Mahendra Sharma",
+      "phone": "+919900651998",
+      "licenseNumber": "DL-5567946981",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-210",
+      "fullName": "Harpreet Gill",
+      "phone": "+919737444033",
+      "licenseNumber": "DL-5763350700",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-211",
+      "fullName": "Mahendra Das",
+      "phone": "+919591819409",
+      "licenseNumber": "DL-1133790981",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-212",
+      "fullName": "Karan Mishra",
+      "phone": "+919836691577",
+      "licenseNumber": "DL-5758659815",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-213",
+      "fullName": "Hari Yadav",
+      "phone": "+919186748119",
+      "licenseNumber": "DL-1637088959",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-214",
+      "fullName": "Naveen Rathore",
+      "phone": "+919728530544",
+      "licenseNumber": "DL-6691628146",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-215",
+      "fullName": "Mohan Mishra",
+      "phone": "+919206492059",
+      "licenseNumber": "DL-4717261214",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-216",
+      "fullName": "Amit Mishra",
+      "phone": "+919463925049",
+      "licenseNumber": "DL-8848705807",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-217",
+      "fullName": "Suresh Joshi",
+      "phone": "+919558234365",
+      "licenseNumber": "DL-6389710636",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-218",
+      "fullName": "Balwinder Yadav",
+      "phone": "+919197951867",
+      "licenseNumber": "DL-4572433066",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-219",
+      "fullName": "Harpreet Pillai",
+      "phone": "+919239710404",
+      "licenseNumber": "DL-3389594115",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-220",
+      "fullName": "Kiran Dhillon",
+      "phone": "+919453954673",
+      "licenseNumber": "DL-3877685081",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-221",
+      "fullName": "Karthik Jadhav",
+      "phone": "+919874233009",
+      "licenseNumber": "DL-6636925105",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-222",
+      "fullName": "Jagdish Reddy",
+      "phone": "+919266140258",
+      "licenseNumber": "DL-8115628227",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-223",
+      "fullName": "Kiran Choudhary",
+      "phone": "+919223357166",
+      "licenseNumber": "DL-8570333548",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-224",
+      "fullName": "Kiran Swamy",
+      "phone": "+919978779150",
+      "licenseNumber": "DL-3391179068",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-225",
+      "fullName": "Satish Kumar",
+      "phone": "+919293720285",
+      "licenseNumber": "DL-8569491238",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-226",
+      "fullName": "Manpreet Kumar",
+      "phone": "+919294782734",
+      "licenseNumber": "DL-4736031885",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-227",
+      "fullName": "Karan Yadav",
+      "phone": "+919252336745",
+      "licenseNumber": "DL-5173893550",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-228",
+      "fullName": "Mahendra Reddy",
+      "phone": "+919503935666",
+      "licenseNumber": "DL-7098134112",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-229",
+      "fullName": "Harpreet Das",
+      "phone": "+919874807770",
+      "licenseNumber": "DL-3560761628",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-230",
+      "fullName": "Rahul Patel",
+      "phone": "+919910069356",
+      "licenseNumber": "DL-3653594796",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-231",
+      "fullName": "Satish Pandey",
+      "phone": "+919810751262",
+      "licenseNumber": "DL-7116096874",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-232",
+      "fullName": "Manish Swamy",
+      "phone": "+919650127661",
+      "licenseNumber": "DL-5783809766",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-233",
+      "fullName": "Pankaj Solanki",
+      "phone": "+919828519068",
+      "licenseNumber": "DL-7842459488",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-234",
+      "fullName": "Deepak Singh",
+      "phone": "+919336779871",
+      "licenseNumber": "DL-3574081104",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-235",
+      "fullName": "Deepak Reddy",
+      "phone": "+919923935280",
+      "licenseNumber": "DL-6392415228",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-236",
+      "fullName": "Rajesh Mehta",
+      "phone": "+919902100304",
+      "licenseNumber": "DL-2849649210",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-237",
+      "fullName": "Devendra Bhati",
+      "phone": "+919347079497",
+      "licenseNumber": "DL-8757570742",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-238",
+      "fullName": "Ramesh Mishra",
+      "phone": "+919120123575",
+      "licenseNumber": "DL-8044354825",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-239",
+      "fullName": "Naveen Pandey",
+      "phone": "+919993381017",
+      "licenseNumber": "DL-2554145481",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-240",
+      "fullName": "Suresh Raja",
+      "phone": "+919567804106",
+      "licenseNumber": "DL-7824150224",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-241",
+      "fullName": "Deepak Naik",
+      "phone": "+919464549612",
+      "licenseNumber": "DL-6246612046",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-242",
+      "fullName": "Vijay Gill",
+      "phone": "+919647556857",
+      "licenseNumber": "DL-8628842157",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-243",
+      "fullName": "Suresh Verma",
+      "phone": "+919374843786",
+      "licenseNumber": "DL-1847275937",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-244",
+      "fullName": "Joginder Swamy",
+      "phone": "+919722199123",
+      "licenseNumber": "DL-7977267911",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-245",
+      "fullName": "Ashok Verma",
+      "phone": "+919572191734",
+      "licenseNumber": "DL-5588254555",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-246",
+      "fullName": "Deepak Pillai",
+      "phone": "+919394928601",
+      "licenseNumber": "DL-3540128512",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-247",
+      "fullName": "Sunil Das",
+      "phone": "+919595792218",
+      "licenseNumber": "DL-2940955281",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-248",
+      "fullName": "Pankaj Yadav",
+      "phone": "+919792205349",
+      "licenseNumber": "DL-4673457063",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-249",
+      "fullName": "Ravindra Saini",
+      "phone": "+919695192667",
+      "licenseNumber": "DL-5471158508",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-250",
+      "fullName": "Santosh Joshi",
+      "phone": "+919749620068",
+      "licenseNumber": "DL-5560712830",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-251",
+      "fullName": "Gurpreet Bhati",
+      "phone": "+919190547712",
+      "licenseNumber": "DL-1741134891",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-252",
+      "fullName": "Hari Pandey",
+      "phone": "+919662714327",
+      "licenseNumber": "DL-5976777081",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-253",
+      "fullName": "Pankaj Gupta",
+      "phone": "+919538912794",
+      "licenseNumber": "DL-8621268224",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-254",
+      "fullName": "Anil Pillai",
+      "phone": "+919777409303",
+      "licenseNumber": "DL-8075122626",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-255",
+      "fullName": "Suresh Dhillon",
+      "phone": "+919828404274",
+      "licenseNumber": "DL-6955247915",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-256",
+      "fullName": "Mohan Jadhav",
+      "phone": "+919261462131",
+      "licenseNumber": "DL-2431779064",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-257",
+      "fullName": "Karan Verma",
+      "phone": "+919738920648",
+      "licenseNumber": "DL-5658832688",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-258",
+      "fullName": "Gurpreet Patil",
+      "phone": "+919237217505",
+      "licenseNumber": "DL-3260842187",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-259",
+      "fullName": "Karthik Gill",
+      "phone": "+919488509962",
+      "licenseNumber": "DL-5373266871",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-260",
+      "fullName": "Manish Joshi",
+      "phone": "+919922653967",
+      "licenseNumber": "DL-3088517710",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-261",
+      "fullName": "Manoj Verma",
+      "phone": "+919182855381",
+      "licenseNumber": "DL-4384950377",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-262",
+      "fullName": "Mahendra Singh",
+      "phone": "+919810741110",
+      "licenseNumber": "DL-2617999521",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-263",
+      "fullName": "Naveen Pillai",
+      "phone": "+919277746324",
+      "licenseNumber": "DL-8392424691",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-264",
+      "fullName": "Harpreet Solanki",
+      "phone": "+919872649234",
+      "licenseNumber": "DL-2928130926",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-265",
+      "fullName": "Balwinder Shinde",
+      "phone": "+919996696177",
+      "licenseNumber": "DL-6128260438",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-266",
+      "fullName": "Joginder Pandey",
+      "phone": "+919595725097",
+      "licenseNumber": "DL-8599680717",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-267",
+      "fullName": "Jagdish Gill",
+      "phone": "+919549533634",
+      "licenseNumber": "DL-5150090143",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-268",
+      "fullName": "Mohan Verma",
+      "phone": "+919368438908",
+      "licenseNumber": "DL-9814045133",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-269",
+      "fullName": "Suresh Bhati",
+      "phone": "+919653953485",
+      "licenseNumber": "DL-4655730355",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-270",
+      "fullName": "Vikram Nair",
+      "phone": "+919582452834",
+      "licenseNumber": "DL-2878930355",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-271",
+      "fullName": "Manpreet Deshmukh",
+      "phone": "+919128636900",
+      "licenseNumber": "DL-2781968664",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-272",
+      "fullName": "Harpreet Raja",
+      "phone": "+919514642708",
+      "licenseNumber": "DL-5271453859",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-273",
+      "fullName": "Sanjay Joshi",
+      "phone": "+919206389694",
+      "licenseNumber": "DL-8086527181",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-274",
+      "fullName": "Manoj Singh",
+      "phone": "+919408034406",
+      "licenseNumber": "DL-4569592370",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-275",
+      "fullName": "Balwinder Pandey",
+      "phone": "+919760725160",
+      "licenseNumber": "DL-1340272119",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-276",
+      "fullName": "Rahul Dhillon",
+      "phone": "+919880862406",
+      "licenseNumber": "DL-2817865363",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-277",
+      "fullName": "Sandip Das",
+      "phone": "+919230833665",
+      "licenseNumber": "DL-1205082311",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-278",
+      "fullName": "Sunil Sharma",
+      "phone": "+919998386592",
+      "licenseNumber": "DL-9182543558",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-279",
+      "fullName": "Sanjay Rathore",
+      "phone": "+919653380476",
+      "licenseNumber": "DL-3469810046",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-280",
+      "fullName": "Pankaj Mishra",
+      "phone": "+919101679695",
+      "licenseNumber": "DL-7935554354",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-281",
+      "fullName": "Arjun Patel",
+      "phone": "+919813363254",
+      "licenseNumber": "DL-3869961166",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-282",
+      "fullName": "Mahendra Dhillon",
+      "phone": "+919644738967",
+      "licenseNumber": "DL-5382302465",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-283",
+      "fullName": "Ramesh Rathore",
+      "phone": "+919515410649",
+      "licenseNumber": "DL-9508499533",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-284",
+      "fullName": "Sanjay Choudhary",
+      "phone": "+919946666926",
+      "licenseNumber": "DL-5585133383",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-285",
+      "fullName": "Lalit Naik",
+      "phone": "+919912477810",
+      "licenseNumber": "DL-2428156550",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-286",
+      "fullName": "Devendra Joshi",
+      "phone": "+919973498494",
+      "licenseNumber": "DL-3760786161",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-287",
+      "fullName": "Balwinder Rathore",
+      "phone": "+919295719504",
+      "licenseNumber": "DL-4485356009",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-288",
+      "fullName": "Ravindra Singh",
+      "phone": "+919415081566",
+      "licenseNumber": "DL-1865826728",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-289",
+      "fullName": "Ramesh Joshi",
+      "phone": "+919432941445",
+      "licenseNumber": "DL-7508522951",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-290",
+      "fullName": "Devendra Mehta",
+      "phone": "+919371993587",
+      "licenseNumber": "DL-3778416511",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-291",
+      "fullName": "Anil Jadhav",
+      "phone": "+919804086195",
+      "licenseNumber": "DL-6720572969",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-292",
+      "fullName": "Harpreet Mishra",
+      "phone": "+919529520110",
+      "licenseNumber": "DL-8487449580",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-293",
+      "fullName": "Jaspreet Joshi",
+      "phone": "+919300593456",
+      "licenseNumber": "DL-7431813987",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-294",
+      "fullName": "Mahendra Nair",
+      "phone": "+919960226208",
+      "licenseNumber": "DL-9944748312",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-295",
+      "fullName": "Ajay Dhillon",
+      "phone": "+919415429295",
+      "licenseNumber": "DL-2379592595",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-296",
+      "fullName": "Pankaj Das",
+      "phone": "+919578798403",
+      "licenseNumber": "DL-2830154607",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-297",
+      "fullName": "Manpreet Pandey",
+      "phone": "+919145478504",
+      "licenseNumber": "DL-9210290540",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-298",
+      "fullName": "Karthik Nair",
+      "phone": "+919786624943",
+      "licenseNumber": "DL-5071218314",
+      "status": "ON_TRIP",
+      "verified": true
+    },
+    {
+      "id": "drv-299",
+      "fullName": "Karan Choudhary",
+      "phone": "+919650921917",
+      "licenseNumber": "DL-3918046336",
+      "status": "AVAILABLE",
+      "verified": true
+    },
+    {
+      "id": "drv-300",
+      "fullName": "Rahul Jadhav",
+      "phone": "+919752376434",
+      "licenseNumber": "DL-2881937953",
+      "status": "AVAILABLE",
+      "verified": true
+    }
+  ],
+  "purchaseOrders": [
+    {
+      "id": "po-vedanta-prmndpr",
+      "poNumber": "PO-VEDANTA-PRMNDPR-01",
+      "clientName": "Vedanta Limited (Lanjigarh)",
+      "commodity": "Fly Ash (Grade I)",
+      "totalQuantityTons": 500000.0,
+      "allocatedQuantityTons": 191764.62000000034,
+      "ratePerTon": 240.0,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "po-vedanta-drmgrh",
+      "poNumber": "PO-VEDANTA-DRMGRH-02",
+      "clientName": "Vedanta Limited (Lanjigarh)",
+      "commodity": "Pond Ash (Grade II)",
+      "totalQuantityTons": 300000.0,
+      "allocatedQuantityTons": 172193.59000000008,
+      "ratePerTon": 280.0,
+      "status": "ACTIVE"
+    }
+  ],
   "trips": [],
   "weighTickets": []
 }

@@ -110,7 +110,12 @@ const getPoSourceDestination = (poNumber: string) => {
       source: 'Jaipur Cement Works, Rajasthan',
       destination: 'Ahmedabad Stockyard, Gujarat',
     };
-  } else if (num.includes('VEDANTA')) {
+  } else if (num.includes('DRMGRH') || num.includes('DHARAMGARH')) {
+    return {
+      source: 'Vedanta Lanjigarh Plant',
+      destination: 'Dharamgarh Terminal',
+    };
+  } else if (num.includes('PRMNDPR') || num.includes('PARAMANANDPUR') || num.includes('VEDANTA')) {
     return {
       source: 'Vedanta Lanjigarh Plant',
       destination: 'Paramanandpur Stockyard',
@@ -805,7 +810,9 @@ export default function TripsPage() {
                 <div>
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-[10px] font-bold text-brand-secondary font-mono tracking-wider">{po.poNumber}</span>
+                      <span className="text-[10px] font-bold text-brand-secondary font-mono tracking-wider">
+                        {po.poNumber === 'PO-VEDANTA-PRMNDPR-01' ? 'PO Lanjigarh - Paramanadpur' : po.poNumber === 'PO-VEDANTA-DRMGRH-02' ? 'PO Lanjigarh - Dharamgarh' : po.poNumber}
+                      </span>
                       <div className="text-xs font-bold text-slate-800 mt-1 truncate">{po.clientName}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5">{po.commodity}</div>
                     </div>
@@ -1068,9 +1075,17 @@ export default function TripsPage() {
                     <option value="">Choose active PO...</option>
                     {purchaseOrders
                       .filter(po => !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh'))
-                      .map(po => (
-                        <option key={po.id} value={po.id}>{po.poNumber} ({po.clientName})</option>
-                    ))}
+                      .map(po => {
+                        let labelText = `${po.poNumber} (${po.clientName})`;
+                        if (po.poNumber === 'PO-VEDANTA-PRMNDPR-01') {
+                          labelText = 'PO Lanjigarh - Paramanadpur';
+                        } else if (po.poNumber === 'PO-VEDANTA-DRMGRH-02') {
+                          labelText = 'PO Lanjigarh - Dharamgarh';
+                        }
+                        return (
+                          <option key={po.id} value={po.id}>{labelText}</option>
+                        );
+                      })}
                   </select>
                 </div>
                 <div>
