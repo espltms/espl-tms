@@ -214,9 +214,8 @@ export default function TripsPage() {
   const applyTruckSelection = (selectedTruck: typeof trucks[number]) => {
     setTruckId(selectedTruck.id);
     setVehicleType(selectedTruck.type || 'Tipper');
-    if (selectedTruck.vendor) {
-      setVendorName(prev => prev || selectedTruck.vendor || '');
-    }
+    setVendorName(selectedTruck.vendor || 'Vendor 1');
+    setEstimatedQuantity(selectedTruck.capacity || '40.00');
   };
 
   const findTruckForDriver = (selectedDriverId: string) => {
@@ -663,14 +662,12 @@ export default function TripsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Estimated Weight (Tons)</label>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Estimated Weight (Tons) <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
                   <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={estimatedQuantity}
-                    onChange={(e) => setEstimatedQuantity(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                    type="text"
+                    disabled
+                    value={estimatedQuantity ? `${estimatedQuantity} Tons` : '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -699,20 +696,6 @@ export default function TripsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Driver Partner</label>
-                  <select 
-                    required 
-                    value={driverId}
-                    onChange={(e) => handleDriverSelection(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
-                  >
-                    <option value="">Choose Driver...</option>
-                    {drivers.map(d => (
-                      <option key={d.id} value={d.id}>{d.fullName}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
                   <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Truck Vehicle</label>
                   <select 
                     required 
@@ -726,22 +709,18 @@ export default function TripsPage() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Driver Partner <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={drivers.find(d => d.id === driverId)?.fullName || 'No driver linked'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vendor</label>
-                  <select
-                    required
-                    value={vendorName}
-                    onChange={(e) => setVendorName(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
-                  >
-                    {VENDOR_OPTIONS.map(vendor => (
-                      <option key={vendor} value={vendor}>{vendor}</option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Distance (Km)</label>
                   <input
@@ -753,22 +732,18 @@ export default function TripsPage() {
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   />
                 </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vendor <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={vendorName || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vehicle Type</label>
-                  <select
-                    required
-                    value={vehicleType}
-                    onChange={(e) => setVehicleType(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
-                  >
-                    {VEHICLE_TYPES.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Commodity</label>
                   <select
@@ -781,6 +756,15 @@ export default function TripsPage() {
                       <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vehicle Type <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={vehicleType || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
                 </div>
               </div>
 
