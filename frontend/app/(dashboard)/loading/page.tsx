@@ -127,12 +127,36 @@ export default function LoadingVehiclePage() {
       const newTripsList: AssignedTrip[] = [];
       const newLoadingRecords: LoadingRecord[] = [];
 
+      const getNextChallanNumber = (destinationName: string, tempRecords: LoadingRecord[]) => {
+        const dest = String(destinationName || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
+        const prefix = dest.substring(0, 2).padEnd(2, 'X');
+        
+        const allChallans = [
+          ...records.map(r => r.challanNo),
+          ...tempRecords.map(r => r.challanNo)
+        ];
+        
+        let maxSeq = 0;
+        allChallans.forEach(c => {
+          if (c && c.toUpperCase().startsWith(prefix)) {
+            const seqStr = c.substring(prefix.length);
+            const seqNum = parseInt(seqStr, 10);
+            if (Number.isFinite(seqNum) && seqNum > maxSeq) {
+              maxSeq = seqNum;
+            }
+          }
+        });
+        
+        const nextSeq = maxSeq + 1;
+        const seqString = String(nextSeq).padStart(3, '0');
+        return `${prefix}${seqString}`;
+      };
+
       detail.import.rows.forEach((row, index) => {
         const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate', 'vehicle_no']);
         if (truckPlate === '-') return;
 
         const ticketNo = getCellValue(detail.import.headers, row, ['ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no']);
-        const challanNo = getCellValue(detail.import.headers, row, ['challan', 'challan no', 'challan number', 'challan_no']);
         
         const qtyValue = getCellValue(detail.import.headers, row, ['received qty', 'received_qty', 'qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight']);
         const grossValue = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross tons', 'gross_weight']);
@@ -147,6 +171,8 @@ export default function LoadingVehiclePage() {
         const commodityValue = getCellValue(detail.import.headers, row, ['commodity', 'commodities', 'material', 'cargo']);
         const driverName = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner']);
         const driverPhone = getCellValue(detail.import.headers, row, ['driver phone', 'driver mobile', 'mobile', 'phone']);
+        const sourceValue = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading point', 'loading_point', 'source loading']);
+        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading point', 'unloading_point', 'destination unloading', 'dest', 'to']);
 
         const netWeight = qtyValue !== '-' ? parseNumberCell(qtyValue) : (grossValue !== '-' && tareValue !== '-' ? Math.max(0, parseNumberCell(grossValue) - parseNumberCell(tareValue)) : 0);
         const tareWeight = tareValue !== '-' ? parseNumberCell(tareValue) : 15.0;
@@ -193,8 +219,8 @@ export default function LoadingVehiclePage() {
             id: tripId,
             tripNumber,
             truckId: `truck-auto-${truckPlate}`,
-            source: '-',
-            destination: '-',
+            source: sourceValue !== '-' ? sourceValue : 'Vedanta Lanjigarh Plant',
+            destination: destinationValue !== '-' ? destinationValue : 'Paramanandpur Stockyard',
             estimatedQuantityTons: netWeight,
             status: statusToSet,
             driver: { fullName: driverName, phone: driverPhone },
@@ -203,6 +229,9 @@ export default function LoadingVehiclePage() {
           };
           newTripsList.push(autoTrip);
         }
+
+        const targetDest = matchingTrip ? matchingTrip.destination : (destinationValue !== '-' ? destinationValue : 'Paramanandpur Stockyard');
+        const generatedChallanNo = getNextChallanNumber(targetDest, newLoadingRecords);
 
         const newRecord: LoadingRecord = {
           id: `loading-import-${Date.now()}-${index}`,
@@ -215,7 +244,7 @@ export default function LoadingVehiclePage() {
           netWeight,
           loadingDateTime,
           ticketNo: ticketNo === '-' ? '-' : ticketNo.toUpperCase(),
-          challanNo: challanNo === '-' ? '-' : challanNo.toUpperCase(),
+          challanNo: generatedChallanNo,
           uom: 'Metric Ton',
           truckStatus: statusToSet,
           receivedQty,
@@ -355,10 +384,31 @@ export default function LoadingVehiclePage() {
   const openLoadingForTrip = (tripId = '') => {
     const trip = assignedTrips.find(item => item.id === tripId);
     const truck = trip ? trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber) : undefined;
+    
+    let generatedChallan = '';
+    if (trip) {
+      const dest = String(trip.destination || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
+      const prefix = dest.substring(0, 2).padEnd(2, 'X');
+      const allChallans = records.map(r => r.challanNo);
+      let maxSeq = 0;
+      allChallans.forEach(c => {
+        if (c && c.toUpperCase().startsWith(prefix)) {
+          const seqStr = c.substring(prefix.length);
+          const seqNum = parseInt(seqStr, 10);
+          if (Number.isFinite(seqNum) && seqNum > maxSeq) {
+            maxSeq = seqNum;
+          }
+        }
+      });
+      const nextSeq = maxSeq + 1;
+      generatedChallan = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+    }
+
     setForm({
       ...emptyLoadingForm,
       tripId,
       truckStatus: truck ? normalizeOperationalStatus(truck.status) : emptyLoadingForm.truckStatus,
+      challanNo: generatedChallan,
     });
     setShowModal(true);
   };
@@ -544,9 +594,35 @@ export default function LoadingVehiclePage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Assigned Trip *">
                   <select required value={form.tripId} onChange={(e) => {
-                    const trip = assignedTrips.find(item => item.id === e.target.value);
+                    const tripId = e.target.value;
+                    const trip = assignedTrips.find(item => item.id === tripId);
                     const truck = trip ? trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber) : undefined;
-                    setForm({ ...form, tripId: e.target.value, truckStatus: truck ? normalizeOperationalStatus(truck.status) : form.truckStatus });
+                    
+                    let generatedChallan = '';
+                    if (trip) {
+                      const dest = String(trip.destination || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
+                      const prefix = dest.substring(0, 2).padEnd(2, 'X');
+                      const allChallans = records.map(r => r.challanNo);
+                      let maxSeq = 0;
+                      allChallans.forEach(c => {
+                        if (c && c.toUpperCase().startsWith(prefix)) {
+                          const seqStr = c.substring(prefix.length);
+                          const seqNum = parseInt(seqStr, 10);
+                          if (Number.isFinite(seqNum) && seqNum > maxSeq) {
+                            maxSeq = seqNum;
+                          }
+                        }
+                      });
+                      const nextSeq = maxSeq + 1;
+                      generatedChallan = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+                    }
+
+                    setForm({ 
+                      ...form, 
+                      tripId, 
+                      truckStatus: truck ? normalizeOperationalStatus(truck.status) : form.truckStatus,
+                      challanNo: generatedChallan
+                    });
                   }} className="load-input">
                     <option value="">Choose assigned trip...</option>
                     {availableTrips.map(trip => (
