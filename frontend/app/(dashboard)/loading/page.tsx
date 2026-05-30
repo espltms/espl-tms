@@ -139,6 +139,9 @@ export default function LoadingVehiclePage() {
         const tareValue = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare tons', 'tare_weight']);
         const dateValue = getCellValue(detail.import.headers, row, ['date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val']);
         
+        const unloadingDateVal = getCellValue(detail.import.headers, row, ['unloading date', 'unloading date time', 'unload date', 'unloading_date', 'received date', 'received_date', 'unloading_time', 'unloading datetime']);
+        const receivedQtyVal = getCellValue(detail.import.headers, row, ['received qty', 'received_qty', 'received quantity', 'actual received', 'received tons', 'received_tons', 'received weight']);
+
         const poNumber = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract']);
         const clientName = getCellValue(detail.import.headers, row, ['client', 'client name', 'customer', 'company']);
         const commodityValue = getCellValue(detail.import.headers, row, ['commodity', 'commodities', 'material', 'cargo']);
@@ -149,6 +152,18 @@ export default function LoadingVehiclePage() {
         const tareWeight = tareValue !== '-' ? parseNumberCell(tareValue) : 15.0;
         const grossWeight = grossValue !== '-' ? parseNumberCell(grossValue) : netWeight + tareWeight;
         const loadingDateTime = parseImportedDate(dateValue);
+
+        const hasUnloadingInfo = unloadingDateVal !== '-';
+        const unloadingDateTime = hasUnloadingInfo ? parseImportedDate(unloadingDateVal) : undefined;
+        const receivedQty = hasUnloadingInfo ? (receivedQtyVal !== '-' ? parseNumberCell(receivedQtyVal) : netWeight) : undefined;
+        
+        let turnaroundMinutes = undefined;
+        if (loadingDateTime && unloadingDateTime) {
+          turnaroundMinutes = Math.max(0, Math.round((new Date(unloadingDateTime).getTime() - new Date(loadingDateTime).getTime()) / 60000));
+        }
+
+        const isReceived = hasUnloadingInfo;
+        const statusToSet: OperationalStatus = isReceived ? 'RECEIVED' : 'IN_TRANSIT';
 
         // Find match in current list or new list
         let matchingTrip = assignedTrips.find(trip => 
@@ -181,7 +196,7 @@ export default function LoadingVehiclePage() {
             source: '-',
             destination: '-',
             estimatedQuantityTons: netWeight,
-            status: 'IN_TRANSIT',
+            status: statusToSet,
             driver: { fullName: driverName, phone: driverPhone },
             truck: { plateNumber: truckPlate, model: '-' },
             purchaseOrder: { poNumber, clientName, commodity: commodityValue },
@@ -202,7 +217,11 @@ export default function LoadingVehiclePage() {
           ticketNo: ticketNo === '-' ? '-' : ticketNo.toUpperCase(),
           challanNo: challanNo === '-' ? '-' : challanNo.toUpperCase(),
           uom: 'Metric Ton',
-          truckStatus: 'IN_TRANSIT',
+          truckStatus: statusToSet,
+          receivedQty,
+          unloadingDateTime,
+          turnaroundMinutes,
+          unloadingTruckStatus: isReceived ? 'RECEIVED' : undefined,
         };
 
         newLoadingRecords.push(newRecord);
@@ -223,8 +242,8 @@ export default function LoadingVehiclePage() {
       }
 
       newLoadingRecords.forEach(record => {
-        updateAssignedTripStatus(record.tripId, record.tripNumber, 'IN_TRANSIT');
-        upsertTruckStatusOverride(record.truckId, 'IN_TRANSIT');
+        updateAssignedTripStatus(record.tripId, record.tripNumber, record.truckStatus);
+        upsertTruckStatusOverride(record.truckId, record.truckStatus);
       });
 
       const nextRecords = [...newLoadingRecords, ...records];
