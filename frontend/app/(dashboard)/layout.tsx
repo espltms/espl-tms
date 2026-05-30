@@ -38,8 +38,9 @@ const navigationDivisions = [
     title: "Core Division",
     items: [
       { label: 'Executive Console', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'Control Room Live', path: '/dispatch', icon: Map, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Trip Dispatch & Loading', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Control Room Live', path: '/dispatch', icon: Map, roles: ['SYS_ADMIN', 'DISPATCHER'] },
     ]
   },
   {
@@ -58,7 +59,6 @@ const navigationDivisions = [
     items: [
       { label: 'Yard & Bay Queue', path: '/yard', icon: ParkingCircle, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Weighbridge Weighing', path: '/weighbridge', icon: Scale, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Store & Spare Inventory', path: '/inventory', icon: Warehouse, roles: ['SYS_ADMIN', 'FINANCE_OFFICER', 'DISPATCHER'] },
     ]
   },
