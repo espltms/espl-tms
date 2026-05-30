@@ -54,10 +54,6 @@ interface VehicleActivityRecord {
   turnaroundMinutes?: number;
 }
 
-const SESSION_OPTIONS = [
-  { value: 'FIRST', label: 'Session 1', range: '1-15' },
-  { value: 'SECOND', label: 'Session 2', range: '16-End' },
-];
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 const VENDOR_NAMES = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
 
@@ -80,10 +76,12 @@ const formatTurnaround = (minutes: number) => {
 
 export default function VehicleSummaryPage() {
   const { user } = useAuthStore();
-  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [selectedSession, setSelectedSession] = useState<'FIRST' | 'SECOND'>(() => (
-    new Date().getDate() <= 15 ? 'FIRST' : 'SECOND'
-  ));
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState('');
+  const [selectedSubVendor, setSelectedSubVendor] = useState('');
+  const [searchVehicleNo, setSearchVehicleNo] = useState('');
+
   const trucks = useMemo(() => getTrucks(), []);
   const [trips, setTrips] = useState(() => getTrips());
   const weighTickets = useMemo(() => getWeighTickets(), []);
@@ -171,21 +169,58 @@ export default function VehicleSummaryPage() {
     return [...localActivities, ...datasetActivities];
   }, [loadingRecords, trips, trucks, weighTickets]);
 
-  const sessionRecords = activityRecords.filter((record) => {
-    if (!record.activityDateTime) return false;
-    const loadedAt = new Date(record.activityDateTime);
-    if (Number.isNaN(loadedAt.getTime())) return false;
-    const monthKey = record.activityDateTime.slice(0, 7);
-    const day = loadedAt.getDate();
-    const matchesSession = selectedSession === 'FIRST' ? day <= 15 : day >= 16;
-    return monthKey === selectedMonth && matchesSession;
-  });
+  const vendorOptions = useMemo(() => {
+    const list = new Set(activityRecords.map(r => r.vendor || getFallbackVendorForPlate(r.truckPlate)).filter(Boolean));
+    return Array.from(list).sort();
+  }, [activityRecords]);
 
-  const visibleSessionRecords = user?.role === 'VENDOR'
-    ? sessionRecords.filter(record => (record.vendor || getFallbackVendorForPlate(record.truckPlate)) === user.vendorName)
-    : sessionRecords;
+  const subVendorOptions = useMemo(() => {
+    const list = new Set(activityRecords.map(r => r.subVendor).filter(Boolean).filter(sv => sv !== 'Not provided in dataset' && sv !== '-'));
+    return Array.from(list).sort();
+  }, [activityRecords]);
 
-  const summaries = Object.values(visibleSessionRecords.reduce<Record<string, {
+  const filteredRecords = useMemo(() => {
+    return activityRecords.filter((record) => {
+      if (record.activityDateTime) {
+        const recordDate = new Date(record.activityDateTime.split('T')[0]);
+        if (startDate) {
+          const start = new Date(startDate);
+          if (recordDate < start) return false;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          if (recordDate > end) return false;
+        }
+      }
+
+      const recordVendor = record.vendor || getFallbackVendorForPlate(record.truckPlate);
+      if (selectedVendor && recordVendor !== selectedVendor) {
+        return false;
+      }
+
+      if (selectedSubVendor && record.subVendor !== selectedSubVendor) {
+        return false;
+      }
+
+      if (searchVehicleNo && !record.truckPlate.toUpperCase().includes(searchVehicleNo.toUpperCase())) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [activityRecords, startDate, endDate, selectedVendor, selectedSubVendor, searchVehicleNo]);
+
+  const visibleRecords = useMemo(() => {
+    let result = filteredRecords;
+    if (user?.role === 'VENDOR') {
+      result = result.filter(record => 
+        (record.vendor || getFallbackVendorForPlate(record.truckPlate)) === user.vendorName
+      );
+    }
+    return result;
+  }, [filteredRecords, user]);
+
+  const summaries = Object.values(visibleRecords.reduce<Record<string, {
     truckId: string;
     plateNumber: string;
     model: string;
@@ -258,32 +293,84 @@ export default function VehicleSummaryPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Vehicle Summary</h2>
-          <p className="text-xs text-slate-500 mt-1">Session-wise vehicle performance for 1-15 and 16-end of each month</p>
+          <p className="text-xs text-slate-500 mt-1">Comprehensive overview of vehicle trip and tonnage performance</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <label className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Month
+      </div>
+
+      {/* Date Range & Vendor/Sub-Vendor/Vehicle No Filter Panel */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-5">
+          <label className="block">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Start Date</span>
             <input
-              type="month"
-              value={selectedMonth}
-              onChange={(event) => setSelectedMonth(event.target.value)}
-              className="ml-2 bg-transparent text-xs font-bold text-slate-800 outline-none"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
             />
           </label>
-          <div className="flex rounded-xl bg-slate-100 p-1">
-            {SESSION_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                onClick={() => setSelectedSession(option.value as 'FIRST' | 'SECOND')}
-                className={`rounded-lg px-4 py-2 text-[10px] font-extrabold transition-all ${
-                  selectedSession === option.value ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'
-                }`}
+          <label className="block">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">End Date</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
+            />
+          </label>
+          {user?.role !== 'VENDOR' ? (
+            <label className="block">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Vendor</span>
+              <select
+                value={selectedVendor}
+                onChange={(e) => setSelectedVendor(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
               >
-                {option.label} ({option.range})
-              </button>
-            ))}
-          </div>
+                <option value="">All Vendors</option>
+                {vendorOptions.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+          ) : (
+            <div className="hidden" />
+          )}
+          <label className="block">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sub Vendor</span>
+            <select
+              value={selectedSubVendor}
+              onChange={(e) => setSelectedSubVendor(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
+            >
+              <option value="">All Sub-Vendors</option>
+              {subVendorOptions.map(sv => <option key={sv} value={sv}>{sv}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Vehicle No</span>
+            <input
+              type="text"
+              placeholder="Search plate..."
+              value={searchVehicleNo}
+              onChange={(e) => setSearchVehicleNo(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
+            />
+          </label>
         </div>
+        {(startDate || endDate || selectedVendor || selectedSubVendor || searchVehicleNo) && (
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                setSelectedVendor('');
+                setSelectedSubVendor('');
+                setSearchVehicleNo('');
+              }}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-[0.98]"
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -296,7 +383,7 @@ export default function VehicleSummaryPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-brand-primary" /> Session Vehicle Summary
+            <BarChart3 className="h-4 w-4 text-brand-primary" /> Vehicle Summary Registry
           </h3>
         </div>
         <div className="overflow-x-auto">
