@@ -397,7 +397,7 @@ export default function VehicleSummaryPage() {
                 <th className="px-6 py-4">Gross / Tare</th>
                 <th className="px-6 py-4">Avg TAT</th>
                 <th className="px-6 py-4">Challans</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4 text-right">Running Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">

@@ -2,7 +2,7 @@ export type OperationalStatus = 'SCHEDULED' | 'IN_TRANSIT' | 'RECEIVED' | 'ACTIO
 
 export const OPERATIONAL_STATUS_OPTIONS: { value: OperationalStatus; label: string }[] = [
   { value: 'SCHEDULED', label: 'Scheduled' },
-  { value: 'IN_TRANSIT', label: 'Running Status' },
+  { value: 'IN_TRANSIT', label: 'In transit' },
   { value: 'RECEIVED', label: 'Received' },
   { value: 'ACTION', label: 'Action' },
   { value: 'COMPLETED', label: 'Completed' },
