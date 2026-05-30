@@ -50,6 +50,8 @@ interface Trip {
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
+import { getTruckDynamicHealth } from '@/lib/healthHelper';
+import { useAuthStore } from '@/store/auth.store';
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
@@ -83,11 +85,13 @@ const normalizeImportedStatus = (value: string): OperationalStatus => {
 };
 
 export default function TripsPage() {
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [trips, setTrips] = useState<Trip[]>(() => getTrips());
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(() => getPurchaseOrders());
   const [drivers, setDrivers] = useState(() => getDrivers());
   const [trucks, setTrucks] = useState(() => getTrucks());
+  const [fleetMasterRecords, setFleetMasterRecords] = useState<any[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [poId, setPoId] = useState('');
@@ -122,8 +126,18 @@ export default function TripsPage() {
   };
   const ITEMS_PER_PAGE = 15;
 
-  const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
-  const paginatedTrips = trips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
+  const userRegion = user?.regionName;
+
+  const filteredTrips = trips.filter(trip => {
+    if (isRegionalUser && userRegion) {
+      return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
+  const paginatedTrips = filteredTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
@@ -145,9 +159,10 @@ export default function TripsPage() {
       return '25.00';
     };
 
-    fetchSyncedValue<any[]>('tms_fleet_master', []).then((fleetMasterRecords) => {
-      if (fleetMasterRecords && fleetMasterRecords.length > 0) {
-        const fleetTrucks = fleetMasterRecords.map(r => ({
+    fetchSyncedValue<any[]>('tms_fleet_master', []).then((loadedRecords) => {
+      setFleetMasterRecords(loadedRecords);
+      if (loadedRecords && loadedRecords.length > 0) {
+        const fleetTrucks = loadedRecords.map(r => ({
           id: r.id || `fm-${r.plateNumber}`,
           plateNumber: r.plateNumber,
           model: r.vehicleType || 'Tipper',
@@ -155,7 +170,7 @@ export default function TripsPage() {
           fleetCategory: r.fleetCategory || 'OWNED_FLEET',
           capacity: getCapacityFromWheeler(r.wheeler),
           fuelCard: '-',
-          health: 100,
+          health: getTruckDynamicHealth(r.plateNumber, 100, loadedRecords),
           status: 'SCHEDULED' as any,
           vendor: r.vendor || 'Vendor 1',
           subVendor: r.subVendor || '-',
@@ -203,6 +218,12 @@ export default function TripsPage() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (modalOpen && isRegionalUser && userRegion) {
+      setDestination(userRegion);
+    }
+  }, [modalOpen, isRegionalUser, userRegion]);
 
   useEffect(() => {
     const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
@@ -351,6 +372,13 @@ export default function TripsPage() {
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (isRegionalUser && userRegion) {
+      if (!destination.toLowerCase().includes(userRegion.toLowerCase())) {
+        setError(`You can only dispatch trips to your region destination (${userRegion})`);
+        return;
+      }
+    }
 
     const targetPO = purchaseOrders.find(po => po.id === poId);
     if (!targetPO) {
@@ -621,7 +649,8 @@ export default function TripsPage() {
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
               {paginatedTrips.map(trip => {
                 const matchedTruck = trucks.find(t => t.plateNumber.toUpperCase() === trip.truck.plateNumber.toUpperCase());
-                const health = matchedTruck ? matchedTruck.health : 90;
+                const rawHealth = matchedTruck ? matchedTruck.health : 90;
+                const health = getTruckDynamicHealth(trip.truck.plateNumber, rawHealth, fleetMasterRecords);
 
                 return (
                   <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>

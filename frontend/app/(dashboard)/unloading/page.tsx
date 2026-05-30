@@ -9,6 +9,7 @@ import {
   getOperationalStatusClasses,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 import {
   LOADING_RECORDS_KEY,
   TRUCK_STATUS_OVERRIDES_KEY,
@@ -53,13 +54,16 @@ const emptyUnloadingForm = {
 };
 
 export default function UnloadingVehiclePage() {
+  const { user } = useAuthStore();
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
   const [records, setRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [activeRecord, setActiveRecord] = useState<LoadingRecord | null>(null);
   const [form, setForm] = useState(emptyUnloadingForm);
+  const [assignedTrips, setAssignedTrips] = useState<any[]>([]);
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
+    fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
   }, []);
 
   const formatTurnaround = (minutes?: number) => {
@@ -163,16 +167,33 @@ export default function UnloadingVehiclePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {records.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records available for unloading.</td></tr>
-              ) : records.map(record => (
+              {(() => {
+                const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
+                const userRegion = user?.regionName;
+
+                const filteredRecords = records.filter(record => {
+                  if (isRegionalUser && userRegion) {
+                    const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
+                    if (trip) {
+                      return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+                    }
+                    return true;
+                  }
+                  return true;
+                });
+
+                if (filteredRecords.length === 0) {
+                  return <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records available for unloading.</td></tr>;
+                }
+
+                return filteredRecords.map(record => (
                 <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{record.truckPlate}</td>
                   <td className="px-6 py-4"><div className="font-mono font-bold text-slate-700">{record.ticketNo}</div><div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div></td>
                   <td className="px-6 py-4 font-mono">{record.netWeight.toFixed(2)} {record.uom}</td>
                   <td className="px-6 py-4">
                     {record.unloadingDateTime ? (
-                      <div><div className="font-mono font-bold text-slate-700">{record.receivedQty?.toFixed(2)} {record.uom}</div><div className="mt-0.5 text-[10px] text-slate-500">{new Date(record.unloadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</div></div>
+                      <div><div className="font-mono font-bold text-slate-700">{record.receivedQty?.toFixed(2)} {record.uom}</div><div className="mt-0.5 text-[10px] text-slate-500">{new Date(record.unloadingDateTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true, dateStyle: 'medium', timeStyle: 'short' })}</div></div>
                     ) : <span className="text-slate-400">Pending</span>}
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(getRecordTurnaround(record))}</td>
@@ -182,7 +203,8 @@ export default function UnloadingVehiclePage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                ));
+              })()}
             </tbody>
           </table>
         </div>

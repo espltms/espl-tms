@@ -49,6 +49,8 @@ import {
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { getTruckDynamicHealth } from '@/lib/healthHelper';
+import { useAuthStore } from '@/store/auth.store';
 
 type ImportedSheet = {
   id: string;
@@ -112,6 +114,7 @@ const emptyDriverForm = {
 };
 
 export default function FleetPage() {
+  const { user } = useAuthStore();
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
   const [drivers, setDrivers] = useState<DriverData[]>(() => getDrivers());
   const [filter, setFilter] = useState('ALL');
@@ -123,6 +126,7 @@ export default function FleetPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [fleetMasterRecords, setFleetMasterRecords] = useState<any[]>([]);
   const ITEMS_PER_PAGE = 15;
 
   const hasDateFilter = Boolean(dateRange.from || dateRange.to);
@@ -177,7 +181,20 @@ export default function FleetPage() {
     });
     return acc;
   }, []);
-  const registryTrucks = [...trucks, ...activityOnlyTrucks];
+  const isVendorUser = user?.role === 'VENDOR';
+  const userVendorName = user?.vendorName;
+
+  const registryTrucks = [...trucks, ...activityOnlyTrucks]
+    .filter(truck => {
+      if (isVendorUser && userVendorName) {
+        return truck.vendor && truck.vendor.toLowerCase().includes(userVendorName.toLowerCase());
+      }
+      return true;
+    })
+    .map(truck => ({
+      ...truck,
+      health: getTruckDynamicHealth(truck.plateNumber, truck.health, fleetMasterRecords),
+    }));
   const filteredTrucks = registryTrucks.filter(t =>
     (filter === 'ALL' || getTruckCurrentStatus(t) === filter) &&
     vehicleHasActivityInRange(t)
@@ -186,6 +203,7 @@ export default function FleetPage() {
   const paginatedTrucks = filteredTrucks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
+    fetchSyncedValue<any[]>('tms_fleet_master', []).then(setFleetMasterRecords);
     fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {
       setTrucks((currentTrucks) => [
         ...syncedTrucks,

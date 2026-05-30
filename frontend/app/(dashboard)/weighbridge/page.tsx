@@ -154,7 +154,7 @@ export default function WeighbridgePage() {
       netTons: net,
       sealNumber: ticketData.sealNumber || '—',
       status: gross > 0 ? 'VERIFIED' : 'PENDING_GROSS',
-      timestamp: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })
+      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     };
     
     setTickets([newTicket, ...tickets]);

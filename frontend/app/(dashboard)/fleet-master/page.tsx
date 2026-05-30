@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Database, Plus, X, ArrowRight, Trash2 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 
 interface FleetMasterRecord {
   id: string;
@@ -66,6 +67,7 @@ const emptyForm = {
 };
 
 export default function FleetMasterPage() {
+  const { user } = useAuthStore();
   const [records, setRecords] = useState<FleetMasterRecord[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -73,11 +75,21 @@ export default function FleetMasterPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
-  const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
-  const paginatedRecords = records.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const isVendorUser = user?.role === 'VENDOR';
+  const userVendorName = user?.vendorName;
 
-  const ownedCount = records.filter(r => r.fleetCategory === 'OWNED_FLEET').length;
-  const attachedCount = records.filter(r => r.fleetCategory === 'ATTACHED_FLEET').length;
+  const filteredRecords = records.filter(r => {
+    if (isVendorUser && userVendorName) {
+      return r.vendor && r.vendor.toLowerCase().includes(userVendorName.toLowerCase());
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredRecords.length / ITEMS_PER_PAGE);
+  const paginatedRecords = filteredRecords.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const ownedCount = filteredRecords.filter(r => r.fleetCategory === 'OWNED_FLEET').length;
+  const attachedCount = filteredRecords.filter(r => r.fleetCategory === 'ATTACHED_FLEET').length;
 
   /* ── Load from synced storage ── */
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 import {
   ASSIGNED_TRIPS_KEY,
   LOADING_RECORDS_KEY,
@@ -94,6 +95,7 @@ const emptyLoadingForm = {
 };
 
 export default function LoadingVehiclePage() {
+  const { user } = useAuthStore();
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
   const [assignedTrips, setAssignedTrips] = useState<AssignedTrip[]>(() => getTrips());
   const [records, setRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
@@ -332,12 +334,33 @@ export default function LoadingVehiclePage() {
     setSelectedIds(prev => prev.filter(id => !recordIds.includes(id)));
   };
 
-  const selectedTrip = assignedTrips.find(trip => trip.id === form.tripId);
+  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
+  const userRegion = user?.regionName;
+
+  const filteredTrips = assignedTrips.filter(trip => {
+    if (isRegionalUser && userRegion) {
+      return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+    }
+    return true;
+  });
+
+  const filteredRecords = records.filter(record => {
+    if (isRegionalUser && userRegion) {
+      const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
+      if (trip) {
+        return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+      }
+      return true;
+    }
+    return true;
+  });
+
+  const selectedTrip = filteredTrips.find(trip => trip.id === form.tripId);
   const selectedTruck = selectedTrip
     ? trucks.find(truck => truck.id === selectedTrip.truckId || truck.plateNumber === selectedTrip.truck.plateNumber)
     : undefined;
-  const availableTrips = assignedTrips.filter(trip =>
-    !records.some(record => record.tripId === trip.id) &&
+  const availableTrips = filteredTrips.filter(trip =>
+    !filteredRecords.some(record => record.tripId === trip.id) &&
     normalizeOperationalStatus(trip.status) !== 'COMPLETED'
   );
 
@@ -550,10 +573,10 @@ export default function LoadingVehiclePage() {
                   <th className="w-10 px-6 py-4">
                     <input
                       type="checkbox"
-                      checked={records.length > 0 && selectedIds.length === records.length}
+                      checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedIds(records.map(r => r.id));
+                          setSelectedIds(filteredRecords.map(r => r.id));
                         } else {
                           setSelectedIds([]);
                         }
@@ -571,9 +594,9 @@ export default function LoadingVehiclePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {records.length === 0 ? (
+              {filteredRecords.length === 0 ? (
                 <tr><td colSpan={isDeleteMode ? 7 : 6} className="px-6 py-8 text-center text-slate-500">No loading records added yet.</td></tr>
-              ) : records.map(record => (
+              ) : filteredRecords.map(record => (
                 <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
                   {isDeleteMode && (
                     <td className="w-10 px-6 py-4">
@@ -598,7 +621,7 @@ export default function LoadingVehiclePage() {
                   <td className="px-6 py-4"><div className="font-mono font-bold text-slate-700">{record.ticketNo}</div><div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div></td>
                   <td className="px-6 py-4 font-mono"><div>Gross: <span className="font-bold text-slate-800">{record.grossWeight.toFixed(2)}</span></div><div className="text-[10px] text-slate-500">Tare: {record.tareWeight.toFixed(2)} | Net: {record.netWeight.toFixed(2)}</div></td>
                   <td className="px-6 py-4 font-semibold text-slate-700">{record.uom}</td>
-                  <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                  <td className="px-6 py-4 text-slate-500">{new Date(record.loadingDateTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true, dateStyle: 'medium', timeStyle: 'short' })}</td>
                   <td className="px-6 py-4"><span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.truckStatus)}`}>{getOperationalStatusLabel(record.truckStatus)}</span></td>
                 </tr>
               ))}

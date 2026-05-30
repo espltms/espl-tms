@@ -80,7 +80,7 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
   REGION_ADMIN: allNavItems.map(item => item.path),
-  VENDOR: ['/vehicle-summary'],
+  VENDOR: ['/fleet', '/fleet-master', '/vehicle-summary'],
 };
 
 const hasRouteAccess = (role: string | undefined, path: string) => {
@@ -94,13 +94,13 @@ const ClockWidget = memo(function ClockWidget() {
 
   useEffect(() => {
     const updateTime = () => {
-      setCurrentTime(new Date().toLocaleTimeString('en-US', {
+      setCurrentTime(new Date().toLocaleTimeString('en-IN', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        hour12: false,
-        timeZoneName: 'short'
-      }));
+        hour12: true,
+        timeZone: 'Asia/Kolkata'
+      }) + ' IST');
     };
 
     updateTime();
@@ -263,7 +263,7 @@ export default function DashboardLayout({
 
           {/* Time & Alert widgets */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-            <SectionExcelImport sectionName={currentSectionName} />
+            {user?.role !== 'VENDOR' && <SectionExcelImport sectionName={currentSectionName} />}
             <SectionExcelExport sectionName={currentSectionName} />
 
             <ClockWidget />
