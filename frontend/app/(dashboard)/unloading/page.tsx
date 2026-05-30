@@ -63,11 +63,20 @@ export default function UnloadingVehiclePage() {
   }, []);
 
   const formatTurnaround = (minutes?: number) => {
-    if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return 'Pending';
+    if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes <= 0) return 'Pending';
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     if (hours <= 0) return `${remainingMinutes}m`;
     return `${hours}h ${remainingMinutes}m`;
+  };
+
+  const getRecordTurnaround = (record: LoadingRecord) => {
+    if (record.truckStatus !== 'RECEIVED') {
+      const loadingTime = new Date(record.loadingDateTime).getTime();
+      const now = Date.now();
+      return Math.max(0, Math.round((now - loadingTime) / 60000));
+    }
+    return record.turnaroundMinutes;
   };
 
   const persistTruckStatusOverrides = (nextTrucks: TruckData[]) => {
@@ -96,16 +105,18 @@ export default function UnloadingVehiclePage() {
     event.preventDefault();
     if (!activeRecord) return;
 
+    const isReceived = form.truckStatus === 'RECEIVED';
     const loadingTime = new Date(activeRecord.loadingDateTime).getTime();
     const unloadingTime = new Date(form.unloadingDateTime).getTime();
     const turnaroundMinutes = Math.max(0, Math.round((unloadingTime - loadingTime) / 60000));
+
     const nextRecords = records.map(record =>
       record.id === activeRecord.id
         ? {
             ...record,
-            receivedQty: parseFloat(form.receivedQty) || 0,
-            unloadingDateTime: form.unloadingDateTime,
-            turnaroundMinutes,
+            receivedQty: isReceived ? (parseFloat(form.receivedQty) || 0) : undefined,
+            unloadingDateTime: isReceived ? form.unloadingDateTime : undefined,
+            turnaroundMinutes: isReceived ? turnaroundMinutes : undefined,
             unloadingTruckStatus: form.truckStatus,
             truckStatus: form.truckStatus,
           }
@@ -117,8 +128,11 @@ export default function UnloadingVehiclePage() {
     setTrucks(nextTrucks);
     persistRecords(nextRecords);
     persistTruckStatusOverrides(nextTrucks);
-    updateAssignedTripStatus(activeRecord.tripId, activeRecord.tripNumber, 'RECEIVED');
+    
+    const tripStatusToSet = isReceived ? 'RECEIVED' : form.truckStatus;
+    updateAssignedTripStatus(activeRecord.tripId, activeRecord.tripNumber, tripStatusToSet);
     upsertTruckStatusOverride(activeRecord.truckId, form.truckStatus);
+    
     setActiveRecord(null);
     setForm(emptyUnloadingForm);
   };
@@ -161,7 +175,7 @@ export default function UnloadingVehiclePage() {
                       <div><div className="font-mono font-bold text-slate-700">{record.receivedQty?.toFixed(2)} {record.uom}</div><div className="mt-0.5 text-[10px] text-slate-500">{new Date(record.unloadingDateTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</div></div>
                     ) : <span className="text-slate-400">Pending</span>}
                   </td>
-                  <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(record.turnaroundMinutes)}</td>
+                  <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(getRecordTurnaround(record))}</td>
                   <td className="px-6 py-4 text-right">
                     <button onClick={() => openUnloadingModal(record)} className={`rounded-lg border px-3 py-1.5 text-[10px] font-extrabold ${record.unloadingDateTime ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
                       {record.unloadingDateTime ? 'Edit' : 'Unload'}
@@ -196,7 +210,11 @@ export default function UnloadingVehiclePage() {
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Calculated Turnaround Time</div>
-                <div className="mt-2 text-lg font-extrabold text-slate-800">{formatTurnaround(Math.max(0, Math.round((new Date(form.unloadingDateTime).getTime() - new Date(activeRecord.loadingDateTime).getTime()) / 60000)))}</div>
+                <div className="mt-2 text-lg font-extrabold text-slate-800">
+                  {form.truckStatus !== 'RECEIVED'
+                    ? formatTurnaround(Math.max(0, Math.round((Date.now() - new Date(activeRecord.loadingDateTime).getTime()) / 60000))) + ' (Running)'
+                    : formatTurnaround(Math.max(0, Math.round((new Date(form.unloadingDateTime).getTime() - new Date(activeRecord.loadingDateTime).getTime()) / 60000)))}
+                </div>
               </div>
               <button type="submit" className="w-full rounded-xl bg-gradient-to-r from-brand-success to-emerald-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
                 Save Unloading Entry <PackageOpen className="h-4 w-4" />
