@@ -82,6 +82,8 @@ const ROLE_ACCESS = {
   PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   DHARAMGARH_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   LANJIGARH_LOADER: ['/trips'],
+  PARAMANANDPUR_UNLOADER: ['/unloading'],
+  DHARAMGARH_UNLOADER: ['/unloading'],
   VENDOR: ['/fleet', '/vehicle-summary'],
 };
 
@@ -161,6 +163,8 @@ export default function DashboardLayout({
       case 'PARAMANANDPUR_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'DHARAMGARH_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'LANJIGARH_LOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'PARAMANANDPUR_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'DHARAMGARH_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'VENDOR': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'FINANCE_OFFICER': return 'bg-amber-50 text-amber-700 border-amber-200';

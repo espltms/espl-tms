@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { useRouter } from 'next/navigation';
-import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck } from 'lucide-react';
+import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, PackageOpen } from 'lucide-react';
 
 const portalRoles = [
   {
@@ -38,6 +38,20 @@ const portalRoles = [
     label: 'Lanjigarh Loader',
     value: 'LANJIGARH_LOADER',
     icon: Truck,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
+    label: 'Paramanandpur Unloader',
+    value: 'PARAMANANDPUR_UNLOADER',
+    icon: PackageOpen,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
+    label: 'Dharamgarh Unloader',
+    value: 'DHARAMGARH_UNLOADER',
+    icon: PackageOpen,
     accent: 'text-blue-600',
     chip: 'bg-blue-500/10 text-blue-600',
   },
@@ -88,7 +102,9 @@ export default function LoginPage() {
         ? '/vehicle-summary' 
         : data.user.role === 'LANJIGARH_LOADER' 
           ? '/trips' 
-          : '/dashboard';
+          : data.user.role === 'PARAMANANDPUR_UNLOADER' || data.user.role === 'DHARAMGARH_UNLOADER'
+            ? '/unloading'
+            : '/dashboard';
       router.push(targetPath);
     } catch (err: any) {
       console.error('login failed:', err);
