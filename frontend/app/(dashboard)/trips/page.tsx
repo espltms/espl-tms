@@ -16,6 +16,13 @@ import {
   Trash2
 } from 'lucide-react';
 
+import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
+import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
+import { getTruckDynamicHealth } from '@/lib/healthHelper';
+import { useAuthStore } from '@/store/auth.store';
+import { updateAssignedTripStatus, upsertTruckStatusOverride } from '@/lib/workflowAutomation';
+
 interface PurchaseOrder {
   id: string;
   poNumber: string;
@@ -47,16 +54,31 @@ interface Trip {
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
 }
 
-import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
-import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
-import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
-import { getTruckDynamicHealth } from '@/lib/healthHelper';
-import { useAuthStore } from '@/store/auth.store';
+interface LoadingRecord {
+  id: string;
+  tripId?: string;
+  tripNumber?: string;
+  truckId: string;
+  truckPlate: string;
+  tareWeight: number;
+  grossWeight: number;
+  netWeight: number;
+  loadingDateTime: string;
+  ticketNo: string;
+  challanNo: string;
+  uom: string;
+  truckStatus: OperationalStatus;
+  receivedQty?: number;
+  unloadingDateTime?: string;
+  turnaroundMinutes?: number;
+  unloadingTruckStatus?: OperationalStatus;
+}
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
 const VENDOR_OPTIONS = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
+const LOADING_RECORDS_KEY = 'tms_loading_records';
 
 type ImportedSheet = {
   id: string;
@@ -75,13 +97,29 @@ const parseImportedDate = (value: string) => {
   const parsed = value === '-' ? new Date() : new Date(value);
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 };
-const normalizeImportedStatus = (value: string): OperationalStatus => {
-  const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
-  if (normalized.includes('complete')) return 'COMPLETED';
-  if (normalized.includes('receive')) return 'RECEIVED';
-  if (normalized.includes('action') || normalized.includes('issue')) return 'ACTION';
-  if (normalized.includes('transit') || normalized.includes('route')) return 'IN_TRANSIT';
-  return 'SCHEDULED';
+
+const getPoSourceDestination = (poNumber: string) => {
+  const num = String(poNumber || '').toUpperCase();
+  if (num.includes('KORBA')) {
+    return {
+      source: 'Korba Coal Fields, Chhattisgarh (Mines Loading)',
+      destination: 'Mundra Port Terminal, Gujarat (Unloading)',
+    };
+  } else if (num.includes('JAIPUR')) {
+    return {
+      source: 'Jaipur Cement Works, Rajasthan',
+      destination: 'Ahmedabad Stockyard, Gujarat',
+    };
+  } else if (num.includes('VEDANTA')) {
+    return {
+      source: 'Vedanta Lanjigarh Plant',
+      destination: 'Paramanandpur Stockyard',
+    };
+  }
+  return {
+    source: 'Vedanta Lanjigarh Plant',
+    destination: 'Paramanandpur Stockyard',
+  };
 };
 
 export default function TripsPage() {
@@ -92,6 +130,7 @@ export default function TripsPage() {
   const [drivers, setDrivers] = useState(() => getDrivers());
   const [trucks, setTrucks] = useState(() => getTrucks());
   const [fleetMasterRecords, setFleetMasterRecords] = useState<any[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [poId, setPoId] = useState('');
@@ -102,15 +141,25 @@ export default function TripsPage() {
   const [vendorName, setVendorName] = useState(VENDOR_OPTIONS[0]);
   const [vehicleType, setVehicleType] = useState('Tipper');
   const [commodity, setCommodity] = useState('Fly Ash');
-  const [tripStatus, setTripStatus] = useState<OperationalStatus>('SCHEDULED');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
+
+  // Weighment state fields
+  const [tareWeight, setTareWeight] = useState('');
+  const [grossWeight, setGrossWeight] = useState('');
+  const [netWeight, setNetWeight] = useState('');
+  const [loadingDateTime, setLoadingDateTime] = useState(new Date().toISOString().slice(0, 16));
+  const [ticketNo, setTicketNo] = useState('');
+  const [challanNo, setChallanNo] = useState('');
+
   const [error, setError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   const [activeGatepass, setActiveGatepass] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 15;
 
   const deleteTrips = (tripIds: string[]) => {
     const nextTrips = trips.filter(t => !tripIds.includes(t.id));
@@ -120,11 +169,16 @@ export default function TripsPage() {
       const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
       const nextSynced = existing.filter(t => !tripIds.includes(t.id));
       saveSyncedValue(ASSIGNED_TRIPS_KEY, nextSynced);
+
+      // Clean matching loading records
+      const existingLoading = JSON.parse(window.localStorage.getItem(LOADING_RECORDS_KEY) || '[]') as LoadingRecord[];
+      const nextLoading = existingLoading.filter(r => !tripIds.includes(r.tripId || ''));
+      saveSyncedValue(LOADING_RECORDS_KEY, nextLoading);
+      setLoadingRecords(nextLoading);
     }
     
     setSelectedIds(prev => prev.filter(id => !tripIds.includes(id)));
   };
-  const ITEMS_PER_PAGE = 15;
 
   const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER';
   const userRegion = user?.regionName;
@@ -139,12 +193,41 @@ export default function TripsPage() {
   const totalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
   const paginatedTrips = filteredTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
+  const getNextChallanNumber = (destinationName: string, tempRecords: LoadingRecord[]) => {
+    const dest = String(destinationName || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const prefix = dest.substring(0, 2).padEnd(2, 'X');
+    
+    const allChallans = [
+      ...loadingRecords.map(r => r.challanNo),
+      ...tempRecords.map(r => r.challanNo)
+    ];
+    
+    let maxSeq = 0;
+    allChallans.forEach(c => {
+      if (c && c.toUpperCase().startsWith(prefix)) {
+        const seqStr = c.substring(prefix.length);
+        const seqNum = parseInt(seqStr, 10);
+        if (Number.isFinite(seqNum) && seqNum > maxSeq) {
+          maxSeq = seqNum;
+        }
+      }
+    });
+    
+    const nextSeq = maxSeq + 1;
+    const seqString = String(nextSeq).padStart(4, '0');
+    return `${prefix}${seqString}`;
+  };
+
   useEffect(() => {
     fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
       setTrips((currentTrips) => [
         ...syncedTrips,
         ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
       ]);
+    });
+
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then((syncedRecords) => {
+      setLoadingRecords(syncedRecords);
     });
 
     const getCapacityFromWheeler = (wheeler: string) => {
@@ -191,7 +274,7 @@ export default function TripsPage() {
           return merged;
         });
 
-        const fleetDrivers = fleetMasterRecords
+        const fleetDrivers = loadedRecords
           .filter(r => r.driverName && r.driverName !== '-')
           .map((r, idx) => ({
             id: `fm-driver-${r.plateNumber}-${idx}`,
@@ -235,72 +318,161 @@ export default function TripsPage() {
 
     const handleExcelImport = (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
-      if (!detail || detail.sectionName !== 'Trip Dispatch & POs') return;
+      if (!detail || detail.sectionName !== 'Trip Dispatch & Loading') return;
 
-      const importedTrips = detail.import.rows.map((row, index): Trip => {
-        const tripNumber = getCellValue(detail.import.headers, row, ['trip number', 'trip no', 'trip id', 'trip']);
-        const poNumber = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract']);
-        const clientName = getCellValue(detail.import.headers, row, ['client', 'client name', 'customer', 'company']);
-        const commodityValue = getCellValue(detail.import.headers, row, ['commodity', 'commodities', 'material', 'cargo']);
-        const driverName = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner']);
-        const driverPhone = getCellValue(detail.import.headers, row, ['driver phone', 'driver mobile', 'mobile', 'phone']);
-        const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate']);
-        const truckModel = getCellValue(detail.import.headers, row, ['truck model', 'model', 'vehicle model']);
-        const sourceValue = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading', 'loading point', 'source loading']);
-        const destinationValue = getCellValue(detail.import.headers, row, ['destination', 'unloading', 'unloading point', 'destination unloading', 'location', 'location name', 'place']);
-        const vendorValue = getCellValue(detail.import.headers, row, ['vendor', 'vendor name']);
-        const vehicleTypeValue = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
-        const statusValue = getCellValue(detail.import.headers, row, ['status', 'trip status']);
-        const qtyValue = getCellValue(detail.import.headers, row, ['estimated weight', 'estimated quantity', 'estimated tons', 'tons', 'quantity', 'qty', 'weight']);
-        const loadedValue = getCellValue(detail.import.headers, row, ['loaded', 'loaded tons', 'actual loaded']);
-        const distanceValue = getCellValue(detail.import.headers, row, ['distance', 'distance km', 'km']);
-        const dateValue = getCellValue(detail.import.headers, row, ['date', 'scheduled date', 'start date', 'trip date']);
+      const newTripsList: Trip[] = [];
+      const newLoadingRecords: LoadingRecord[] = [];
 
-        return {
-          id: `trip-import-${Date.now()}-${index}`,
-          tripNumber: tripNumber === '-' ? `TRIP-IMP-${Date.now()}-${index + 1}` : tripNumber,
-          truckId: truckPlate === '-' ? '-' : `import-truck-${truckPlate}`,
-          driverId: driverName === '-' ? '-' : `import-driver-${driverName}-${index}`,
-          source: sourceValue,
-          destination: destinationValue,
-          vendorName: vendorValue,
-          vehicleType: vehicleTypeValue,
-          distanceKm: parseNumberCell(distanceValue),
-          estimatedQuantityTons: parseNumberCell(qtyValue),
-          actualLoadedTons: loadedValue === '-' ? undefined : parseNumberCell(loadedValue),
-          status: normalizeImportedStatus(statusValue),
-          scheduledStartDate: parseImportedDate(dateValue),
+      const getNextChallanNumberExcel = (destinationName: string, tempRecords: LoadingRecord[]) => {
+        const dest = String(destinationName || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
+        const prefix = dest.substring(0, 2).padEnd(2, 'X');
+        
+        const allChallans = [
+          ...loadingRecords.map(r => r.challanNo),
+          ...tempRecords.map(r => r.challanNo)
+        ];
+        
+        let maxSeq = 0;
+        allChallans.forEach(c => {
+          if (c && c.toUpperCase().startsWith(prefix)) {
+            const seqStr = c.substring(prefix.length);
+            const seqNum = parseInt(seqStr, 10);
+            if (Number.isFinite(seqNum) && seqNum > maxSeq) {
+              maxSeq = seqNum;
+            }
+          }
+        });
+        
+        const nextSeq = maxSeq + 1;
+        const seqString = String(nextSeq).padStart(4, '0');
+        return `${prefix}${seqString}`;
+      };
+
+      detail.import.rows.forEach((row, index) => {
+        const truckPlate = getCellValue(detail.import.headers, row, ['truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate', 'vehicle_no']);
+        if (truckPlate === '-') return;
+
+        const poVal = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract', 'po']);
+        const qtyVal = getCellValue(detail.import.headers, row, ['qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight', 'qty/net', 'estimated quantity', 'actual loaded']);
+        const tareVal = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare tons', 'tare_weight']);
+        const grossVal = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross tons', 'gross_weight']);
+        const ticketNo = getCellValue(detail.import.headers, row, ['ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no']);
+        const challanVal = getCellValue(detail.import.headers, row, ['challan', 'challan no', 'challan number', 'challan_no']);
+        const dateVal = getCellValue(detail.import.headers, row, ['date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val', 'time and date of loading']);
+        const locationVal = getCellValue(detail.import.headers, row, ['location', 'destination', 'unloading', 'unloading point', 'destination unloading', 'location/destination']);
+        const sourceVal = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading point', 'loading_point', 'source loading']);
+
+        // Find active PO
+        let matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase() === poVal.toUpperCase());
+        if (!matchedPo && poVal !== '-') {
+          matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase().includes(poVal.toUpperCase()));
+        }
+        if (!matchedPo && purchaseOrders.length > 0) {
+          matchedPo = purchaseOrders[0];
+        }
+
+        const poNumber = matchedPo ? matchedPo.poNumber : (poVal !== '-' ? poVal : 'PO-GENERIC-01');
+        const clientName = matchedPo ? matchedPo.clientName : 'Client';
+        const commodityValue = matchedPo ? matchedPo.commodity : 'Fly Ash';
+        
+        const route = getPoSourceDestination(poNumber);
+        const finalDestination = locationVal !== '-' ? locationVal : route.destination;
+        const finalSource = sourceVal !== '-' ? sourceVal : route.source;
+
+        // Resolve truck details
+        const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
+        const vendor = matchedMasterTruck?.vendor || 'Vendor 1';
+        const type = matchedMasterTruck?.type || 'Tipper';
+        const driverName = matchedMasterTruck?.assignedDriverName || 'Driver Partner';
+        const driverPhone = matchedMasterTruck?.assignedDriverPhone || '-';
+
+        // Weights
+        const netWeight = qtyVal !== '-' ? parseNumberCell(qtyVal) : (grossVal !== '-' && tareVal !== '-' ? Math.max(0, parseNumberCell(grossVal) - parseNumberCell(tareVal)) : 25.0);
+        const tareWeight = tareVal !== '-' ? parseNumberCell(tareVal) : 15.0;
+        const grossWeight = grossVal !== '-' ? parseNumberCell(grossVal) : netWeight + tareWeight;
+        const loadingDateTime = parseImportedDate(dateVal);
+
+        const generatedChallanNo = challanVal !== '-' ? challanVal.toUpperCase() : getNextChallanNumberExcel(finalDestination, newLoadingRecords);
+        const finalTicketNo = ticketNo !== '-' ? ticketNo.toUpperCase() : `TK-${Date.now().toString().slice(-6)}-${index}`;
+
+        const tripId = `trip-import-${Date.now()}-${index}`;
+        const tripNumber = `TRIP-IMP-${Date.now().toString().slice(-4)}-${index + 1}`;
+
+        const autoTrip: Trip = {
+          id: tripId,
+          tripNumber,
+          truckId: matchedMasterTruck?.id || `truck-auto-${truckPlate}`,
+          driverId: matchedMasterTruck?.assignedDriverId || `driver-auto-${truckPlate}`,
+          source: finalSource,
+          destination: finalDestination,
+          vendorName: vendor,
+          vehicleType: type,
+          distanceKm: 120,
+          estimatedQuantityTons: netWeight,
+          status: 'IN_TRANSIT',
+          scheduledStartDate: loadingDateTime,
           driver: { fullName: driverName, phone: driverPhone },
-          truck: { plateNumber: truckPlate, model: truckModel },
-          purchaseOrder: {
-            poNumber,
-            clientName,
-            commodity: commodityValue,
-          },
+          truck: { plateNumber: truckPlate, model: matchedMasterTruck?.model || '-' },
+          purchaseOrder: { poNumber, clientName, commodity: commodityValue },
         };
+        newTripsList.push(autoTrip);
+
+        const newRecord: LoadingRecord = {
+          id: `loading-import-${Date.now()}-${index}`,
+          tripId,
+          tripNumber,
+          truckId: matchedMasterTruck?.id || `truck-auto-${truckPlate}`,
+          truckPlate,
+          tareWeight,
+          grossWeight,
+          netWeight,
+          loadingDateTime,
+          ticketNo: finalTicketNo,
+          challanNo: generatedChallanNo,
+          uom: 'Metric Ton',
+          truckStatus: 'IN_TRANSIT',
+        };
+        newLoadingRecords.push(newRecord);
+
+        if (matchedPo) {
+          matchedPo.allocatedQuantityTons = Number(matchedPo.allocatedQuantityTons) + netWeight;
+        }
       });
 
-      if (importedTrips.length === 0) return;
+      if (newTripsList.length === 0) return;
+
       setTrips(prev => [
-        ...importedTrips,
-        ...prev.filter(trip => !importedTrips.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
+        ...newTripsList,
+        ...prev.filter(trip => !newTripsList.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
       ]);
-      const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
+      setLoadingRecords(prev => [
+        ...newLoadingRecords,
+        ...prev.filter(rec => !newLoadingRecords.some(importedRec => importedRec.challanNo === rec.challanNo)),
+      ]);
+
+      const existingTrips = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
       saveSyncedValue(ASSIGNED_TRIPS_KEY, [
-        ...importedTrips,
-        ...existing.filter(trip => !importedTrips.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
+        ...newTripsList,
+        ...existingTrips.filter(trip => !newTripsList.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
       ]);
+
+      const existingLoading = JSON.parse(window.localStorage.getItem(LOADING_RECORDS_KEY) || '[]') as LoadingRecord[];
+      saveSyncedValue(LOADING_RECORDS_KEY, [
+        ...newLoadingRecords,
+        ...existingLoading.filter(rec => !newLoadingRecords.some(importedRec => importedRec.challanNo === rec.challanNo)),
+      ]);
+
+      newTripsList.forEach(t => {
+        upsertTruckStatusOverride(t.truckId || '', 'IN_TRANSIT');
+      });
+
+      setPurchaseOrders([...purchaseOrders]);
       setCurrentPage(1);
     };
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
-  }, []);
-
-  const fetchTripsData = async () => {
-    // Static offline data from helper is used
-    setLoading(false);
-  };
+  }, [purchaseOrders, loadingRecords, trucks]);
 
   const applyTruckSelection = (selectedTruck: typeof trucks[number]) => {
     setTruckId(selectedTruck.id);
@@ -349,14 +521,6 @@ export default function TripsPage() {
       })();
   };
 
-  const handleDriverSelection = (selectedDriverId: string) => {
-    setDriverId(selectedDriverId);
-    const pairedTruck = findTruckForDriver(selectedDriverId);
-    if (pairedTruck) {
-      applyTruckSelection(pairedTruck);
-    }
-  };
-
   const handleTruckSelection = (selectedTruckId: string) => {
     setTruckId(selectedTruckId);
     const selectedTruck = trucks.find(truck => truck.id === selectedTruckId);
@@ -366,6 +530,33 @@ export default function TripsPage() {
     const pairedDriver = findDriverForTruck(selectedTruckId);
     if (pairedDriver) {
       setDriverId(pairedDriver.id);
+    }
+  };
+
+  const handlePoSelection = (poId: string) => {
+    setPoId(poId);
+    const selectedPo = purchaseOrders.find(po => po.id === poId);
+    if (selectedPo) {
+      setCommodity(selectedPo.commodity || 'Fly Ash');
+      const route = getPoSourceDestination(selectedPo.poNumber);
+      setSource(route.source);
+      setDestination(route.destination);
+      const generatedChallan = getNextChallanNumber(route.destination, []);
+      setChallanNo(generatedChallan);
+    }
+  };
+
+  const handleWeightChange = (field: 'tare' | 'gross', value: string) => {
+    if (field === 'tare') {
+      setTareWeight(value);
+      const grossVal = parseFloat(grossWeight) || 0;
+      const tareVal = parseFloat(value) || 0;
+      setNetWeight(grossVal > tareVal ? (grossVal - tareVal).toFixed(2) : '0.00');
+    } else {
+      setGrossWeight(value);
+      const grossVal = parseFloat(value) || 0;
+      const tareVal = parseFloat(tareWeight) || 0;
+      setNetWeight(grossVal > tareVal ? (grossVal - tareVal).toFixed(2) : '0.00');
     }
   };
 
@@ -386,10 +577,15 @@ export default function TripsPage() {
       return;
     }
 
-    const requestedQty = Number(estimatedQuantity);
+    const requestedQty = Number(netWeight) || 0;
     const poRemaining = Number(targetPO.totalQuantityTons) - Number(targetPO.allocatedQuantityTons);
     const selectedDriver = drivers.find(d => d.id === driverId);
     const selectedTruck = trucks.find(t => t.id === truckId);
+
+    if (requestedQty <= 0) {
+      setError('Net weight must be greater than 0');
+      return;
+    }
 
     if (requestedQty > poRemaining) {
       setError(`PO Allocation limit exceeded. PO has only ${poRemaining.toFixed(2)} remaining tons. Requested: ${requestedQty} tons.`);
@@ -397,13 +593,14 @@ export default function TripsPage() {
     }
 
     if (!selectedDriver || !selectedTruck) {
-      setError('Select a valid driver and truck from the imported dataset');
+      setError('Select a valid driver and truck from the registry');
       return;
     }
 
     const tripNumber = `TRIP-${10000 + trips.length + 1}`;
+    const newTripId = `trip-local-${Date.now()}`;
     const newTrip: Trip = {
-      id: `trip-local-${Date.now()}`,
+      id: newTripId,
       tripNumber,
       truckId,
       driverId,
@@ -413,8 +610,8 @@ export default function TripsPage() {
       vehicleType,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
-      status: tripStatus,
-      scheduledStartDate: new Date().toISOString(),
+      status: 'IN_TRANSIT',
+      scheduledStartDate: new Date(loadingDateTime).toISOString(),
       driver: { fullName: selectedDriver.fullName, phone: selectedDriver.phone },
       truck: { plateNumber: selectedTruck.plateNumber, model: selectedTruck.model },
       purchaseOrder: {
@@ -424,12 +621,46 @@ export default function TripsPage() {
       },
     };
 
-    const persistAssignedTrip = (trip: Trip) => {
-      if (typeof window === 'undefined') return;
-      const existing = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
-      saveSyncedValue(ASSIGNED_TRIPS_KEY, [trip, ...existing.filter(item => item.id !== trip.id)]);
+    const newLoadingRecord: LoadingRecord = {
+      id: `loading-local-${Date.now()}`,
+      tripId: newTripId,
+      tripNumber: newTrip.tripNumber,
+      truckId: selectedTruck.id,
+      truckPlate: selectedTruck.plateNumber,
+      tareWeight: parseFloat(tareWeight) || 0,
+      grossWeight: parseFloat(grossWeight) || 0,
+      netWeight: requestedQty,
+      loadingDateTime: new Date(loadingDateTime).toISOString(),
+      ticketNo: ticketNo.toUpperCase(),
+      challanNo: challanNo.toUpperCase(),
+      uom: 'Metric Ton',
+      truckStatus: 'IN_TRANSIT'
     };
 
+    setTrips(prev => [newTrip, ...prev]);
+    setLoadingRecords(prev => [newLoadingRecord, ...prev]);
+
+    if (typeof window !== 'undefined') {
+      const existingTrips = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
+      saveSyncedValue(ASSIGNED_TRIPS_KEY, [newTrip, ...existingTrips]);
+
+      const existingLoading = JSON.parse(window.localStorage.getItem(LOADING_RECORDS_KEY) || '[]') as LoadingRecord[];
+      saveSyncedValue(LOADING_RECORDS_KEY, [newLoadingRecord, ...existingLoading]);
+
+      setPurchaseOrders(prev =>
+        prev.map(po =>
+          po.id === poId
+            ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
+            : po
+        )
+      );
+
+      upsertTruckStatusOverride(selectedTruck.id, 'IN_TRANSIT');
+    }
+
+    setModalOpen(false);
+
+    // Call API (failsafe)
     const payload = {
       tripNumber,
       purchaseOrderId: poId,
@@ -444,16 +675,16 @@ export default function TripsPage() {
       vendorName,
       vehicleType,
       commodity,
-      status: tripStatus,
+      status: 'IN_TRANSIT',
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
-      scheduledStartDate: new Date().toISOString(),
+      scheduledStartDate: new Date(loadingDateTime).toISOString(),
     };
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const token = localStorage.getItem('tms_token');
-      const response = await fetch(`${apiUrl}/api/trips`, {
+      await fetch(`${apiUrl}/api/trips`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -461,40 +692,13 @@ export default function TripsPage() {
         },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'API failed to assign trip');
-      }
-
-      setTrips(prev => [newTrip, ...prev]);
-      persistAssignedTrip(newTrip);
-      setPurchaseOrders(prev =>
-        prev.map(po =>
-          po.id === poId
-            ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
-            : po
-        )
-      );
-      fetchTripsData();
-      setModalOpen(false);
-    } catch (err: any) {
-      setTrips(prev => [newTrip, ...prev]);
-      persistAssignedTrip(newTrip);
-
-      setPurchaseOrders(prev =>
-        prev.map(po =>
-          po.id === poId
-            ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
-            : po
-        )
-      );
-
-      setModalOpen(false);
+    } catch (err) {
+      // Ignored: offline takes precedence
     }
   };
 
   const getGatepassToken = (trip: Trip) => {
+    const record = loadingRecords.find(r => r.tripId === trip.id || r.tripNumber === trip.tripNumber);
     setActiveGatepass({
       gatepassNumber: `GP-OUT-${trip.tripNumber.split('-')[1]}`,
       tripNumber: trip.tripNumber,
@@ -502,9 +706,9 @@ export default function TripsPage() {
       commodity: trip.purchaseOrder.commodity,
       driverName: trip.driver.fullName,
       plateNumber: trip.truck.plateNumber,
-      tareWeight: '15.30 Tons',
-      grossWeight: `${(15.30 + Number(trip.estimatedQuantityTons || 0)).toFixed(2)} Tons (Est)`,
-      issuedAt: new Date().toLocaleDateString(),
+      tareWeight: record ? `${record.tareWeight.toFixed(2)} Tons` : '15.30 Tons',
+      grossWeight: record ? `${record.grossWeight.toFixed(2)} Tons` : `${(15.30 + Number(trip.estimatedQuantityTons || 0)).toFixed(2)} Tons (Est)`,
+      issuedAt: record ? new Date(record.loadingDateTime).toLocaleDateString() : new Date().toLocaleDateString(),
     });
   };
 
@@ -512,19 +716,44 @@ export default function TripsPage() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
   };
 
+  const openAssignModal = () => {
+    setPoId('');
+    setTruckId('');
+    setDriverId('');
+    setVendorName('');
+    setVehicleType('');
+    setCommodity('Fly Ash');
+    setSource('Vedanta Lanjigarh Plant');
+    setDestination('Paramanandpur Stockyard');
+    setEstimatedQuantity('40.00');
+    setDistance('120');
+    setTareWeight('');
+    setGrossWeight('');
+    setNetWeight('');
+    setTicketNo('');
+    setChallanNo('');
+    setLoadingDateTime(new Date().toISOString().slice(0, 16));
+    setError('');
+    setModalOpen(true);
+  };
+
+  const selectedTruckObject = trucks.find(t => t.id === truckId);
+  const selectedTruckRawHealth = selectedTruckObject ? selectedTruckObject.health : 100;
+  const selectedTruckHealth = selectedTruckObject ? getTruckDynamicHealth(selectedTruckObject.plateNumber, selectedTruckRawHealth, fleetMasterRecords) : null;
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Title */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Freight Dispatch Board</h2>
-          <p className="text-xs text-slate-500 mt-1">Assign vehicle routes under active client contract ceilings (India Network)</p>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Freight Dispatch & Loading Board</h2>
+          <p className="text-xs text-slate-500 mt-1">Consolidated dispatch planning, dynamic health checking, and vehicle loading logs.</p>
         </div>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={openAssignModal}
           className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-4 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-glass-glow"
         >
-          <Plus className="h-4.5 w-4.5" /> Assign New Trip Dispatch
+          <Plus className="h-4.5 w-4.5" /> Assign New Trip Dispatch & Load
         </button>
       </div>
 
@@ -571,10 +800,10 @@ export default function TripsPage() {
         </div>
       </div>
 
-      {/* Dispatched Table */}
+      {/* Dispatched & Loaded Table */}
       <div className="glass-panel rounded-2xl border border-brand-slate overflow-hidden">
         <div className="border-b border-[#e2e8f0] bg-white/60 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Trip dispatches</h3>
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Trip Dispatches & Loads</h3>
           <div className="flex items-center gap-2">
             {isDeleteMode ? (
               <>
@@ -638,12 +867,23 @@ export default function TripsPage() {
                     />
                   </th>
                 )}
+                <th className="px-6 py-4">Vehicle no</th>
                 <th className="px-6 py-4">PO</th>
                 <th className="px-6 py-4">Commodity</th>
+                <th className="px-6 py-4">Vendor</th>
+                <th className="px-6 py-4">Vehicle type</th>
                 <th className="px-6 py-4">Source</th>
                 <th className="px-6 py-4">Destination</th>
-                <th className="px-6 py-4">Vehicle no</th>
+                <th className="px-6 py-4">Driver partner</th>
                 <th className="px-6 py-4">health index</th>
+                <th className="px-6 py-4">Tare (T)</th>
+                <th className="px-6 py-4">Gross (T)</th>
+                <th className="px-6 py-4">Net (T)</th>
+                <th className="px-6 py-4">Loading Time</th>
+                <th className="px-6 py-4">Ticket no</th>
+                <th className="px-6 py-4">Challan no</th>
+                <th className="px-6 py-4">Running Status</th>
+                <th className="px-6 py-4 text-center">Gatepass</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
@@ -651,6 +891,12 @@ export default function TripsPage() {
                 const matchedTruck = trucks.find(t => t.plateNumber.toUpperCase() === trip.truck.plateNumber.toUpperCase());
                 const rawHealth = matchedTruck ? matchedTruck.health : 90;
                 const health = getTruckDynamicHealth(trip.truck.plateNumber, rawHealth, fleetMasterRecords);
+
+                const record = loadingRecords.find(r => r.tripId === trip.id || (trip.tripNumber && r.tripNumber === trip.tripNumber));
+
+                const vendor = matchedTruck?.vendor || trip.vendorName || '—';
+                const vType = matchedTruck?.type || trip.vehicleType || '—';
+                const driverPartner = matchedTruck?.assignedDriverName || trip.driver?.fullName || '—';
 
                 return (
                   <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
@@ -670,11 +916,14 @@ export default function TripsPage() {
                         />
                       </td>
                     )}
+                    <td className="px-6 py-4 font-mono font-bold text-slate-800 tracking-wider whitespace-nowrap">{trip.truck.plateNumber}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800 font-mono">{trip.purchaseOrder.poNumber}</td>
                     <td className="px-6 py-4 text-slate-600">{trip.purchaseOrder.commodity || '—'}</td>
+                    <td className="px-6 py-4 text-slate-600 font-semibold">{vendor}</td>
+                    <td className="px-6 py-4 text-slate-600">{vType}</td>
                     <td className="px-6 py-4 text-slate-600 font-medium">{trip.source}</td>
                     <td className="px-6 py-4 text-slate-600 font-medium">{trip.destination}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-slate-800 tracking-wider">{trip.truck.plateNumber}</td>
+                    <td className="px-6 py-4 text-slate-600">{driverPartner}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <div className="h-1.5 w-12 bg-slate-100 rounded-full overflow-hidden">
@@ -685,12 +934,34 @@ export default function TripsPage() {
                         </span>
                       </div>
                     </td>
+                    <td className="px-6 py-4 font-mono">{record ? `${record.tareWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 font-mono">{record ? `${record.grossWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 font-mono font-bold text-slate-800">{record ? `${record.netWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-medium">
+                      {record ? new Date(record.loadingDateTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true, dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                    </td>
+                    <td className="px-6 py-4 font-mono">{record ? record.ticketNo : '—'}</td>
+                    <td className="px-6 py-4 font-mono font-semibold text-slate-800 whitespace-nowrap">{record ? record.challanNo : '—'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(trip.status as OperationalStatus)}`}>
+                        {getOperationalStatusLabel(trip.status as OperationalStatus)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => getGatepassToken(trip)}
+                        className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 p-1.5 text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                        title="Show Gatepass QR"
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={isDeleteMode ? 7 : 6} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
@@ -723,12 +994,15 @@ export default function TripsPage() {
         )}
       </div>
 
-      {/* Modal - Create Trip */}
+      {/* Modal - Create Trip & Load Vehicle */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="glass-panel w-full max-w-lg rounded-2xl p-6 border border-brand-slate shadow-glass shadow-glass-glow animate-scale-up max-h-[90dvh] flex flex-col overflow-hidden">
+          <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 border border-brand-slate shadow-glass shadow-glass-glow animate-scale-up max-h-[90dvh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 mb-4 shrink-0">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Assign Trip Dispatch</h3>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Assign Trip & Load Vehicle</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Captures dispatch PO allocation, vehicle parameters, and loading weights simultaneously.</p>
+              </div>
               <button 
                 onClick={() => setModalOpen(false)}
                 className="rounded-lg hover:bg-slate-100 p-1 text-slate-500 hover:text-slate-900"
@@ -745,14 +1019,18 @@ export default function TripsPage() {
                 </div>
               )}
 
+              <div className="border-b border-[#e2e8f0] pb-3 mb-2">
+                <span className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">1. Contract & Routing Information</span>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Purchase Order Contract</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Purchase Order Contract *</label>
                   <select 
                     required 
                     value={poId}
-                    onChange={(e) => setPoId(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                    onChange={(e) => handlePoSelection(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   >
                     <option value="">Choose active PO...</option>
                     {purchaseOrders.map(po => (
@@ -761,141 +1039,190 @@ export default function TripsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Estimated Weight (Tons) <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Commodity <span className="text-[9px] text-brand-primary font-normal font-sans">(PO Auto-resolved)</span></label>
                   <input
                     type="text"
                     disabled
-                    value={estimatedQuantity ? `${estimatedQuantity} Tons` : '—'}
-                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                    value={commodity || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Trip Status</label>
-                  <select
-                    required
-                    value={tripStatus}
-                    onChange={(e) => setTripStatus(e.target.value as OperationalStatus)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
-                  >
-                    {OPERATIONAL_STATUS_OPTIONS.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Source Loading <span className="text-[9px] text-brand-primary font-normal font-sans">(PO Auto-resolved)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={source || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Current Status Preview</label>
-                  <div className={`flex min-h-[46px] items-center rounded-xl border px-3 text-xs font-bold ${getOperationalStatusClasses(tripStatus)}`}>
-                    {getOperationalStatusLabel(tripStatus)}
-                  </div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Destination Unloading <span className="text-[9px] text-brand-primary font-normal font-sans">(PO Auto-resolved)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={destination || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
                 </div>
+              </div>
+
+              <div className="border-b border-[#e2e8f0] pb-3 pt-2 mb-2">
+                <span className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">2. Fleet & Driver Allocation</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Truck Vehicle</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Truck Vehicle Plate *</label>
                   <select 
                     required 
                     value={truckId}
                     onChange={(e) => handleTruckSelection(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none"
                   >
                     <option value="">Choose Truck...</option>
                     {trucks.map(t => (
                       <option key={t.id} value={t.id}>{t.plateNumber}</option>
                     ))}
                   </select>
+                  {selectedTruckHealth !== null && (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">Dynamic Health:</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${selectedTruckHealth > 80 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : selectedTruckHealth > 50 ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                        {selectedTruckHealth}%
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Driver Partner <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Driver Partner <span className="text-[9px] text-brand-primary font-normal font-sans">(Registry Auto-fetched)</span></label>
                   <input
                     type="text"
                     disabled
-                    value={drivers.find(d => d.id === driverId)?.fullName || 'No driver linked'}
-                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                    value={drivers.find(d => d.id === driverId)?.fullName || 'No driver linked to truck'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Distance (Km)</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vendor Company <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-fetched)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={vendorName || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vehicle Type <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-fetched)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={vehicleType || '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Distance (Km) *</label>
                   <input
                     type="number"
                     step="0.01"
                     required
                     value={distance}
                     onChange={(e) => setDistance(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  />
+                </div>
+              </div>
+
+              <div className="border-b border-[#e2e8f0] pb-3 pt-2 mb-2">
+                <span className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">3. Loading Weighment & Inbound Info</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Tare Weight (Tons) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="e.g. 15.20"
+                    value={tareWeight}
+                    onChange={(e) => handleWeightChange('tare', e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vendor <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Gross Weight (Tons) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="e.g. 54.70"
+                    value={grossWeight}
+                    onChange={(e) => handleWeightChange('gross', e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Net Weight (Tons) <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-computed)</span></label>
                   <input
                     type="text"
                     disabled
-                    value={vendorName || '—'}
-                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                    value={netWeight ? `${netWeight} Tons` : '—'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-bold font-mono cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Time & Date of Loading *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={loadingDateTime}
+                    onChange={(e) => setLoadingDateTime(e.target.value)}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Ticket No. *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="TICKET-10293"
+                    value={ticketNo}
+                    onChange={(e) => setTicketNo(e.target.value.toUpperCase())}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none uppercase font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Commodity</label>
-                  <select
-                    required
-                    value={commodity}
-                    onChange={(e) => setCommodity(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Challan No. <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-generated)</span></label>
+                  <input
+                    type="text"
+                    disabled
+                    value={challanNo || 'Select PO first'}
+                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-mono font-semibold cursor-not-allowed uppercase"
+                  />
+                </div>
+                <div className="flex flex-col justify-end">
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 font-sans shadow-md"
                   >
-                    {COMMODITIES.map(item => (
-                      <option key={item} value={item}>{item}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Vehicle Type <span className="text-[10px] text-brand-primary font-normal font-sans tracking-normal">(Auto-fetched)</span></label>
-                  <input
-                    type="text"
-                    disabled
-                    value={vehicleType || '—'}
-                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-3 px-3 text-slate-500 font-semibold cursor-not-allowed"
-                  />
+                    Dispatch & Load Vehicle
+                  </button>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Source Loading</label>
-                  <input
-                    type="text"
-                    required
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Destination Unloading</label>
-                  <input
-                    type="text"
-                    required
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-3 px-3 text-slate-800 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-sm font-semibold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 font-sans font-extrabold"
-              >
-                Create Assignments & Release Outbound Gatepass
-              </button>
             </form>
           </div>
         </div>
@@ -952,6 +1279,14 @@ export default function TripsPage() {
               <div className="flex justify-between">
                 <span className="text-slate-400">Truck Plate:</span>
                 <span className="text-slate-800 font-mono">{activeGatepass.plateNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Tare Weight:</span>
+                <span className="text-slate-800 font-semibold font-mono">{activeGatepass.tareWeight}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Gross Weight:</span>
+                <span className="text-slate-800 font-semibold font-mono">{activeGatepass.grossWeight}</span>
               </div>
             </div>
 
