@@ -360,8 +360,8 @@ export default function LoadingVehiclePage() {
     ? trucks.find(truck => truck.id === selectedTrip.truckId || truck.plateNumber === selectedTrip.truck.plateNumber)
     : undefined;
   const availableTrips = filteredTrips.filter(trip =>
-    !filteredRecords.some(record => record.tripId === trip.id) &&
-    normalizeOperationalStatus(trip.status) !== 'COMPLETED'
+    normalizeOperationalStatus(trip.status) === 'SCHEDULED' &&
+    !filteredRecords.some(record => record.tripId === trip.id)
   );
 
   const persistTruckStatusOverrides = (nextTrucks: TruckData[]) => {
