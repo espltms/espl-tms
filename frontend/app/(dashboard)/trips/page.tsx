@@ -145,7 +145,7 @@ export default function TripsPage() {
   const [destination, setDestination] = useState('Paramanandpur Stockyard');
   const [vendorName, setVendorName] = useState(VENDOR_OPTIONS[0]);
   const [vehicleType, setVehicleType] = useState('Tipper');
-  const [commodity, setCommodity] = useState('Fly Ash');
+  const [commodity, setCommodity] = useState('');
   const [estimatedQuantity, setEstimatedQuantity] = useState('40.00');
   const [distance, setDistance] = useState('120');
 
@@ -556,7 +556,6 @@ export default function TripsPage() {
     setPoId(poId);
     const selectedPo = purchaseOrders.find(po => po.id === poId);
     if (selectedPo) {
-      setCommodity(selectedPo.commodity || 'Fly Ash');
       const route = getPoSourceDestination(selectedPo.poNumber);
       setSource(route.source);
       setDestination(route.destination);
@@ -758,15 +757,15 @@ export default function TripsPage() {
     setDriverId('');
     setVendorName('');
     setVehicleType('');
-    setCommodity('Fly Ash');
+    setCommodity('');
     setSource('Vedanta Lanjigarh Plant');
     setDestination('Paramanandpur Stockyard');
     setEstimatedQuantity('40.00');
     setDistance('120');
-    setTareWeight('15.00');
+    setTareWeight('');
     setGrossWeight('');
     setNetWeight('');
-    setTicketNo(`TK-${Math.floor(100000 + Math.random() * 900000)}`);
+    setTicketNo('');
     setChallanNo('');
     setLoadingDateTime(new Date().toISOString().slice(0, 16));
     setError('');
@@ -1089,12 +1088,14 @@ export default function TripsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Commodity <span className="text-[9px] text-brand-primary font-normal font-sans">(PO Auto-resolved)</span></label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Commodity *</label>
                   <input
                     type="text"
-                    disabled
-                    value={commodity || '—'}
-                    className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-semibold cursor-not-allowed"
+                    required
+                    value={commodity}
+                    onChange={(e) => setCommodity(e.target.value)}
+                    placeholder="e.g. Fly Ash"
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   />
                 </div>
               </div>
