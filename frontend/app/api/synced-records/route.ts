@@ -4,6 +4,22 @@ import { getUserFromRequest } from '@/lib/auth';
 
 const LOCAL_STORAGE_RECORD_TYPE = 'local_storage';
 
+const SHARED_KEYS = [
+  'tms_assigned_trips',
+  'tms_loading_records',
+  'tms_local_trucks',
+  'tms_local_drivers',
+  'tms_truck_status_overrides',
+  'tms_custom_roles'
+];
+
+const getEffectiveUserId = (userId: string, recordKey: string | null) => {
+  if (recordKey && SHARED_KEYS.includes(recordKey)) {
+    return 'global-system-data';
+  }
+  return userId;
+};
+
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) {
@@ -14,11 +30,13 @@ export async function GET(req: NextRequest) {
   const recordType = searchParams.get('recordType') || LOCAL_STORAGE_RECORD_TYPE;
   const recordKey = searchParams.get('recordKey');
 
+  const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
+
   if (recordKey) {
     const record = await prisma.syncedRecord.findUnique({
       where: {
         userId_recordType_recordKey: {
-          userId: user.userId,
+          userId: effectiveUserId,
           recordType,
           recordKey,
         },
@@ -29,7 +47,7 @@ export async function GET(req: NextRequest) {
   }
 
   const records = await prisma.syncedRecord.findMany({
-    where: { userId: user.userId, recordType },
+    where: { userId: effectiveUserId, recordType },
     orderBy: { updatedAt: 'desc' },
   });
 
@@ -50,16 +68,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'recordKey is required' }, { status: 400 });
   }
 
+  const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
+
   const record = await prisma.syncedRecord.upsert({
     where: {
       userId_recordType_recordKey: {
-        userId: user.userId,
+        userId: effectiveUserId,
         recordType,
         recordKey,
       },
     },
     create: {
-      userId: user.userId,
+      userId: effectiveUserId,
       recordType,
       recordKey,
       payload,
