@@ -15,6 +15,7 @@ import {
   TRUCK_STATUS_OVERRIDES_KEY,
   updateAssignedTripStatus,
   upsertTruckStatusOverride,
+  isMatchingDestination,
 } from '@/lib/workflowAutomation';
 
 type TruckStatus = OperationalStatus;
@@ -50,6 +51,7 @@ const getLocalDateTimeString = () => {
   const tzoffset = (new Date()).getTimezoneOffset() * 60000;
   return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
 };
+
 
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const emptyUnloadingForm = {
@@ -189,7 +191,7 @@ export default function UnloadingVehiclePage() {
                   if (isRegionalUser && userRegion) {
                     const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
                     if (trip) {
-                      return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+                      return isMatchingDestination(trip.destination, userRegion);
                     }
                     return true;
                   }

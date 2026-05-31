@@ -21,7 +21,7 @@ import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
 import { getTruckDynamicHealth } from '@/lib/healthHelper';
 import { useAuthStore } from '@/store/auth.store';
-import { updateAssignedTripStatus, upsertTruckStatusOverride } from '@/lib/workflowAutomation';
+import { updateAssignedTripStatus, upsertTruckStatusOverride, isMatchingDestination } from '@/lib/workflowAutomation';
 
 interface PurchaseOrder {
   id: string;
@@ -204,7 +204,7 @@ export default function TripsPage() {
       return trip.source && trip.source.toLowerCase().includes('lanjigarh');
     }
     if (isRegionalUser && userRegion) {
-      return trip.destination && trip.destination.toLowerCase().includes(userRegion.toLowerCase());
+      return isMatchingDestination(trip.destination, userRegion);
     }
     return true;
   });
@@ -599,7 +599,7 @@ export default function TripsPage() {
     setError('');
 
     if (isRegionalUser && userRegion) {
-      if (!destination.toLowerCase().includes(userRegion.toLowerCase())) {
+      if (!isMatchingDestination(destination, userRegion)) {
         setError(`You can only dispatch trips to your region destination (${userRegion})`);
         return;
       }

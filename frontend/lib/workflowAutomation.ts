@@ -52,3 +52,58 @@ export const upsertTruckStatusOverride = async (
   }
   await saveSyncedValue(TRUCK_STATUS_OVERRIDES_KEY, { ...existing, [truckId]: status });
 };
+
+export const isMatchingDestination = (destination: string | null | undefined, region: string | null | undefined) => {
+  if (!destination || !region) return false;
+  const dest = destination.toLowerCase().trim().replace(/[^a-z]/g, '');
+  const reg = region.toLowerCase().trim().replace(/[^a-z]/g, '');
+  
+  if (dest.includes(reg) || reg.includes(dest)) return true;
+  
+  // Paramanandpur check
+  const isParamanandpurRegion = 
+    reg.includes('param') || 
+    reg.includes('parman') || 
+    reg.includes('prm') || 
+    reg.includes('paramanand') || 
+    reg.includes('paramanad') || 
+    reg.includes('paramand') ||
+    reg.includes('pram');
+
+  if (isParamanandpurRegion) {
+    const paramWords = [
+      'param', 'parman', 'prm', 'pram',
+      'prmndpr', 'pramndpr', 'pramnand',
+      'paramanand', 'paramanad', 'paramand', 
+      'parmanand', 'parmanad', 'parmand', 'parman',
+      'prmnd'
+    ];
+    return paramWords.some(word => dest.includes(word));
+  }
+  
+  // Dharamgarh check
+  const isDharamgarhRegion = 
+    reg.includes('dharam') || 
+    reg.includes('dharm') || 
+    reg.includes('dhrm') || 
+    reg.includes('drm') || 
+    reg.includes('dharang') || 
+    reg.includes('dharamb') || 
+    reg.includes('dham') ||
+    reg.includes('dharag');
+
+  if (isDharamgarhRegion) {
+    const dharamWords = [
+      'dharam', 'dharm', 'dhrm', 'drm',
+      'dharang', 'dharamb', 'dham', 'dharag',
+      'drmgrh', 'dhrmgrh',
+      'dharagard', 'dharagarh', 'dharamgahr',
+      'dharmgahr', 'dharamgadh', 'dharmgadh',
+      'dharamgard', 'dharmgard', 'dhamgarh'
+    ];
+    return dharamWords.some(word => dest.includes(word));
+  }
+  
+  return false;
+};
+
