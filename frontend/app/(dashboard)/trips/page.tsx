@@ -161,6 +161,7 @@ export default function TripsPage() {
   const [loadingDateTime, setLoadingDateTime] = useState(getLocalDateTimeString());
   const [ticketNo, setTicketNo] = useState('');
   const [challanNo, setChallanNo] = useState('');
+  const [typedTruckPlate, setTypedTruckPlate] = useState('');
 
   const [error, setError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -619,8 +620,45 @@ export default function TripsPage() {
 
     const requestedQty = Number(netWeight) || 0;
     const poRemaining = Number(targetPO.totalQuantityTons) - Number(targetPO.allocatedQuantityTons);
-    const selectedDriver = drivers.find(d => d.id === driverId);
-    const selectedTruck = trucks.find(t => t.id === truckId);
+
+    let selectedTruck = trucks.find(t => t.id === truckId);
+    if (!selectedTruck && typedTruckPlate.trim()) {
+      const normalizedPlate = typedTruckPlate.toUpperCase().replace(/\s+/g, '');
+      selectedTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/\s+/g, '') === normalizedPlate);
+    }
+
+    if (!selectedTruck && typedTruckPlate.trim()) {
+      selectedTruck = {
+        id: `temp-truck-${Date.now()}`,
+        plateNumber: typedTruckPlate.trim().toUpperCase(),
+        model: 'Generic Model',
+        type: vehicleType || 'Tipper',
+        capacityTons: 40.0,
+        fuelCard: '',
+        health: 100,
+        status: 'AVAILABLE',
+        complianceVerified: true,
+      } as any;
+    }
+
+    let selectedDriver = drivers.find(d => d.id === driverId);
+    if (selectedTruck && !selectedDriver) {
+      const pairedDriver = findDriverForTruck(selectedTruck.id);
+      if (pairedDriver) {
+        selectedDriver = pairedDriver;
+      }
+    }
+
+    if (!selectedDriver) {
+      selectedDriver = drivers[0] || ({
+        id: `temp-driver-${Date.now()}`,
+        fullName: 'Generic Driver',
+        phone: '9999999999',
+        licenseNumber: 'DL-TEMP',
+        status: 'AVAILABLE',
+        verified: true,
+      } as any);
+    }
 
     if (requestedQty <= 0) {
       setError('Net weight must be greater than 0');
@@ -632,8 +670,8 @@ export default function TripsPage() {
       return;
     }
 
-    if (!selectedDriver || !selectedTruck) {
-      setError('Select a valid driver and truck from the registry');
+    if (!selectedTruck) {
+      setError('Please enter a valid Truck Plate Number');
       return;
     }
 
@@ -642,8 +680,8 @@ export default function TripsPage() {
     const newTrip: Trip = {
       id: newTripId,
       tripNumber,
-      truckId,
-      driverId,
+      truckId: selectedTruck.id,
+      driverId: selectedDriver.id,
       source,
       destination,
       vendorName,
@@ -705,10 +743,10 @@ export default function TripsPage() {
       tripNumber,
       purchaseOrderId: poId,
       poNumber: targetPO.poNumber,
-      driverId,
-      driverName: selectedDriver.fullName,
-      driverPhone: selectedDriver.phone,
-      truckId,
+      driverId: selectedDriver?.id,
+      driverName: selectedDriver?.fullName,
+      driverPhone: selectedDriver?.phone,
+      truckId: selectedTruck.id,
       truckPlate: selectedTruck.plateNumber,
       source,
       destination,
@@ -758,10 +796,9 @@ export default function TripsPage() {
 
   const openAssignModal = () => {
     setPoId('');
-    setTruckId('');
     setDriverId('');
-    setVendorName('');
-    setVehicleType('');
+    setTruckId('');
+    setTypedTruckPlate('');
     setCommodity('');
     setSource('Vedanta Lanjigarh Plant');
     setDestination('Paramanandpur Stockyard');
@@ -1133,17 +1170,30 @@ export default function TripsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Truck Vehicle Plate *</label>
-                  <select 
-                    required 
-                    value={truckId}
-                    onChange={(e) => handleTruckSelection(e.target.value)}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none"
-                  >
-                    <option value="">Choose Truck...</option>
-                    {trucks.map(t => (
-                      <option key={t.id} value={t.id}>{t.plateNumber}</option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. CG04GV8763"
+                    value={typedTruckPlate}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTypedTruckPlate(val);
+                      
+                      const normalizedVal = val.toUpperCase().replace(/\s+/g, '');
+                      const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/\s+/g, '') === normalizedVal);
+                      if (matched) {
+                        setTruckId(matched.id);
+                        applyTruckSelection(matched);
+                        const pairedDriver = findDriverForTruck(matched.id);
+                        if (pairedDriver) {
+                          setDriverId(pairedDriver.id);
+                        }
+                      } else {
+                        setTruckId('');
+                      }
+                    }}
+                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none placeholder-slate-400 font-mono font-bold tracking-wider"
+                  />
                   {selectedTruckHealth !== null && (
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <span className="text-[9px] text-slate-400 font-bold uppercase">Dynamic Health:</span>

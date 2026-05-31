@@ -89,23 +89,52 @@ export async function POST(req: NextRequest) {
         ].filter(Boolean) as any,
       },
     });
-    const driver = await prisma.driver.findFirst({
+    let driver = await prisma.driver.findFirst({
       where: {
         OR: [
-          body.driverId ? { id: body.driverId } : undefined,
+          (body.driverId && !body.driverId.startsWith('temp-')) ? { id: body.driverId } : undefined,
           body.driverPhone ? { phone: body.driverPhone } : undefined,
           body.driverName ? { fullName: body.driverName } : undefined,
         ].filter(Boolean) as any,
       },
     });
-    const truck = await prisma.truck.findFirst({
+
+    if (!driver) {
+      const defaultD = await prisma.driver.findFirst();
+      if (defaultD) {
+        driver = defaultD;
+      } else {
+        driver = await prisma.driver.create({
+          data: {
+            fullName: body.driverName || 'Generic Driver',
+            licenseNumber: `DL-${Date.now()}`,
+            phone: body.driverPhone || `99999${Math.floor(10000 + Math.random() * 90000)}`,
+            status: 'AVAILABLE',
+          }
+        });
+      }
+    }
+
+    let truck = await prisma.truck.findFirst({
       where: {
         OR: [
-          body.truckId ? { id: body.truckId } : undefined,
+          (body.truckId && !body.truckId.startsWith('temp-')) ? { id: body.truckId } : undefined,
           body.truckPlate ? { plateNumber: body.truckPlate } : undefined,
         ].filter(Boolean) as any,
       },
     });
+
+    if (!truck && body.truckPlate) {
+      truck = await prisma.truck.create({
+        data: {
+          plateNumber: body.truckPlate.toUpperCase().trim(),
+          model: 'Generic Model',
+          capacityTons: body.estimatedQuantityTons || 40.0,
+          type: body.vehicleType || 'Tipper',
+          status: 'AVAILABLE',
+        }
+      });
+    }
 
     if (!purchaseOrder || !driver || !truck) {
       return NextResponse.json({ error: 'Could not match PO, driver, or truck in master database' }, { status: 400 });
