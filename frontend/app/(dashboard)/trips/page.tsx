@@ -94,7 +94,13 @@ const parseNumberCell = (value: string) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 const parseImportedDate = (value: string) => {
-  const parsed = value === '-' ? new Date() : new Date(value);
+  if (!value || value === '-') return new Date().toISOString();
+  const num = Number(value);
+  if (Number.isFinite(num) && num > 30000 && num < 100000) {
+    const jsDate = new Date((num - 25569) * 86400 * 1000);
+    return jsDate.toISOString();
+  }
+  const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 };
 
@@ -950,6 +956,7 @@ export default function TripsPage() {
                 <th className="px-6 py-4">Tare (T)</th>
                 <th className="px-6 py-4">Gross (T)</th>
                 <th className="px-6 py-4">Net (T)</th>
+                <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Loading Time</th>
                 <th className="px-6 py-4">Ticket no</th>
                 <th className="px-6 py-4">Challan no</th>
@@ -1009,7 +1016,10 @@ export default function TripsPage() {
                     <td className="px-6 py-4 font-mono">{record ? `${record.grossWeight.toFixed(2)}` : '—'}</td>
                     <td className="px-6 py-4 font-mono font-bold text-slate-800">{record ? `${record.netWeight.toFixed(2)}` : '—'}</td>
                     <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-medium">
-                      {record ? new Date(record.loadingDateTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true, dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                      {record ? new Date(record.loadingDateTime).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-medium">
+                      {record ? new Date(record.loadingDateTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }) : '—'}
                     </td>
                     <td className="px-6 py-4 font-mono">{record ? record.ticketNo : '—'}</td>
                     <td className="px-6 py-4 font-mono font-semibold text-slate-800 whitespace-nowrap">{record ? record.challanNo : '—'}</td>
@@ -1032,7 +1042,7 @@ export default function TripsPage() {
               })}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 19 : 18} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>
