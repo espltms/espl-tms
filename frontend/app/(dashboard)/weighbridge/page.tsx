@@ -64,12 +64,17 @@ const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 const TRUCK_STATUS_OVERRIDES_KEY = 'tms_truck_status_overrides';
 
+const getLocalDateTimeString = () => {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+};
+
 const emptyLoadingForm = {
   truckId: '',
   tareWeight: '',
   grossWeight: '',
   netWeight: '',
-  loadingDateTime: new Date().toISOString().slice(0, 16),
+  loadingDateTime: getLocalDateTimeString(),
   ticketNo: '',
   challanNo: '',
   uom: 'Metric Ton',
@@ -79,7 +84,7 @@ const emptyLoadingForm = {
 const emptyUnloadingForm = {
   truckStatus: 'RECEIVED' as TruckStatus,
   receivedQty: '',
-  unloadingDateTime: new Date().toISOString().slice(0, 16),
+  unloadingDateTime: getLocalDateTimeString(),
 };
 
 export default function WeighbridgePage() {
@@ -209,7 +214,7 @@ export default function WeighbridgePage() {
     setUnloadingForm({
       truckStatus: record.unloadingTruckStatus || 'RECEIVED',
       receivedQty: record.receivedQty?.toString() || record.netWeight.toString(),
-      unloadingDateTime: record.unloadingDateTime || new Date().toISOString().slice(0, 16),
+      unloadingDateTime: record.unloadingDateTime || getLocalDateTimeString(),
     });
   };
 

@@ -46,11 +46,16 @@ interface LoadingRecord {
   unloadingTruckStatus?: TruckStatus;
 }
 
+const getLocalDateTimeString = () => {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+};
+
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const emptyUnloadingForm = {
   truckStatus: 'RECEIVED' as TruckStatus,
   receivedQty: '',
-  unloadingDateTime: new Date().toISOString().slice(0, 16),
+  unloadingDateTime: getLocalDateTimeString(),
 };
 
 export default function UnloadingVehiclePage() {
@@ -101,7 +106,7 @@ export default function UnloadingVehiclePage() {
     setForm({
       truckStatus: record.unloadingTruckStatus || 'RECEIVED',
       receivedQty: record.receivedQty?.toString() || record.netWeight.toString(),
-      unloadingDateTime: record.unloadingDateTime || new Date().toISOString().slice(0, 16),
+      unloadingDateTime: record.unloadingDateTime || getLocalDateTimeString(),
     });
   };
 

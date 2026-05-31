@@ -127,6 +127,11 @@ const getPoSourceDestination = (poNumber: string) => {
   };
 };
 
+const getLocalDateTimeString = () => {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+};
+
 export default function TripsPage() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -153,7 +158,7 @@ export default function TripsPage() {
   const [tareWeight, setTareWeight] = useState('');
   const [grossWeight, setGrossWeight] = useState('');
   const [netWeight, setNetWeight] = useState('');
-  const [loadingDateTime, setLoadingDateTime] = useState(new Date().toISOString().slice(0, 16));
+  const [loadingDateTime, setLoadingDateTime] = useState(getLocalDateTimeString());
   const [ticketNo, setTicketNo] = useState('');
   const [challanNo, setChallanNo] = useState('');
 
@@ -767,7 +772,7 @@ export default function TripsPage() {
     setNetWeight('');
     setTicketNo('');
     setChallanNo('');
-    setLoadingDateTime(new Date().toISOString().slice(0, 16));
+    setLoadingDateTime(getLocalDateTimeString());
     setError('');
     setModalOpen(true);
   };
