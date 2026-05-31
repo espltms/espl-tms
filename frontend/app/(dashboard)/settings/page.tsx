@@ -60,10 +60,9 @@ export default function SettingsPage() {
   const canManageUsers = isSuperAdmin || currentUser?.role === 'SYS_ADMIN' || isRegionAdmin;
   const canManageRoles = isSuperAdmin || currentUser?.role === 'SYS_ADMIN';
 
-  const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'roles' | 'reset'>(canManageUsers ? 'users' : 'logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'roles'>(canManageUsers ? 'users' : 'logs');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [resetting, setResetting] = useState(false);
   
   // User Form State
   const [email, setEmail] = useState('');
@@ -281,39 +280,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResetData = async (type: 'fleet_master' | 'fleet_specs' | 'trips' | 'all') => {
-    const confirmation = confirm('Are you sure you want to permanently delete this data? This action cannot be undone.');
-    if (!confirmation) return;
-
-    setResetting(true);
-    try {
-      if (type === 'fleet_master' || type === 'all') {
-        localStorage.removeItem('tms_fleet_master');
-        await saveSyncedValue('tms_fleet_master', []);
-      }
-      if (type === 'fleet_specs' || type === 'all') {
-        localStorage.removeItem('tms_local_trucks');
-        localStorage.removeItem('tms_local_drivers');
-        localStorage.removeItem('tms_truck_status_overrides');
-        await saveSyncedValue('tms_local_trucks', []);
-        await saveSyncedValue('tms_local_drivers', []);
-        await saveSyncedValue('tms_truck_status_overrides', {});
-      }
-      if (type === 'trips' || type === 'all') {
-        localStorage.removeItem('tms_assigned_trips');
-        localStorage.removeItem('tms_loading_records');
-        await saveSyncedValue('tms_assigned_trips', []);
-        await saveSyncedValue('tms_loading_records', []);
-      }
-      alert('Data reset successfully!');
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to reset data.');
-    } finally {
-      setResetting(false);
-    }
-  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -363,17 +329,7 @@ export default function SettingsPage() {
           <FileText className="h-4 w-4" />
           Security Audit Logs
         </button>
-        <button
-          onClick={() => setActiveTab('reset')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
-            activeTab === 'reset'
-              ? 'border-red-500 text-red-600 font-extrabold'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Trash2 className="h-4 w-4 text-red-500" />
-          Danger Zone
-        </button>
+
       </div>
 
       {activeTab === 'users' && canManageUsers && (
@@ -840,80 +796,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {activeTab === 'reset' && (
-        <div className="space-y-6 max-w-3xl animate-fade-in">
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-            <h3 className="text-sm font-extrabold text-red-800 uppercase tracking-wider flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600" /> Warning: Critical Actions
-            </h3>
-            <p className="text-xs text-red-700 mt-2 font-medium">
-              Actions in this section are destructive and permanent. Resetting will delete all data you have uploaded via Excel sheets or manually entered in the respective modules. This will sync to your cloud storage and cannot be restored.
-            </p>
-          </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
-            {/* Fleet Master Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Fleet Master Registry</h4>
-                <p className="text-[11px] text-slate-500 mt-1">Delete all imported vehicles, validity dates, assigned drivers and records from the Fleet Master tab.</p>
-              </div>
-              <button
-                onClick={() => handleResetData('fleet_master')}
-                disabled={resetting}
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-all font-sans shadow-sm shrink-0"
-              >
-                Clear Fleet Master
-              </button>
-            </div>
-
-            {/* Fleet Control Specs Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Fleet Control Specs & Crew</h4>
-                <p className="text-[11px] text-slate-500 mt-1">Delete all manually onboarded trucks, linked driver details, and operational status overrides.</p>
-              </div>
-              <button
-                onClick={() => handleResetData('fleet_specs')}
-                disabled={resetting}
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-all font-sans shadow-sm shrink-0"
-              >
-                Clear Fleet & Drivers
-              </button>
-            </div>
-
-            {/* Operations logs Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Operations Logs & Trips</h4>
-                <p className="text-[11px] text-slate-500 mt-1">Clear all custom dispatched trips, weighbridge tickets, and loading logs.</p>
-              </div>
-              <button
-                onClick={() => handleResetData('trips')}
-                disabled={resetting}
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-all font-sans shadow-sm shrink-0"
-              >
-                Clear Operations Logs
-              </button>
-            </div>
-
-            {/* Reset All Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-2">
-              <div>
-                <h4 className="text-xs font-bold text-red-800 uppercase tracking-wider">Full Database Reset</h4>
-                <p className="text-[11px] text-slate-500 mt-1">Reset all storage modules back to original state, removing all custom dataset imports at once.</p>
-              </div>
-              <button
-                onClick={() => handleResetData('all')}
-                disabled={resetting}
-                className="rounded-xl bg-red-600 px-5 py-3 text-xs font-bold text-white hover:bg-red-700 active:scale-[0.98] transition-all font-sans shadow-md shrink-0"
-              >
-                Reset System Database
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style jsx global>{`
         .settings-input {
