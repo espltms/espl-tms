@@ -100,25 +100,10 @@ const parseImportedDate = (value: string) => {
 
 const getPoSourceDestination = (poNumber: string) => {
   const num = String(poNumber || '').toUpperCase();
-  if (num.includes('KORBA')) {
-    return {
-      source: 'Korba Coal Fields, Chhattisgarh (Mines Loading)',
-      destination: 'Mundra Port Terminal, Gujarat (Unloading)',
-    };
-  } else if (num.includes('JAIPUR')) {
-    return {
-      source: 'Jaipur Cement Works, Rajasthan',
-      destination: 'Ahmedabad Stockyard, Gujarat',
-    };
-  } else if (num.includes('DRMGRH') || num.includes('DHARAMGARH')) {
+  if (num.includes('DRMGRH') || num.includes('DHARAMGARH') || num.includes('DHARAM') || num.includes('DRM')) {
     return {
       source: 'Vedanta Lanjigarh Plant',
       destination: 'Dharamgarh Terminal',
-    };
-  } else if (num.includes('PRMNDPR') || num.includes('PARAMANANDPUR') || num.includes('VEDANTA')) {
-    return {
-      source: 'Vedanta Lanjigarh Plant',
-      destination: 'Paramanandpur Stockyard',
     };
   }
   return {
@@ -397,14 +382,11 @@ export default function TripsPage() {
         const commodityValue = matchedPo ? matchedPo.commodity : 'Fly Ash';
         
         const route = getPoSourceDestination(poNumber);
-        const finalDestination = locationVal !== '-' ? locationVal : route.destination;
-        const finalSource = sourceVal !== '-' ? sourceVal : route.source;
-
-        if (isLanjigarhLoader) {
-          if (!finalSource || !finalSource.toLowerCase().includes('lanjigarh')) {
-            return;
-          }
-        }
+        const finalSource = 'Vedanta Lanjigarh Plant';
+        const destLower = String(locationVal !== '-' ? locationVal : route.destination).toLowerCase();
+        const finalDestination = (destLower.includes('dharam') || destLower.includes('dharm') || destLower.includes('dhrm') || destLower.includes('drm'))
+          ? 'Dharamgarh Terminal'
+          : 'Paramanandpur Stockyard';
 
         // Resolve truck details
         const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
@@ -567,15 +549,7 @@ export default function TripsPage() {
       const route = getPoSourceDestination(selectedPo.poNumber);
       setSource(route.source);
       setDestination(route.destination);
-      
-      const poNum = selectedPo.poNumber.toUpperCase();
-      if (poNum.includes('KORBA')) {
-        setDistance('1350');
-      } else if (poNum.includes('JAIPUR')) {
-        setDistance('650');
-      } else {
-        setDistance('120');
-      }
+      setDistance('120');
 
       const generatedChallan = getNextChallanNumber(route.destination, []);
       setChallanNo(generatedChallan);
@@ -608,11 +582,18 @@ export default function TripsPage() {
       }
     }
 
-    if (isLanjigarhLoader) {
-      if (!source.toLowerCase().includes('lanjigarh')) {
-        setError('You can only create trips with source Lanjigarh');
-        return;
-      }
+    if (!source.toLowerCase().includes('lanjigarh')) {
+      setError('Source can only be Vedanta Lanjigarh Plant');
+      return;
+    }
+
+    const dLower = destination.toLowerCase();
+    const isAllowedDest = dLower.includes('dharam') || dLower.includes('dharm') || dLower.includes('dhrm') || dLower.includes('drm') ||
+                          dLower.includes('param') || dLower.includes('parman') || dLower.includes('prm') || dLower.includes('pram') ||
+                          dLower.includes('paramanandpur');
+    if (!isAllowedDest) {
+      setError('Destination can only be Paramanandpur Stockyard or Dharamgarh Terminal');
+      return;
     }
 
     const targetPO = purchaseOrders.find(po => po.id === poId);
