@@ -108,7 +108,7 @@ export default function MaintenancePage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Plate Number</th>
+                <th className="px-6 py-4">Vehicle No</th>
                 <th className="px-6 py-4">Work Description</th>
                 <th className="px-6 py-4">Severity Triage</th>
                 <th className="px-6 py-4">Service Cost</th>

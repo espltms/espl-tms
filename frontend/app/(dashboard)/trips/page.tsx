@@ -674,7 +674,7 @@ export default function TripsPage() {
     }
 
     if (!selectedTruck) {
-      setError('Please enter a valid Truck Plate Number');
+      setError('Please enter a valid Vehicle Number');
       return;
     }
 

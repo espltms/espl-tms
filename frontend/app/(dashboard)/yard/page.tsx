@@ -268,7 +268,7 @@ export default function YardPage() {
 
             <form onSubmit={handleAllocate} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
               <div>
-                <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Plate Number *</label>
+                <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Vehicle No *</label>
                 <input 
                   type="text" 
                   required

@@ -476,7 +476,7 @@ export default function FleetPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Plate Number</th>
+                <th className="px-6 py-4">Vehicle No</th>
                 <th className="px-6 py-4">Truck Specs</th>
                 <th className="px-6 py-4">Fleet Category</th>
                 <th className="px-6 py-4">Vendor</th>
@@ -624,7 +624,7 @@ export default function FleetPage() {
                     <Truck className="h-4 w-4 text-brand-primary" /> Vehicle Details
                   </h4>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Field label="Plate Number *">
+                    <Field label="Vehicle No *">
                       <input type="text" required placeholder="e.g. OD-08-AB-1234" value={vehicleForm.plateNumber} onChange={(e) => setVehicleForm({...vehicleForm, plateNumber: e.target.value})} className="fleet-input uppercase font-mono" />
                     </Field>
                     <Field label="Truck Model *">

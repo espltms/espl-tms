@@ -382,7 +382,7 @@ export default function WeighbridgePage() {
               <form onSubmit={handleNextStep} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Plate No.</label>
+                    <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Truck Vehicle No.</label>
                     <input 
                       type="text" required placeholder="e.g. MH-04-AB-1234"
                       value={ticketData.truckPlate} onChange={(e) => setTicketData({...ticketData, truckPlate: e.target.value.toUpperCase()})}
