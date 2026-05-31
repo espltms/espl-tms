@@ -12,12 +12,14 @@ import {
   normalizeOperationalStatus,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 import {
   FLEET_FINANCE_ENTRIES_KEY,
   LOADING_RECORDS_KEY,
   LOCAL_TRUCKS_KEY,
   TRUCK_STATUS_OVERRIDES_KEY,
   updateAssignedTripStatus,
+  isMatchingDestination,
 } from '@/lib/workflowAutomation';
 
 type FleetCategory = 'OWNED_FLEET' | 'ATTACHED_FLEET';
@@ -73,9 +75,11 @@ export default function FleetFinanceWorkspace({
 }: {
   fleetCategory: FleetCategory;
 }) {
+  const { user } = useAuthStore();
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [entries, setEntries] = useState<FleetFinanceEntry[]>([]);
+  const [assignedTrips, setAssignedTrips] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState('');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [form, setForm] = useState({
@@ -102,6 +106,18 @@ export default function FleetFinanceWorkspace({
     return true;
   };
 
+  const isRegionalUser = user?.role === 'REGION_ADMIN' || 
+                         user?.role === 'PARAMANANDPUR_ADMIN' || 
+                         user?.role === 'DHARAMGARH_ADMIN' ||
+                         user?.role === 'BHAWANIPATNA_ADMIN';
+  const userRegion = user?.role === 'PARAMANANDPUR_ADMIN'
+    ? 'Paramanandpur' 
+    : user?.role === 'DHARAMGARH_ADMIN' 
+      ? 'Dharamgarh' 
+      : user?.role === 'BHAWANIPATNA_ADMIN'
+        ? 'Bhawanipatna'
+        : user?.regionName;
+
   const allUnloadedVehicles = useMemo(() => loadingRecords
     .filter(record => Boolean(record.unloadingDateTime))
     .map((record) => {
@@ -114,7 +130,17 @@ export default function FleetFinanceWorkspace({
         currentStatus: normalizeOperationalStatus(record.unloadingTruckStatus || record.truckStatus),
       };
     })
-    .filter(record => record.fleetCategory === fleetCategory), [fleetCategory, loadingRecords, trucks]);
+    .filter(record => {
+      if (record.fleetCategory !== fleetCategory) return false;
+      if (isRegionalUser && userRegion) {
+        const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
+        if (trip) {
+          return isMatchingDestination(trip.destination, userRegion);
+        }
+        return true;
+      }
+      return true;
+    }), [fleetCategory, loadingRecords, trucks, isRegionalUser, userRegion, assignedTrips]);
 
   const unloadedVehicles = allUnloadedVehicles.filter(record =>
     !hasDateFilter || isWithinDateRange(record.unloadingDateTime)
@@ -134,6 +160,7 @@ export default function FleetFinanceWorkspace({
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
+    fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
     fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {
       setTrucks((currentTrucks) => [
         ...syncedTrucks,
@@ -172,10 +199,21 @@ export default function FleetFinanceWorkspace({
     });
   }, [selectedRecordId, entries, selectedRecord]);
 
-  const filteredEntries = entries.filter(entry =>
-    entry.fleetCategory === fleetCategory &&
-    (!hasDateFilter || isWithinDateRange(entry.entryDate))
-  );
+  const filteredEntries = entries.filter(entry => {
+    if (entry.fleetCategory !== fleetCategory) return false;
+    if (hasDateFilter && !isWithinDateRange(entry.entryDate)) return false;
+    if (isRegionalUser && userRegion) {
+      const record = loadingRecords.find(r => r.id === entry.loadingRecordId);
+      if (record) {
+        const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
+        if (trip) {
+          return isMatchingDestination(trip.destination, userRegion);
+        }
+      }
+      return true;
+    }
+    return true;
+  });
   const repairTotal = filteredEntries
     .filter(entry => entry.type === 'REPAIR_MAINTENANCE')
     .reduce((sum, entry) => sum + entry.amount, 0);
