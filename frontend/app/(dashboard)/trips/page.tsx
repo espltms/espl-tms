@@ -365,7 +365,7 @@ export default function TripsPage() {
         if (truckPlate === '-') return;
 
         const poVal = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract', 'po']);
-        const qtyVal = getCellValue(detail.import.headers, row, ['qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight', 'qty/net', 'estimated quantity', 'actual loaded']);
+        const qtyVal = getCellValue(detail.import.headers, row, ['qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight', 'qty/net', 'estimated quantity', 'actual loaded', 'netwt', 'netwt.', 'wt', 'netweight', 'netqty']);
         const tareVal = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare tons', 'tare_weight']);
         const grossVal = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross tons', 'gross_weight']);
         const ticketNo = getCellValue(detail.import.headers, row, ['ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no']);
@@ -382,7 +382,15 @@ export default function TripsPage() {
         // Find active PO
         let matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase() === poVal.toUpperCase());
         if (!matchedPo && poVal !== '-') {
-          matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase().includes(poVal.toUpperCase()));
+          const poValUpper = poVal.toUpperCase();
+          if (poValUpper.includes('DHARAM') || poValUpper.includes('DRMGRH') || poValUpper.includes('DRM') || poValUpper.includes('DHARM')) {
+            matchedPo = purchaseOrders.find(p => p.poNumber.includes('DRMGRH') || p.poNumber.includes('DHARAM'));
+          } else if (poValUpper.includes('PARAM') || poValUpper.includes('PRMNDPR') || poValUpper.includes('PRM') || poValUpper.includes('PARMAN')) {
+            matchedPo = purchaseOrders.find(p => p.poNumber.includes('PRMNDPR') || p.poNumber.includes('PARAM'));
+          }
+        }
+        if (!matchedPo && poVal !== '-') {
+          matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase().includes(poVal.toUpperCase()) || poVal.toUpperCase().includes(p.poNumber.toUpperCase()));
         }
         if (!matchedPo && purchaseOrders.length > 0) {
           matchedPo = purchaseOrders[0];
@@ -409,8 +417,8 @@ export default function TripsPage() {
 
         // Weights
         const netWeight = qtyVal !== '-' ? parseNumberCell(qtyVal) : (grossVal !== '-' && tareVal !== '-' ? Math.max(0, parseNumberCell(grossVal) - parseNumberCell(tareVal)) : 25.0);
-        const tareWeight = tareVal !== '-' ? parseNumberCell(tareVal) : 15.0;
-        const grossWeight = grossVal !== '-' ? parseNumberCell(grossVal) : netWeight + tareWeight;
+        const tareWeight = tareVal !== '-' ? parseNumberCell(tareVal) : 0.0;
+        const grossWeight = grossVal !== '-' ? parseNumberCell(grossVal) : (grossVal === '-' && tareVal === '-' ? 0.0 : netWeight + tareWeight);
         const loadingDateTime = parseImportedDate(dateVal);
 
         const generatedChallanNo = challanVal !== '-' ? challanVal.toUpperCase() : getNextChallanNumberExcel(finalDestination, newLoadingRecords);
@@ -1012,9 +1020,9 @@ export default function TripsPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-mono">{record ? `${record.tareWeight.toFixed(2)}` : '—'}</td>
-                    <td className="px-6 py-4 font-mono">{record ? `${record.grossWeight.toFixed(2)}` : '—'}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-slate-800">{record ? `${record.netWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 font-mono">{record && record.tareWeight > 0 ? `${record.tareWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 font-mono">{record && record.grossWeight > 0 ? `${record.grossWeight.toFixed(2)}` : '—'}</td>
+                    <td className="px-6 py-4 font-mono font-bold text-slate-800">{record && record.netWeight > 0 ? `${record.netWeight.toFixed(2)}` : '—'}</td>
                     <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-medium">
                       {record ? new Date(record.loadingDateTime).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                     </td>
