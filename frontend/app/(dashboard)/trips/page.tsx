@@ -191,13 +191,15 @@ export default function TripsPage() {
     setSelectedIds(prev => prev.filter(id => !tripIds.includes(id)));
   };
 
-  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN';
+  const isRegionalUser = user?.role === 'REGION_ADMIN' || user?.role === 'DISPATCHER' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
   const isLanjigarhLoader = user?.role === 'LANJIGARH_LOADER';
   const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' 
     ? 'Paramanandpur' 
     : user?.role === 'DHARAMGARH_ADMIN' 
       ? 'Dharamgarh' 
-      : user?.regionName;
+      : user?.role === 'BHAWANIPATNA_ADMIN'
+        ? 'Bhawanipatna'
+        : user?.regionName;
 
   const filteredTrips = trips.filter(trip => {
     if (isLanjigarhLoader) {
@@ -323,7 +325,7 @@ export default function TripsPage() {
 
   useEffect(() => {
     if (modalOpen && isRegionalUser && userRegion) {
-      setDestination(userRegion);
+      setDestination(userRegion === 'Bhawanipatna' ? 'Paramanandpur Stockyard' : userRegion);
     }
   }, [modalOpen, isRegionalUser, userRegion]);
 
@@ -600,7 +602,8 @@ export default function TripsPage() {
 
     if (isRegionalUser && userRegion) {
       if (!isMatchingDestination(destination, userRegion)) {
-        setError(`You can only dispatch trips to your region destination (${userRegion})`);
+        const allowedRegions = userRegion === 'Bhawanipatna' ? 'Paramanandpur or Dharamgarh' : userRegion;
+        setError(`You can only dispatch trips to your region destination (${allowedRegions})`);
         return;
       }
     }

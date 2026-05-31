@@ -46,7 +46,7 @@ const navigationDivisions = [
   {
     title: "Fleet & Crew",
     items: [
-      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
+      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
       { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
@@ -81,6 +81,7 @@ const ROLE_ACCESS = {
   SYS_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path),
   DHARAMGARH_ADMIN: allNavItems.map(item => item.path),
+  BHAWANIPATNA_ADMIN: allNavItems.map(item => item.path),
   LANJIGARH_LOADER: ['/trips'],
   PARAMANANDPUR_UNLOADER: ['/unloading'],
   DHARAMGARH_UNLOADER: ['/unloading'],
@@ -207,6 +208,7 @@ export default function DashboardLayout({
       case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'PARAMANANDPUR_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'DHARAMGARH_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'BHAWANIPATNA_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'LANJIGARH_LOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'PARAMANANDPUR_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'DHARAMGARH_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';

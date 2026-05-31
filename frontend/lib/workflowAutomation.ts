@@ -60,6 +60,11 @@ export const isMatchingDestination = (destination: string | null | undefined, re
   
   if (dest.includes(reg) || reg.includes(dest)) return true;
   
+  // Bhawanipatna check matching both regions
+  if (reg.includes('bhawani') || reg.includes('patna')) {
+    return isMatchingDestination(destination, 'Paramanandpur') || isMatchingDestination(destination, 'Dharamgarh');
+  }
+  
   // Paramanandpur check
   const isParamanandpurRegion = 
     reg.includes('param') || 

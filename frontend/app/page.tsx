@@ -35,6 +35,13 @@ const portalRoles = [
     chip: 'bg-blue-500/10 text-blue-600',
   },
   {
+    label: 'Bhawanipatna Admin',
+    value: 'BHAWANIPATNA_ADMIN',
+    icon: Building2,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
     label: 'Paramanandpur Unloader',
     value: 'PARAMANANDPUR_UNLOADER',
     icon: PackageOpen,
