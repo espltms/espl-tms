@@ -89,6 +89,20 @@ type ImportedSheet = {
 };
 
 const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/**
+ * Fuzzy header matcher: checks exact normalized match first,
+ * then tries substring containment (both directions) to handle
+ * small spelling variations, extra words, or abbreviations like "Net Wt."
+ */
+const fuzzyHeaderMatch = (headerNorm: string, aliasNorm: string): boolean => {
+  if (headerNorm === aliasNorm) return true;
+  // If alias is at least 3 chars and header contains it, or vice versa
+  if (aliasNorm.length >= 3 && headerNorm.includes(aliasNorm)) return true;
+  if (headerNorm.length >= 3 && aliasNorm.includes(headerNorm)) return true;
+  return false;
+};
+
 const parseNumberCell = (value: string) => {
   const parsed = Number(String(value || '').replace(/,/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
@@ -323,7 +337,15 @@ export default function TripsPage() {
   useEffect(() => {
     const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
       const normalizedAliases = aliases.map(normalizeHeader);
-      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      // First pass: exact normalized match
+      let index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      // Second pass: fuzzy substring match (handles extra words, abbreviations, minor misspellings)
+      if (index < 0) {
+        index = headers.findIndex(header => {
+          const hn = normalizeHeader(header);
+          return normalizedAliases.some(an => fuzzyHeaderMatch(hn, an));
+        });
+      }
       const value = index >= 0 ? row[index] : '';
       return value && String(value).trim() ? String(value).trim() : '-';
     };
@@ -365,9 +387,12 @@ export default function TripsPage() {
         if (truckPlate === '-') return;
 
         const poVal = getCellValue(detail.import.headers, row, ['po number', 'po no', 'purchase order', 'purchase order contract', 'contract', 'po']);
-        const qtyVal = getCellValue(detail.import.headers, row, ['qty', 'net', 'net weight', 'net tons', 'tons', 'quantity', 'weight', 'qty/net', 'estimated quantity', 'actual loaded', 'netwt', 'netwt.', 'wt', 'netweight', 'netqty']);
-        const tareVal = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare tons', 'tare_weight']);
-        const grossVal = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross tons', 'gross_weight']);
+        // IMPORTANT: Order matters — more specific aliases first to avoid cross-matching.
+        // 'net wt' / 'net weight' should ONLY match the Net column, never Gross.
+        // 'gross wt' / 'gross weight' should ONLY match the Gross column.
+        const grossVal = getCellValue(detail.import.headers, row, ['gross', 'gross weight', 'gross wt', 'gross wt.', 'gross tons', 'gross_weight', 'grosswt']);
+        const tareVal = getCellValue(detail.import.headers, row, ['tare', 'tare weight', 'tare wt', 'tare wt.', 'tare tons', 'tare_weight', 'tarewt']);
+        const qtyVal = getCellValue(detail.import.headers, row, ['net wt', 'net wt.', 'net weight', 'netwt', 'netwt.', 'netweight', 'net tons', 'net qty', 'netqty', 'qty', 'quantity', 'estimated quantity', 'actual loaded', 'qty/net']);
         const ticketNo = getCellValue(detail.import.headers, row, ['ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no']);
         const challanVal = getCellValue(detail.import.headers, row, ['challan', 'challan no', 'challan number', 'challan_no']);
         const dateVal = getCellValue(detail.import.headers, row, ['date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val', 'time and date of loading']);
@@ -378,6 +403,7 @@ export default function TripsPage() {
         const driverVal = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner', 'driver_name']);
         const phoneVal = getCellValue(detail.import.headers, row, ['driver phone', 'phone', 'mobile', 'driver_phone', 'phone no', 'phone number']);
         const excelCommodity = getCellValue(detail.import.headers, row, ['commodity', 'material', 'product', 'cargo', 'item']);
+        const tripVal = getCellValue(detail.import.headers, row, ['trip', 'trip no', 'trip number', 'trip_no']);
 
         // Find active PO
         let matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase() === poVal.toUpperCase());
@@ -415,17 +441,20 @@ export default function TripsPage() {
         const driverName = driverVal !== '-' ? driverVal : (matchedMasterTruck?.assignedDriverName || 'Driver Partner');
         const driverPhone = phoneVal !== '-' ? phoneVal : (matchedMasterTruck?.assignedDriverPhone || '-');
 
-        // Weights
-        const netWeight = qtyVal !== '-' ? parseNumberCell(qtyVal) : (grossVal !== '-' && tareVal !== '-' ? Math.max(0, parseNumberCell(grossVal) - parseNumberCell(tareVal)) : 25.0);
+        // Weights: only use the exact column values from the Excel. Never fabricate defaults.
         const tareWeight = tareVal !== '-' ? parseNumberCell(tareVal) : 0.0;
-        const grossWeight = grossVal !== '-' ? parseNumberCell(grossVal) : (grossVal === '-' && tareVal === '-' ? 0.0 : netWeight + tareWeight);
+        const grossWeightRaw = grossVal !== '-' ? parseNumberCell(grossVal) : 0.0;
+        const netWeightRaw = qtyVal !== '-' ? parseNumberCell(qtyVal) : 0.0;
+        // If Excel gave net and gross but no tare, or vice versa, compute the missing one
+        const netWeight = netWeightRaw > 0 ? netWeightRaw : (grossWeightRaw > 0 && tareWeight > 0 ? Math.max(0, grossWeightRaw - tareWeight) : 0.0);
+        const grossWeight = grossWeightRaw > 0 ? grossWeightRaw : (netWeightRaw > 0 && tareWeight > 0 ? netWeightRaw + tareWeight : 0.0);
         const loadingDateTime = parseImportedDate(dateVal);
 
         const generatedChallanNo = challanVal !== '-' ? challanVal.toUpperCase() : getNextChallanNumberExcel(finalDestination, newLoadingRecords);
         const finalTicketNo = ticketNo !== '-' ? ticketNo.toUpperCase() : `TK-${Date.now().toString().slice(-6)}-${index}`;
 
         const tripId = `trip-import-${Date.now()}-${index}`;
-        const tripNumber = `TRIP-IMP-${Date.now().toString().slice(-4)}-${index + 1}`;
+        const tripNumber = tripVal !== '-' ? `TRIP-${tripVal}-${index + 1}` : `TRIP-IMP-${Date.now().toString().slice(-4)}-${index + 1}`;
 
         const autoTrip: Trip = {
           id: tripId,
@@ -980,9 +1009,17 @@ export default function TripsPage() {
 
                 const record = loadingRecords.find(r => r.tripId === trip.id || (trip.tripNumber && r.tripNumber === trip.tripNumber));
 
-                const vendor = matchedTruck?.vendor || trip.vendorName || '—';
-                const vType = matchedTruck?.type || trip.vehicleType || '—';
-                const driverPartner = matchedTruck?.assignedDriverName || trip.driver?.fullName || '—';
+                // Excel values take priority over auto-fetched fleet master values
+                const isImportedTrip = trip.id.startsWith('trip-import-');
+                const vendor = isImportedTrip
+                  ? (trip.vendorName && trip.vendorName !== 'Vendor 1' ? trip.vendorName : matchedTruck?.vendor || trip.vendorName || '—')
+                  : (matchedTruck?.vendor || trip.vendorName || '—');
+                const vType = isImportedTrip
+                  ? (trip.vehicleType && trip.vehicleType !== 'Tipper' ? trip.vehicleType : matchedTruck?.type || trip.vehicleType || '—')
+                  : (matchedTruck?.type || trip.vehicleType || '—');
+                const driverPartner = isImportedTrip
+                  ? (trip.driver?.fullName && trip.driver.fullName !== 'Driver Partner' ? trip.driver.fullName : matchedTruck?.assignedDriverName || trip.driver?.fullName || '—')
+                  : (matchedTruck?.assignedDriverName || trip.driver?.fullName || '—');
 
                 return (
                   <tr key={trip.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(trip.id) ? 'bg-blue-50/20' : ''}`}>
