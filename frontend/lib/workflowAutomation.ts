@@ -64,6 +64,32 @@ export const isMatchingDestination = (destination: string | null | undefined, re
   if (reg.includes('bhawani') || reg.includes('patna')) {
     return isMatchingDestination(destination, 'Paramanandpur') || isMatchingDestination(destination, 'Dharamgarh');
   }
+
+  // Broad spelling fuzzy match for Paramanandpur / Parmanandpur / Paramnadapur stockyard / etc.
+  const isDestParamanandpur = 
+    dest.includes('param') || dest.includes('parman') || dest.includes('prm') || dest.includes('pram') || 
+    dest.includes('para') || dest.includes('parm') || dest.includes('prm') || dest.includes('par') || 
+    dest.includes('prmnd') || dest.includes('paramnad');
+
+  const isRegParamanandpur = 
+    reg.includes('param') || reg.includes('parman') || reg.includes('prm') || reg.includes('pram') || 
+    reg.includes('para') || reg.includes('parm') || reg.includes('prm') || reg.includes('par') || 
+    reg.includes('prmnd') || reg.includes('paramnad');
+
+  if (isRegParamanandpur && isDestParamanandpur) return true;
+
+  // Broad spelling fuzzy match for Dharamgarh / Dharamgahr / Dharamgadh / etc.
+  const isDestDharamgarh = 
+    dest.includes('dharam') || dest.includes('dharm') || dest.includes('dhrm') || dest.includes('drm') || 
+    dest.includes('dha') || dest.includes('dhra') || dest.includes('dhar') || dest.includes('dharang') || 
+    dest.includes('dham');
+
+  const isRegDharamgarh = 
+    reg.includes('dharam') || reg.includes('dharm') || reg.includes('dhrm') || reg.includes('drm') || 
+    reg.includes('dha') || reg.includes('dhra') || reg.includes('dhar') || reg.includes('dharang') || 
+    reg.includes('dham');
+
+  if (isRegDharamgarh && isDestDharamgarh) return true;
   
   // Paramanandpur check
   const isParamanandpurRegion = 
