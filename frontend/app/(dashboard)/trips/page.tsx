@@ -367,6 +367,11 @@ export default function TripsPage() {
         const dateVal = getCellValue(detail.import.headers, row, ['date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val', 'time and date of loading']);
         const locationVal = getCellValue(detail.import.headers, row, ['location', 'destination', 'unloading', 'unloading point', 'destination unloading', 'location/destination']);
         const sourceVal = getCellValue(detail.import.headers, row, ['source', 'origin', 'loading point', 'loading_point', 'source loading']);
+        const vendorVal = getCellValue(detail.import.headers, row, ['vendor', 'vendor company', 'transporter', 'carrier', 'vendor name', 'company']);
+        const typeVal = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type', 'vehicle_type', 'wheeler']);
+        const driverVal = getCellValue(detail.import.headers, row, ['driver', 'driver name', 'driver partner', 'driver_name']);
+        const phoneVal = getCellValue(detail.import.headers, row, ['driver phone', 'phone', 'mobile', 'driver_phone', 'phone no', 'phone number']);
+        const excelCommodity = getCellValue(detail.import.headers, row, ['commodity', 'material', 'product', 'cargo', 'item']);
 
         // Find active PO
         let matchedPo = purchaseOrders.find(p => p.poNumber.toUpperCase() === poVal.toUpperCase());
@@ -379,21 +384,22 @@ export default function TripsPage() {
 
         const poNumber = matchedPo ? matchedPo.poNumber : (poVal !== '-' ? poVal : 'PO-GENERIC-01');
         const clientName = matchedPo ? matchedPo.clientName : 'Client';
-        const commodityValue = matchedPo ? matchedPo.commodity : 'Fly Ash';
+        
+        // Prioritize excel commodity name
+        const commodityValue = excelCommodity !== '-' ? excelCommodity : (matchedPo ? matchedPo.commodity : 'Fly Ash');
         
         const route = getPoSourceDestination(poNumber);
-        const finalSource = 'Vedanta Lanjigarh Plant';
-        const destLower = String(locationVal !== '-' ? locationVal : route.destination).toLowerCase();
-        const finalDestination = (destLower.includes('dharam') || destLower.includes('dharm') || destLower.includes('dhrm') || destLower.includes('drm'))
-          ? 'Dharamgarh Terminal'
-          : 'Paramanandpur Stockyard';
+        
+        // Prioritize Excel source & destination strings directly if supplied
+        const finalSource = sourceVal !== '-' ? sourceVal : route.source;
+        const finalDestination = locationVal !== '-' ? locationVal : route.destination;
 
-        // Resolve truck details
+        // Resolve truck details fallbacks
         const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
-        const vendor = matchedMasterTruck?.vendor || 'Vendor 1';
-        const type = matchedMasterTruck?.type || 'Tipper';
-        const driverName = matchedMasterTruck?.assignedDriverName || 'Driver Partner';
-        const driverPhone = matchedMasterTruck?.assignedDriverPhone || '-';
+        const vendor = vendorVal !== '-' ? vendorVal : (matchedMasterTruck?.vendor || 'Vendor 1');
+        const type = typeVal !== '-' ? typeVal : (matchedMasterTruck?.type || 'Tipper');
+        const driverName = driverVal !== '-' ? driverVal : (matchedMasterTruck?.assignedDriverName || 'Driver Partner');
+        const driverPhone = phoneVal !== '-' ? phoneVal : (matchedMasterTruck?.assignedDriverPhone || '-');
 
         // Weights
         const netWeight = qtyVal !== '-' ? parseNumberCell(qtyVal) : (grossVal !== '-' && tareVal !== '-' ? Math.max(0, parseNumberCell(grossVal) - parseNumberCell(tareVal)) : 25.0);
