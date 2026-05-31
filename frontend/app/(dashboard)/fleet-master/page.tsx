@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Database, Plus, X, ArrowRight, Trash2 } from 'lucide-react';
+import { Database, Plus, X, ArrowRight, Trash2, Search } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -74,6 +74,7 @@ export default function FleetMasterPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [vehicleSearch, setVehicleSearch] = useState('');
 
   const isVendorUser = user?.role?.startsWith('VENDOR');
   const userVendorName = user?.vendorName;
@@ -81,7 +82,12 @@ export default function FleetMasterPage() {
 
   const filteredRecords = records.filter(r => {
     if (isVendorUser && userVendorName) {
-      return r.vendor && r.vendor.toLowerCase().includes(userVendorName.toLowerCase());
+      if (!(r.vendor && r.vendor.toLowerCase().includes(userVendorName.toLowerCase()))) return false;
+    }
+    if (vehicleSearch.trim()) {
+      const query = vehicleSearch.trim().toUpperCase().replace(/[\s\-]/g, '');
+      const plate = r.plateNumber.toUpperCase().replace(/[\s\-]/g, '');
+      if (!plate.includes(query)) return false;
     }
     return true;
   });
@@ -264,11 +270,29 @@ export default function FleetMasterPage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between gap-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 shrink-0">
             <Database className="h-4.5 w-4.5 text-brand-primary" />
             Fleet Master Registry
           </h3>
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search vehicle no… (e.g. 1234)"
+              value={vehicleSearch}
+              onChange={(e) => { setVehicleSearch(e.target.value); setCurrentPage(1); }}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 font-mono tracking-wider focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/20 transition-all"
+            />
+            {vehicleSearch && (
+              <button
+                onClick={() => setVehicleSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           {canDelete && (
             <div className="flex items-center gap-2">
               {isDeleteMode ? (

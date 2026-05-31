@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Truck, 
   MapPin, 
@@ -167,6 +167,8 @@ export default function TripsPage() {
   const [ticketNo, setTicketNo] = useState('');
   const [challanNo, setChallanNo] = useState('');
   const [typedTruckPlate, setTypedTruckPlate] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const [error, setError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -1213,32 +1215,79 @@ export default function TripsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div ref={suggestionsRef}>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Truck Vehicle Plate *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. CG04GV8763"
-                    value={typedTruckPlate}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setTypedTruckPlate(val);
-                      
-                      const normalizedVal = val.toUpperCase().replace(/\s+/g, '');
-                      const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/\s+/g, '') === normalizedVal);
-                      if (matched) {
-                        setTruckId(matched.id);
-                        applyTruckSelection(matched);
-                        const pairedDriver = findDriverForTruck(matched.id);
-                        if (pairedDriver) {
-                          setDriverId(pairedDriver.id);
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Type last 4 digits e.g. 8763"
+                      value={typedTruckPlate}
+                      onFocus={() => { if (typedTruckPlate.trim().length >= 3) setShowSuggestions(true); }}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTypedTruckPlate(val);
+                        setShowSuggestions(val.trim().length >= 3);
+                        
+                        const normalizedVal = val.toUpperCase().replace(/\s+/g, '');
+                        const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/\s+/g, '') === normalizedVal);
+                        if (matched) {
+                          setTruckId(matched.id);
+                          applyTruckSelection(matched);
+                          const pairedDriver = findDriverForTruck(matched.id);
+                          if (pairedDriver) {
+                            setDriverId(pairedDriver.id);
+                          }
+                          setShowSuggestions(false);
+                        } else {
+                          setTruckId('');
                         }
-                      } else {
-                        setTruckId('');
-                      }
-                    }}
-                    className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none placeholder-slate-400 font-mono font-bold tracking-wider"
-                  />
+                      }}
+                      autoComplete="off"
+                      className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/20 placeholder-slate-400 font-mono font-bold tracking-wider transition-all"
+                    />
+                    {/* Auto-suggest dropdown */}
+                    {showSuggestions && typedTruckPlate.trim().length >= 3 && (() => {
+                      const query = typedTruckPlate.trim().toUpperCase().replace(/[\s\-]/g, '');
+                      const matches = trucks.filter(t => {
+                        const plate = t.plateNumber.toUpperCase().replace(/[\s\-]/g, '');
+                        return plate.includes(query) && plate !== query;
+                      }).slice(0, 8);
+                      if (matches.length === 0) return null;
+                      return (
+                        <div className="absolute z-[100] left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden animate-fade-in">
+                          <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{matches.length} vehicle{matches.length > 1 ? 's' : ''} found</span>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {matches.map((truck) => (
+                              <button
+                                key={truck.id}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setTypedTruckPlate(truck.plateNumber);
+                                  setTruckId(truck.id);
+                                  applyTruckSelection(truck);
+                                  const pairedDriver = findDriverForTruck(truck.id);
+                                  if (pairedDriver) setDriverId(pairedDriver.id);
+                                  setShowSuggestions(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-blue-50/60 transition-colors border-b border-slate-50 last:border-0 group"
+                              >
+                                <span className="font-mono font-extrabold text-xs text-slate-800 tracking-wider group-hover:text-brand-primary transition-colors">
+                                  {truck.plateNumber}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-semibold truncate">
+                                  {truck.type || 'Vehicle'} · {(truck as any).vendor || '—'}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                   {selectedTruckHealth !== null && (
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <span className="text-[9px] text-slate-400 font-bold uppercase">Dynamic Health:</span>
