@@ -20,6 +20,27 @@ const getEffectiveUserId = (userId: string, recordKey: string | null) => {
   return userId;
 };
 
+const ensureGlobalUserExists = async (effectiveUserId: string) => {
+  if (effectiveUserId === 'global-system-data') {
+    try {
+      await prisma.user.upsert({
+        where: { id: 'global-system-data' },
+        create: {
+          id: 'global-system-data',
+          email: 'global-system-data@espl.com',
+          fullName: 'Global System Data',
+          passwordHash: 'GlobalSystemPasswordHashSecretSharedNoAuthNeededForSystemDataKeyMapping',
+          role: 'SYS_ADMIN',
+          phone: '+919999999999',
+        },
+        update: {},
+      });
+    } catch (e) {
+      console.error("Error creating global system data user:", e);
+    }
+  }
+};
+
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) {
@@ -31,6 +52,7 @@ export async function GET(req: NextRequest) {
   const recordKey = searchParams.get('recordKey');
 
   const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
+  await ensureGlobalUserExists(effectiveUserId);
 
   if (recordKey) {
     const record = await prisma.syncedRecord.findUnique({
@@ -69,6 +91,7 @@ export async function POST(req: NextRequest) {
   }
 
   const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
+  await ensureGlobalUserExists(effectiveUserId);
 
   const record = await prisma.syncedRecord.upsert({
     where: {
