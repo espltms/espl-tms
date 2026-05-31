@@ -94,22 +94,24 @@ async function main() {
   ];
 
   for (const u of users) {
-    const existing = await prisma.user.findUnique({ where: { email: u.email } });
-    if (!existing) {
-      await prisma.user.create({
-        data: {
-          email: u.email,
-          passwordHash: hashPassword(u.password),
-          fullName: u.fullName,
-          role: u.role as any,
-          regionName: (u as any).regionName || null,
-          vendorName: (u as any).vendorName || null,
-        },
-      });
-      console.log('Created user:', u.email);
-    } else {
-      console.log('User already exists:', u.email);
-    }
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        role: u.role,
+        fullName: u.fullName,
+        regionName: (u as any).regionName || null,
+        vendorName: (u as any).vendorName || null,
+      },
+      create: {
+        email: u.email,
+        passwordHash: hashPassword(u.password),
+        fullName: u.fullName,
+        role: u.role,
+        regionName: (u as any).regionName || null,
+        vendorName: (u as any).vendorName || null,
+      },
+    });
+    console.log('Upserted user:', u.email);
   }
 
   // 2. Create Purchase Orders
