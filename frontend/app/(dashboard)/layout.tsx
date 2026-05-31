@@ -50,8 +50,14 @@ const navigationDivisions = [
       { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      { label: 'Workshop & Repairs', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
+    ]
+  },
+  {
+    title: "Fleet Finance",
+    items: [
+      { label: 'Workshop & Maintenance', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
+      { label: 'Fuel Finances', path: '/fuel-finance', icon: Fuel, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
     ]
   },
   {
