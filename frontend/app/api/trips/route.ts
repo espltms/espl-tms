@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const search = getSearchParam(req, 'search');
 
     const where: any = {};
-    if (user?.role === 'VENDOR') {
+    if (user?.role?.startsWith('VENDOR')) {
       where.vendorName = user.vendorName || '';
     }
     if (user?.role === 'LANJIGARH_LOADER') {

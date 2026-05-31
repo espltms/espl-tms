@@ -78,19 +78,31 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
-  REGION_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
+  SYS_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   DHARAMGARH_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
   LANJIGARH_LOADER: ['/trips'],
   PARAMANANDPUR_UNLOADER: ['/unloading'],
   DHARAMGARH_UNLOADER: ['/unloading'],
-  VENDOR: ['/fleet', '/vehicle-summary'],
 };
 
-const hasRouteAccess = (role: string | undefined, path: string) => {
-  const explicitAccess = ROLE_ACCESS[(role || 'SUPER_ADMIN') as keyof typeof ROLE_ACCESS];
+const hasRouteAccess = (role: string | undefined, path: string, customRoles?: Record<string, string[]>) => {
+  if (!role) return false;
+  if (role === 'SUPER_ADMIN') return true;
+
+  // Vendors (VENDOR_1 through VENDOR_5)
+  if (role.startsWith('VENDOR')) {
+    return ['/fleet', '/vehicle-summary'].includes(path);
+  }
+
+  const explicitAccess = ROLE_ACCESS[role as keyof typeof ROLE_ACCESS];
   if (explicitAccess) return explicitAccess.includes(path);
-  return allNavItems.find(item => item.path === path)?.roles.includes(role || 'SYS_ADMIN') ?? false;
+
+  if (customRoles && customRoles[role]) {
+    return customRoles[role].includes(path);
+  }
+
+  return false;
 };
 
 const ClockWidget = memo(function ClockWidget() {
@@ -131,6 +143,35 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const [customRoles, setCustomRoles] = useState<Record<string, string[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = window.localStorage.getItem('tms_custom_roles');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch('/api/roles')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.roles) {
+          const mapping: Record<string, string[]> = {};
+          data.roles.forEach((r: any) => {
+            mapping[r.name] = r.routes;
+          });
+          setCustomRoles(mapping);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('tms_custom_roles', JSON.stringify(mapping));
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching custom roles:", err));
+  }, [isAuthenticated]);
+
   useEffect(() => {
     setMounted(true);
     if (!isAuthenticated) {
@@ -140,16 +181,16 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!mounted || !isAuthenticated) return;
-    if (!hasRouteAccess(user?.role, pathname)) {
-      const fallback = ROLE_ACCESS[user?.role as keyof typeof ROLE_ACCESS]?.[0] || '/dashboard';
+    if (!hasRouteAccess(user?.role, pathname, customRoles)) {
+      const fallback = ROLE_ACCESS[user?.role as keyof typeof ROLE_ACCESS]?.[0] || customRoles[user?.role || '']?.[0] || '/dashboard';
       router.push(fallback);
     }
-  }, [isAuthenticated, mounted, pathname, router, user?.role]);
+  }, [isAuthenticated, mounted, pathname, router, user?.role, customRoles]);
 
   const allowedDivisions = useMemo(() => navigationDivisions.map(div => ({
     ...div,
-    items: div.items.filter(item => hasRouteAccess(user?.role, item.path))
-  })).filter(div => div.items.length > 0), [user?.role]);
+    items: div.items.filter(item => hasRouteAccess(user?.role, item.path, customRoles))
+  })).filter(div => div.items.length > 0), [user?.role, customRoles]);
 
   const handleSignOut = () => {
     logout();
@@ -157,18 +198,18 @@ export default function DashboardLayout({
   };
 
   const getRoleBadgeStyle = (role: string) => {
+    if (!role) return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (role.startsWith('VENDOR')) {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    }
     switch (role) {
       case 'SUPER_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
-      case 'REGION_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'PARAMANANDPUR_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'DHARAMGARH_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'LANJIGARH_LOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'PARAMANANDPUR_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'DHARAMGARH_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'VENDOR': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
-      case 'FINANCE_OFFICER': return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'COMPLIANCE_OFFICER': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       default: return 'bg-blue-50 text-blue-700 border-blue-200';
     }
   };

@@ -10,14 +10,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const isRegAdmin = operator.role === 'REGION_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+    const isRegAdmin = operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
 
-    if (operator.role !== 'SUPER_ADMIN' && !isRegAdmin) {
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can manage accounts.' }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
-      where: isRegAdmin ? { role: 'VENDOR' } : undefined,
+      where: isRegAdmin ? { role: { startsWith: 'VENDOR' } } : undefined,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -46,15 +47,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const isRegAdmin = operator.role === 'REGION_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
+    const isRegAdmin = operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN';
 
-    if (operator.role !== 'SUPER_ADMIN' && !isRegAdmin) {
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can create user accounts.' }, { status: 403 });
     }
 
     const { email, password, fullName, role, phone, regionName, vendorName } = await req.json();
 
-    if (isRegAdmin && role !== 'VENDOR') {
+    if (isRegAdmin && !role.startsWith('VENDOR')) {
       return NextResponse.json({ error: 'Forbidden. Regional Admins can only create VENDOR accounts.' }, { status: 403 });
     }
 
@@ -109,8 +111,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (operator.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can delete user accounts.' }, { status: 403 });
+    if (operator.role !== 'SUPER_ADMIN' && operator.role !== 'SYS_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only System/Super Admins can delete user accounts.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

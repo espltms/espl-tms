@@ -17,31 +17,50 @@ interface UserRecord {
   createdAt: string;
 }
 
-const ROLES = [
+const STATIC_ROLES = [
   'SUPER_ADMIN',
-  'REGION_ADMIN',
+  'SYS_ADMIN',
   'PARAMANANDPUR_ADMIN',
   'DHARAMGARH_ADMIN',
   'LANJIGARH_LOADER',
   'PARAMANANDPUR_UNLOADER',
   'DHARAMGARH_UNLOADER',
-  'VENDOR',
-  'SYS_ADMIN',
-  'LOGISTICS_MANAGER',
-  'DISPATCHER',
-  'COMPLIANCE_OFFICER',
-  'FINANCE_OFFICER',
-  'GATE_OPERATOR',
-  'DRIVER_PARTNER'
+  'VENDOR_1',
+  'VENDOR_2',
+  'VENDOR_3',
+  'VENDOR_4',
+  'VENDOR_5'
+];
+
+const ALL_ROUTES = [
+  { path: '/dashboard', label: 'Executive Console (Core)' },
+  { path: '/trips', label: 'Trip Dispatch & Loading (Core)' },
+  { path: '/unloading', label: 'Unloading Vehicle (Core)' },
+  { path: '/dispatch', label: 'Control Room Live (Core)' },
+  { path: '/fleet-master', label: 'Fleet Master (Fleet)' },
+  { path: '/fleet', label: 'Fleet Control Specs (Fleet)' },
+  { path: '/vehicle-summary', label: 'Vehicle Summary (Fleet)' },
+  { path: '/drivers', label: 'Driver Duty Logs (Fleet)' },
+  { path: '/maintenance', label: 'Workshop & Repairs (Fleet)' },
+  { path: '/hr', label: 'HR & Payroll Center (Fleet)' },
+  { path: '/yard', label: 'Yard & Bay Queue (Yard)' },
+  { path: '/weighbridge', label: 'Weighbridge Weighing (Yard)' },
+  { path: '/inventory', label: 'Store & Spare Inventory (Yard)' },
+  { path: '/owned-fleet', label: 'Owned Fleet Finance (Finance)' },
+  { path: '/attached-fleet', label: 'Attached Fleet Finance (Finance)' },
+  { path: '/billing', label: 'Billing & Matches (Finance)' },
+  { path: '/legal', label: 'Corporate Compliance (Finance)' },
+  { path: '/settings', label: 'System Configuration (Finance)' },
 ];
 
 export default function SettingsPage() {
   const { user: currentUser, token } = useAuthStore();
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-  const isRegionAdmin = currentUser?.role === 'REGION_ADMIN' || currentUser?.role === 'PARAMANANDPUR_ADMIN' || currentUser?.role === 'DHARAMGARH_ADMIN';
-  const canManageUsers = isSuperAdmin || isRegionAdmin;
+  const isRegionAdmin = currentUser?.role === 'PARAMANANDPUR_ADMIN' || currentUser?.role === 'DHARAMGARH_ADMIN';
+  const canManageUsers = isSuperAdmin || currentUser?.role === 'SYS_ADMIN' || isRegionAdmin;
+  const canManageRoles = isSuperAdmin || currentUser?.role === 'SYS_ADMIN';
 
-  const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'reset'>(canManageUsers ? 'users' : 'logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'roles' | 'reset'>(canManageUsers ? 'users' : 'logs');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -50,7 +69,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('VENDOR');
+  const [role, setRole] = useState('VENDOR_1');
   const [phone, setPhone] = useState('');
   const [regionName, setRegionName] = useState('');
   const [vendorName, setVendorName] = useState('');
@@ -58,16 +77,115 @@ export default function SettingsPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Custom Roles State
+  const [customRoles, setCustomRoles] = useState<Array<{ id: string; name: string; routes: string[] }>>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
+  const [roleActionError, setRoleActionError] = useState('');
+  const [roleActionSuccess, setRoleActionSuccess] = useState('');
+  const [creatingRole, setCreatingRole] = useState(false);
   
   const logs: Array<{ id: string; operator: string; action: string; payload: string; timestamp: string; ip: string }> = [];
 
+  const fetchCustomRoles = async () => {
+    if (!canManageRoles) return;
+    setLoadingRoles(true);
+    try {
+      const res = await fetch('/api/roles', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success && data.roles) {
+        setCustomRoles(data.roles);
+      }
+    } catch (err) {
+      console.error("Failed to load roles", err);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
   useEffect(() => {
-    if (isSuperAdmin) {
+    if (canManageRoles) {
+      fetchCustomRoles();
+    }
+  }, [canManageRoles, token]);
+
+  useEffect(() => {
+    if (isSuperAdmin || currentUser?.role === 'SYS_ADMIN') {
       setRole('SYS_ADMIN');
     } else if (isRegionAdmin) {
-      setRole('VENDOR');
+      setRole('VENDOR_1');
     }
-  }, [isSuperAdmin, isRegionAdmin]);
+  }, [isSuperAdmin, isRegionAdmin, currentUser]);
+
+  const handleCreateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRoleActionError('');
+    setRoleActionSuccess('');
+    if (!newRoleName.trim()) {
+      setRoleActionError('Role name is required');
+      return;
+    }
+    if (selectedRoutes.length === 0) {
+      setRoleActionError('Please select at least one route access criteria');
+      return;
+    }
+
+    setCreatingRole(true);
+    try {
+      const response = await fetch('/api/roles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newRoleName,
+          routes: selectedRoutes
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create role');
+      }
+
+      setRoleActionSuccess(`Custom role ${newRoleName.toUpperCase()} created successfully!`);
+      setNewRoleName('');
+      setSelectedRoutes([]);
+      fetchCustomRoles();
+    } catch (err: any) {
+      setRoleActionError(err.message || 'An error occurred during role creation.');
+    } finally {
+      setCreatingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete the role ${name}? Users with this role may lose access.`)) return;
+    setRoleActionError('');
+    setRoleActionSuccess('');
+    try {
+      const response = await fetch(`/api/roles?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete role');
+      }
+      setRoleActionSuccess(`Role ${name} deleted successfully.`);
+      fetchCustomRoles();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   const fetchUsers = async () => {
     if (!canManageUsers) return;
@@ -221,6 +339,19 @@ export default function SettingsPage() {
             User ID Provisioning
           </button>
         )}
+        {canManageRoles && (
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+              activeTab === 'roles'
+                ? 'border-brand-primary text-brand-primary'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Role Management
+          </button>
+        )}
         <button
           onClick={() => setActiveTab('logs')}
           className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
@@ -313,17 +444,25 @@ export default function SettingsPage() {
                   onChange={(e) => setRole(e.target.value)}
                   className="settings-input cursor-pointer"
                 >
-                  {isSuperAdmin ? (
-                    ROLES.map(r => (
-                      <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
-                    ))
+                  {isSuperAdmin || currentUser?.role === 'SYS_ADMIN' ? (
+                    <>
+                      {STATIC_ROLES.map(r => (
+                        <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                      ))}
+                      {customRoles.map(cr => (
+                        <option key={cr.id} value={cr.name}>{cr.name.replace(/_/g, ' ')}</option>
+                      ))}
+                    </>
                   ) : isRegionAdmin ? (
                     <>
-                      <option value="DISPATCHER">DISPATCHER (Regional Dispatcher)</option>
-                      <option value="VENDOR">VENDOR</option>
+                      <option value="VENDOR_1">Vendor -1</option>
+                      <option value="VENDOR_2">Vendor -2</option>
+                      <option value="VENDOR_3">Vendor -3</option>
+                      <option value="VENDOR_4">Vendor -4</option>
+                      <option value="VENDOR_5">Vendor -5</option>
                     </>
                   ) : (
-                    <option value="VENDOR">VENDOR</option>
+                    <option value="VENDOR_1">Vendor -1</option>
                   )}
                 </select>
               </div>
@@ -344,7 +483,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {(role === 'REGION_ADMIN' || role === 'PARAMANANDPUR_ADMIN' || role === 'DHARAMGARH_ADMIN') && (
+              {(role === 'PARAMANANDPUR_ADMIN' || role === 'DHARAMGARH_ADMIN') && (
                 <div>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Assigned Region / Place</label>
                   <input
@@ -358,7 +497,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {role === 'VENDOR' && (
+              {role.startsWith('VENDOR') && (
                 <div>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Assigned Vendor Company</label>
                   <input
@@ -457,7 +596,168 @@ export default function SettingsPage() {
               </table>
             </div>
           </div>
+        </div>
+      )}
 
+      {activeTab === 'roles' && canManageRoles && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 animate-fade-in">
+          {/* Role Creation Form */}
+          <div className="lg:col-span-1 glass-panel rounded-2xl border border-brand-slate p-6 h-fit bg-white">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <ShieldCheck className="h-4.5 w-4.5 text-brand-primary" />
+              <span>Create Custom Role</span>
+            </h3>
+
+            <form onSubmit={handleCreateRole} className="space-y-4 text-xs">
+              {roleActionError && (
+                <div className="flex items-center gap-2 rounded-xl bg-brand-danger/10 border border-brand-danger/20 p-3.5 text-brand-danger">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{roleActionError}</span>
+                </div>
+              )}
+
+              {roleActionSuccess && (
+                <div className="flex items-center gap-2 rounded-xl bg-brand-success/10 border border-brand-success/20 p-3.5 text-brand-success">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                  <span>{roleActionSuccess}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Role Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  placeholder="e.g. Regional Manager"
+                  className="settings-input text-xs"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">This will be stored as uppercase (e.g. REGIONAL_MANAGER)</p>
+              </div>
+
+              <div>
+                <label className="block text-slate-500 mb-2 font-bold uppercase tracking-wider">Assign Route Access Criteria *</label>
+                <div className="space-y-3 max-h-[350px] overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+                  {Object.entries(
+                    ALL_ROUTES.reduce((acc, route) => {
+                      const group = route.label.match(/\(([^)]+)\)/)?.[1] || 'Other';
+                      if (!acc[group]) acc[group] = [];
+                      acc[group].push(route);
+                      return acc;
+                    }, {} as Record<string, typeof ALL_ROUTES>)
+                  ).map(([group, routes]) => (
+                    <div key={group} className="space-y-1.5">
+                      <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-200/60 pb-0.5 mb-1.5">
+                        {group} Division
+                      </div>
+                      {routes.map(route => {
+                        const isChecked = selectedRoutes.includes(route.path);
+                        return (
+                          <label key={route.path} className="flex items-center gap-2.5 py-1 px-1.5 rounded hover:bg-slate-100/80 cursor-pointer select-none transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedRoutes(selectedRoutes.filter(p => p !== route.path));
+                                } else {
+                                  setSelectedRoutes([...selectedRoutes, route.path]);
+                                }
+                              }}
+                              className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                            />
+                            <span className="text-[11px] font-medium text-slate-700">{route.label.split(' (')[0]}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={creatingRole}
+                className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
+              >
+                {creatingRole ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating Role...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Create Custom Role
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Dynamic Roles List */}
+          <div className="lg:col-span-2 glass-panel rounded-2xl border border-brand-slate overflow-hidden bg-white">
+            <div className="border-b border-[#e2e8f0] px-6 py-4 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Dynamic Access Control Roles</h3>
+              {loadingRoles && <Loader2 className="h-4.5 w-4.5 animate-spin text-brand-primary" />}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4 w-1/4">Role Name</th>
+                    <th className="px-6 py-4 w-2/3">Allowed Sidebar Screens</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
+                  {customRoles.map(cr => (
+                    <tr key={cr.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-extrabold text-slate-800">
+                        <span className="inline-block rounded bg-purple-50 border border-purple-200 text-purple-700 px-2 py-0.5 text-[9px] font-bold uppercase font-mono tracking-wider">
+                          {cr.name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {cr.routes.length === 0 ? (
+                            <span className="text-slate-400 text-[10px]">No screen access granted</span>
+                          ) : (
+                            (cr.routes as string[]).map(path => {
+                              const rObj = ALL_ROUTES.find(r => r.path === path);
+                              return (
+                                <span key={path} className="inline-block rounded bg-slate-100 text-slate-600 px-1.5 py-0.5 text-[9px] font-semibold border border-slate-200">
+                                  {rObj ? rObj.label.split(' (')[0] : path}
+                                </span>
+                              );
+                            })
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleDeleteRole(cr.id, cr.name)}
+                          className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Delete Role"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {customRoles.length === 0 && !loadingRoles && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
+                        No custom roles defined. System admins can configure custom roles above.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

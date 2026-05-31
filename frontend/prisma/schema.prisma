@@ -89,7 +89,7 @@ model User {
   email        String    @unique
   passwordHash String
   fullName     String
-  role         UserRole  @default(DISPATCHER)
+  role         String    @default("SYS_ADMIN")
   phone        String?
   regionName   String?
   vendorName   String?
@@ -100,6 +100,14 @@ model User {
   syncedRecords SyncedRecord[]
 
   @@index([email])
+}
+
+model CustomRole {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  routes    Json     // stores array of allowed routes (e.g., ["/trips", "/unloading"])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SyncedRecord {

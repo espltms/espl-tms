@@ -14,11 +14,11 @@ const portalRoles = [
     chip: 'bg-purple-500/10 text-purple-600',
   },
   {
-    label: 'Region Admin',
-    value: 'REGION_ADMIN',
-    icon: Building2,
-    accent: 'text-brand-primary',
-    chip: 'bg-brand-primary/10 text-brand-primary',
+    label: 'System Admin',
+    value: 'SYS_ADMIN',
+    icon: Shield,
+    accent: 'text-purple-600',
+    chip: 'bg-purple-500/10 text-purple-600',
   },
   {
     label: 'Paramanandpur Admin',
@@ -31,13 +31,6 @@ const portalRoles = [
     label: 'Dharamgarh Admin',
     value: 'DHARAMGARH_ADMIN',
     icon: Building2,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Lanjigarh Loader',
-    value: 'LANJIGARH_LOADER',
-    icon: Truck,
     accent: 'text-blue-600',
     chip: 'bg-blue-500/10 text-blue-600',
   },
@@ -56,8 +49,43 @@ const portalRoles = [
     chip: 'bg-blue-500/10 text-blue-600',
   },
   {
-    label: 'Vendor',
-    value: 'VENDOR',
+    label: 'Lanjigarh Loader',
+    value: 'LANJIGARH_LOADER',
+    icon: Truck,
+    accent: 'text-blue-600',
+    chip: 'bg-blue-500/10 text-blue-600',
+  },
+  {
+    label: 'Vendor -1',
+    value: 'VENDOR_1',
+    icon: Truck,
+    accent: 'text-emerald-600',
+    chip: 'bg-emerald-500/10 text-emerald-600',
+  },
+  {
+    label: 'Vendor -2',
+    value: 'VENDOR_2',
+    icon: Truck,
+    accent: 'text-emerald-600',
+    chip: 'bg-emerald-500/10 text-emerald-600',
+  },
+  {
+    label: 'Vendor -3',
+    value: 'VENDOR_3',
+    icon: Truck,
+    accent: 'text-emerald-600',
+    chip: 'bg-emerald-500/10 text-emerald-600',
+  },
+  {
+    label: 'Vendor -4',
+    value: 'VENDOR_4',
+    icon: Truck,
+    accent: 'text-emerald-600',
+    chip: 'bg-emerald-500/10 text-emerald-600',
+  },
+  {
+    label: 'Vendor -5',
+    value: 'VENDOR_5',
     icon: Truck,
     accent: 'text-emerald-600',
     chip: 'bg-emerald-500/10 text-emerald-600',
@@ -98,7 +126,7 @@ export default function LoginPage() {
 
       const data = await response.json();
       login(data.user, data.token);
-      const targetPath = data.user.role === 'VENDOR' 
+      const targetPath = data.user.role?.startsWith('VENDOR') 
         ? '/vehicle-summary' 
         : data.user.role === 'LANJIGARH_LOADER' 
           ? '/trips' 

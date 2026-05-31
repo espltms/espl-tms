@@ -212,7 +212,7 @@ export default function VehicleSummaryPage() {
 
   const visibleRecords = useMemo(() => {
     let result = filteredRecords;
-    if (user?.role === 'VENDOR') {
+    if (user?.role?.startsWith('VENDOR')) {
       result = result.filter(record => 
         (record.vendor || getFallbackVendorForPlate(record.truckPlate)) === user.vendorName
       );

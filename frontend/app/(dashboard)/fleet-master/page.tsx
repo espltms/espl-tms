@@ -75,7 +75,7 @@ export default function FleetMasterPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
-  const isVendorUser = user?.role === 'VENDOR';
+  const isVendorUser = user?.role?.startsWith('VENDOR');
   const userVendorName = user?.vendorName;
 
   const filteredRecords = records.filter(r => {

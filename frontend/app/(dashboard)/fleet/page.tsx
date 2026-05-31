@@ -181,7 +181,7 @@ export default function FleetPage() {
     });
     return acc;
   }, []);
-  const isVendorUser = user?.role === 'VENDOR';
+  const isVendorUser = user?.role?.startsWith('VENDOR');
   const userVendorName = user?.vendorName;
 
   const registryTrucks = [...trucks, ...activityOnlyTrucks]
