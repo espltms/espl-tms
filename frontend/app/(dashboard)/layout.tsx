@@ -46,7 +46,7 @@ const navigationDivisions = [
   {
     title: "Fleet & Crew",
     items: [
-      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN'] },
+      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
       { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
@@ -79,8 +79,8 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
   SYS_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
-  PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
-  DHARAMGARH_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
+  PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path),
+  DHARAMGARH_ADMIN: allNavItems.map(item => item.path),
   LANJIGARH_LOADER: ['/trips'],
   PARAMANANDPUR_UNLOADER: ['/unloading'],
   DHARAMGARH_UNLOADER: ['/unloading'],

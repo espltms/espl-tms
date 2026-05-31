@@ -77,6 +77,7 @@ export default function FleetMasterPage() {
 
   const isVendorUser = user?.role?.startsWith('VENDOR');
   const userVendorName = user?.vendorName;
+  const canDelete = user?.role === 'SUPER_ADMIN' || user?.role === 'SYS_ADMIN';
 
   const filteredRecords = records.filter(r => {
     if (isVendorUser && userVendorName) {
@@ -268,41 +269,43 @@ export default function FleetMasterPage() {
             <Database className="h-4.5 w-4.5 text-brand-primary" />
             Fleet Master Registry
           </h3>
-          <div className="flex items-center gap-2">
-            {isDeleteMode ? (
-              <>
-                {selectedIds.length > 0 && (
+          {canDelete && (
+            <div className="flex items-center gap-2">
+              {isDeleteMode ? (
+                <>
+                  {selectedIds.length > 0 && (
+                    <button
+                      onClick={() => {
+                        deleteRecords(selectedIds);
+                        setIsDeleteMode(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete Selected ({selectedIds.length})
+                    </button>
+                  )}
                   <button
                     onClick={() => {
-                      deleteRecords(selectedIds);
                       setIsDeleteMode(false);
+                      setSelectedIds([]);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete Selected ({selectedIds.length})
+                    Cancel
                   </button>
-                )}
+                </>
+              ) : (
                 <button
-                  onClick={() => {
-                    setIsDeleteMode(false);
-                    setSelectedIds([]);
-                  }}
+                  onClick={() => setIsDeleteMode(true)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
                 >
-                  Cancel
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  Select to Delete
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsDeleteMode(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-              >
-                <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                Select to Delete
-              </button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto">
