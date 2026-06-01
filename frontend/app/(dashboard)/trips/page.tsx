@@ -602,6 +602,14 @@ export default function TripsPage() {
       setDestination(route.destination);
       setDistance('120');
 
+      // Auto-fill commodity — both Vedanta POs are always Fly Ash
+      const poNum = selectedPo.poNumber.toUpperCase();
+      if (poNum.includes('PRMNDPR') || poNum.includes('DRMGRH')) {
+        setCommodity('Fly Ash');
+      } else {
+        setCommodity(selectedPo.commodity || '');
+      }
+
       const generatedChallan = getNextChallanNumber(route.destination, []);
       setChallanNo(generatedChallan);
     }
