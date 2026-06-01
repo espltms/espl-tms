@@ -38,7 +38,6 @@ const ALL_ROUTES = [
   { path: '/dashboard', label: 'Executive Console (Core)' },
   { path: '/trips', label: 'Trip Dispatch & Loading (Core)' },
   { path: '/unloading', label: 'Unloading Vehicle (Core)' },
-  { path: '/dispatch', label: 'Control Room Live (Core)' },
   { path: '/fleet-master', label: 'Fleet Master (Fleet)' },
   { path: '/vehicle-summary', label: 'Vehicle Summary (Fleet)' },
   { path: '/drivers', label: 'Driver Duty Logs (Fleet)' },
