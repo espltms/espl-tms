@@ -7400,7 +7400,7 @@
       "clientName": "Vedanta Limited (Lanjigarh)",
       "commodity": "Fly Ash (Grade I)",
       "totalQuantityTons": 500000.0,
-      "allocatedQuantityTons": 191764.62000000034,
+      "allocatedQuantityTons": 0.0,
       "ratePerTon": 240.0,
       "status": "ACTIVE"
     },
@@ -7410,7 +7410,7 @@
       "clientName": "Vedanta Limited (Lanjigarh)",
       "commodity": "Pond Ash (Grade II)",
       "totalQuantityTons": 300000.0,
-      "allocatedQuantityTons": 172193.59000000008,
+      "allocatedQuantityTons": 0.0,
       "ratePerTon": 280.0,
       "status": "ACTIVE"
     }
