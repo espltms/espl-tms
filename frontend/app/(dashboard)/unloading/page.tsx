@@ -55,6 +55,7 @@ const getLocalDateTimeString = () => {
 
 const TRUCK_STATUS_OPTIONS = OPERATIONAL_STATUS_OPTIONS;
 const emptyUnloadingForm = {
+  truckPlate: '',
   truckStatus: 'RECEIVED' as TruckStatus,
   receivedQty: '',
   unloadingDateTime: getLocalDateTimeString(),
@@ -106,6 +107,7 @@ export default function UnloadingVehiclePage() {
   const openUnloadingModal = (record: LoadingRecord) => {
     setActiveRecord(record);
     setForm({
+      truckPlate: record.truckPlate,
       truckStatus: record.unloadingTruckStatus || 'RECEIVED',
       receivedQty: record.receivedQty?.toString() || record.netWeight.toString(),
       unloadingDateTime: record.unloadingDateTime || getLocalDateTimeString(),
@@ -121,10 +123,12 @@ export default function UnloadingVehiclePage() {
     const unloadingTime = new Date(form.unloadingDateTime).getTime();
     const turnaroundMinutes = Math.max(0, Math.round((unloadingTime - loadingTime) / 60000));
 
+    const finalTruckPlate = form.truckPlate.toUpperCase().trim();
     const nextRecords = records.map(record =>
       record.id === activeRecord.id
         ? {
             ...record,
+            truckPlate: finalTruckPlate,
             receivedQty: isReceived ? (parseFloat(form.receivedQty) || 0) : undefined,
             unloadingDateTime: isReceived ? form.unloadingDateTime : undefined,
             turnaroundMinutes: isReceived ? turnaroundMinutes : undefined,
@@ -133,7 +137,11 @@ export default function UnloadingVehiclePage() {
           }
         : record
     );
-    const nextTrucks = trucks.map(truck => truck.id === activeRecord.truckId ? { ...truck, status: form.truckStatus } : truck);
+    const nextTrucks = trucks.map(truck => 
+      truck.id === activeRecord.truckId || truck.plateNumber.toUpperCase().trim() === activeRecord.truckPlate.toUpperCase().trim()
+        ? { ...truck, status: form.truckStatus, plateNumber: finalTruckPlate } 
+        : truck
+    );
 
     setRecords(nextRecords);
     setTrucks(nextTrucks);
@@ -252,6 +260,16 @@ export default function UnloadingVehiclePage() {
               <button onClick={() => { setActiveRecord(null); setForm(emptyUnloadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all"><X className="h-4 w-4" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
+              <Field label="Vehicle Number *">
+                <input 
+                  type="text" 
+                  required 
+                  value={form.truckPlate} 
+                  onChange={(e) => setForm({ ...form, truckPlate: e.target.value })} 
+                  className="unload-input font-mono font-bold" 
+                  placeholder="e.g. OD08Z6368"
+                />
+              </Field>
               <Field label="Truck Status *">
                 <select required value={form.truckStatus} onChange={(e) => setForm({ ...form, truckStatus: e.target.value as TruckStatus })} className={`unload-input ${getOperationalStatusClasses(form.truckStatus)}`}>
                   {TRUCK_STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
