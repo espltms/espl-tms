@@ -47,7 +47,6 @@ const navigationDivisions = [
     title: "Fleet & Crew",
     items: [
       { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
-      { label: 'Fleet Control Specs', path: '/fleet', icon: Layers, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
@@ -99,7 +98,7 @@ const hasRouteAccess = (role: string | undefined, path: string, customRoles?: Re
 
   // Vendors (VENDOR_1 through VENDOR_5)
   if (role.startsWith('VENDOR')) {
-    return ['/fleet', '/vehicle-summary'].includes(path);
+    return ['/vehicle-summary'].includes(path);
   }
 
   const explicitAccess = ROLE_ACCESS[role as keyof typeof ROLE_ACCESS];
