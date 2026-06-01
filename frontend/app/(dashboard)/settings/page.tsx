@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Settings, ShieldCheck, Users, FileText, CheckCircle2, Trash2, Plus, Loader2, UserPlus, Lock, AlertCircle, Pencil, X } from 'lucide-react';
 import { useAuthStore } from '../../../store/auth.store';
 import { saveSyncedValue } from '@/lib/syncedStorage';
+import { getRoleDisplayName, normalizeVendorName } from '@/lib/operationalStatus';
 
 interface UserRecord {
   id: string;
@@ -229,7 +230,7 @@ export default function SettingsPage() {
           role,
           phone: phone || null,
           regionName: isRegionAdmin ? currentUser?.regionName : (regionName || null),
-          vendorName: vendorName || null
+          vendorName: (role === 'VENDOR_1' ? 'Eastern Stevedores' : (role === 'VENDOR_2' ? 'Mahaveer' : (role.startsWith('VENDOR') ? normalizeVendorName(vendorName) : (vendorName || null))))
         })
       });
 
@@ -442,22 +443,22 @@ export default function SettingsPage() {
                   {isSuperAdmin || currentUser?.role === 'SYS_ADMIN' ? (
                     <>
                       {STATIC_ROLES.map(r => (
-                        <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                        <option key={r} value={r}>{getRoleDisplayName(r)}</option>
                       ))}
                       {customRoles.map(cr => (
-                        <option key={cr.id} value={cr.name}>{cr.name.replace(/_/g, ' ')}</option>
+                        <option key={cr.id} value={cr.name}>{getRoleDisplayName(cr.name)}</option>
                       ))}
                     </>
                   ) : isRegionAdmin ? (
                     <>
-                      <option value="VENDOR_1">Vendor -1</option>
-                      <option value="VENDOR_2">Vendor -2</option>
+                      <option value="VENDOR_1">Eastern Stevedores</option>
+                      <option value="VENDOR_2">Mahaveer</option>
                       <option value="VENDOR_3">Vendor -3</option>
                       <option value="VENDOR_4">Vendor -4</option>
                       <option value="VENDOR_5">Vendor -5</option>
                     </>
                   ) : (
-                    <option value="VENDOR_1">Vendor -1</option>
+                    <option value="VENDOR_1">Eastern Stevedores</option>
                   )}
                 </select>
               </div>
@@ -557,7 +558,7 @@ export default function SettingsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-block rounded bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 text-[9px] font-bold uppercase font-mono tracking-wider">
-                          {u.role.replace(/_/g, ' ')}
+                          {getRoleDisplayName(u.role)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-[10px] text-slate-500 font-semibold">
@@ -857,7 +858,7 @@ export default function SettingsPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Edit Corporate ID</h3>
                 <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
-                  {editingUser.fullName} &bull; {editingUser.role.replace(/_/g, ' ')}
+                  {editingUser.fullName} &bull; {getRoleDisplayName(editingUser.role)}
                 </p>
               </div>
               <button 

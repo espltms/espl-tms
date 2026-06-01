@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { Database, Plus, X, ArrowRight, Trash2, Search } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
+import { normalizeVendorName } from '@/lib/operationalStatus';
 
 interface FleetMasterRecord {
   id: string;
@@ -126,7 +127,7 @@ export default function FleetMasterPage() {
       const importedRecords = detail.import.rows.map((row, index): FleetMasterRecord => {
         const plateNumber = getCellValue(detail.import.headers, row, ['vehicle no', 'vehicle_no', 'plate number', 'vehicle number', 'vehicle no.']).toUpperCase();
         const fleetCategoryVal = getCellValue(detail.import.headers, row, ['fleet category', 'category']);
-        const vendor = getCellValue(detail.import.headers, row, ['vendor', 'vendor name', 'vendor company']);
+        const vendor = normalizeVendorName(getCellValue(detail.import.headers, row, ['vendor', 'vendor name', 'vendor company']));
         const subVendor = getCellValue(detail.import.headers, row, ['sub vendor', 'sub-vendor', 'sub_vendor', 'subvendor', 'owner', 'owner name']);
         const vehicleType = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
         const wheeler = getCellValue(detail.import.headers, row, ['wheeler', 'wheelers', 'no of wheels']);
@@ -197,7 +198,7 @@ export default function FleetMasterPage() {
       id: `fm-local-${Date.now()}`,
       plateNumber: form.plateNumber.toUpperCase(),
       fleetCategory: form.fleetCategory,
-      vendor: form.vendor || '-',
+      vendor: normalizeVendorName(form.vendor) || '-',
       subVendor: form.subVendor || '-',
       vehicleType: form.vehicleType,
       wheeler: form.wheeler,

@@ -31,3 +31,36 @@ export const getOperationalStatusClasses = (status?: string) => {
   return 'bg-blue-50 text-blue-700 border-blue-200';
 };
 
+export const getRoleDisplayName = (role: string): string => {
+  if (role === 'VENDOR_1') return 'Eastern Stevedores';
+  if (role === 'VENDOR_2') return 'Mahaveer';
+  return role.replace(/_/g, ' ');
+};
+
+export const normalizeVendorName = (name: string): string => {
+  if (!name) return '—';
+  const clean = name.trim().toLowerCase();
+  
+  if (
+    clean.includes('espl') ||
+    clean.includes('eastern') ||
+    clean.includes('stevedore') ||
+    clean.includes('est') ||
+    clean.startsWith('east')
+  ) {
+    return 'Eastern Stevedores';
+  }
+  
+  if (
+    clean.includes('mahaveer') ||
+    clean.includes('mahavir') ||
+    clean.includes('mahveer') ||
+    clean.startsWith('maha')
+  ) {
+    return 'Mahaveer';
+  }
+  
+  return name.trim();
+};
+
+

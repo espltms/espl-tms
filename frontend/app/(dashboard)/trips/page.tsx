@@ -18,7 +18,7 @@ import {
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
-import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus } from '@/lib/operationalStatus';
+import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus, normalizeVendorName } from '@/lib/operationalStatus';
 import { getTruckDynamicHealth } from '@/lib/healthHelper';
 import { useAuthStore } from '@/store/auth.store';
 import { updateAssignedTripStatus, upsertTruckStatusOverride, isMatchingDestination } from '@/lib/workflowAutomation';
@@ -76,7 +76,7 @@ interface LoadingRecord {
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
-const VENDOR_OPTIONS = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
+const VENDOR_OPTIONS = ['Eastern Stevedores', 'Mahaveer', 'Vendor 3'];
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 
@@ -438,7 +438,7 @@ export default function TripsPage() {
 
         // Resolve truck details fallbacks
         const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
-        const vendor = vendorVal !== '-' ? vendorVal : (matchedMasterTruck?.vendor || 'Vendor 1');
+        const vendor = normalizeVendorName(vendorVal !== '-' ? vendorVal : (matchedMasterTruck?.vendor || 'Eastern Stevedores'));
         const type = typeVal !== '-' ? typeVal : (matchedMasterTruck?.type || 'Tipper');
         const driverName = driverVal !== '-' ? driverVal : (matchedMasterTruck?.assignedDriverName || 'Driver Partner');
         const driverPhone = phoneVal !== '-' ? phoneVal : (matchedMasterTruck?.assignedDriverPhone || '-');
@@ -537,7 +537,7 @@ export default function TripsPage() {
   const applyTruckSelection = (selectedTruck: typeof trucks[number]) => {
     setTruckId(selectedTruck.id);
     setVehicleType(selectedTruck.type || 'Tipper');
-    setVendorName(selectedTruck.vendor || 'Vendor 1');
+    setVendorName(normalizeVendorName(selectedTruck.vendor) || 'Eastern Stevedores');
     setEstimatedQuantity(selectedTruck.capacity || '40.00');
   };
 
@@ -727,7 +727,7 @@ export default function TripsPage() {
       driverId: selectedDriver.id,
       source,
       destination,
-      vendorName,
+      vendorName: normalizeVendorName(vendorName),
       vehicleType,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
@@ -1022,8 +1022,8 @@ export default function TripsPage() {
                 // Excel values take priority over auto-fetched fleet master values
                 const isImportedTrip = trip.id.startsWith('trip-import-');
                 const vendor = isImportedTrip
-                  ? (trip.vendorName && trip.vendorName !== 'Vendor 1' ? trip.vendorName : matchedTruck?.vendor || trip.vendorName || '—')
-                  : (matchedTruck?.vendor || trip.vendorName || '—');
+                  ? (trip.vendorName && trip.vendorName !== 'Eastern Stevedores' && trip.vendorName !== 'Vendor 1' ? normalizeVendorName(trip.vendorName) : normalizeVendorName(matchedTruck?.vendor || trip.vendorName || '—'))
+                  : normalizeVendorName(matchedTruck?.vendor || trip.vendorName || '—');
                 const vType = isImportedTrip
                   ? (trip.vehicleType && trip.vehicleType !== 'Tipper' ? trip.vehicleType : matchedTruck?.type || trip.vehicleType || '—')
                   : (matchedTruck?.type || trip.vehicleType || '—');
