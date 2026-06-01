@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Settings, ShieldCheck, Users, FileText, CheckCircle2, Trash2, Plus, Loader2, UserPlus, Lock, AlertCircle } from 'lucide-react';
+import { Settings, ShieldCheck, Users, FileText, CheckCircle2, Trash2, Plus, Loader2, UserPlus, Lock, AlertCircle, Pencil, X } from 'lucide-react';
 import { useAuthStore } from '../../../store/auth.store';
 import { saveSyncedValue } from '@/lib/syncedStorage';
 
@@ -70,6 +70,12 @@ export default function SettingsPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Edit User State
+  const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   // Custom Roles State
   const [customRoles, setCustomRoles] = useState<Array<{ id: string; name: string; routes: string[] }>>([]);
@@ -271,6 +277,45 @@ export default function SettingsPage() {
       fetchUsers();
     } catch (err: any) {
       alert(err.message);
+    }
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setError('');
+    setSuccess('');
+    setUpdating(true);
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: editingUser.id,
+          email: editEmail,
+          password: editPassword || undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update user account');
+      }
+
+      setSuccess(`Account for ${editingUser.fullName} updated successfully!`);
+      setEditingUser(null);
+      setEditEmail('');
+      setEditPassword('');
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during account update.');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -521,17 +566,32 @@ export default function SettingsPage() {
                         {!u.regionName && !u.vendorName && <span className="text-slate-400">Global Admin</span>}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {isSuperAdmin && u.id !== currentUser?.id ? (
-                          <button
-                            onClick={() => handleDeleteUser(u.id)}
-                            className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Remove Account"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        ) : u.id === currentUser?.id ? (
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-2">Self</span>
-                        ) : null}
+                        <div className="flex items-center justify-end gap-1">
+                          {isSuperAdmin && u.id !== currentUser?.id ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingUser(u);
+                                  setEditEmail(u.email);
+                                  setEditPassword('');
+                                }}
+                                className="rounded-lg p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-colors"
+                                title="Edit Account"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u.id)}
+                                className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Remove Account"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : u.id === currentUser?.id ? (
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-2">Self</span>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -790,7 +850,77 @@ export default function SettingsPage() {
         </>
       )}
 
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl border border-brand-slate max-w-md w-full p-6 space-y-4 shadow-xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Edit Corporate ID</h3>
+                <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                  {editingUser.fullName} &bull; {editingUser.role.replace(/_/g, ' ')}
+                </p>
+              </div>
+              <button 
+                onClick={() => setEditingUser(null)}
+                className="text-slate-400 hover:text-slate-600 rounded-lg p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
+            <form onSubmit={handleUpdateUser} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Corporate Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="name@espl.com"
+                  className="settings-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">
+                  New Password / Token (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="Leave blank to keep unchanged"
+                  className="settings-input"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="w-1/2 rounded-xl border border-slate-200 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="w-1/2 rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .settings-input {
