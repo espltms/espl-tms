@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromRequest(req);
-    const isRegAdmin = user?.role === 'REGION_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+    const isRegAdmin = user?.role === 'REGION_ADMIN';
     if (isRegAdmin) {
       const { page, limit } = getPagination(req);
       return NextResponse.json({ data: [], total: 0, page, limit });
@@ -26,6 +26,23 @@ export async function GET(req: NextRequest) {
     if (user?.role === 'LANJIGARH_LOADER') {
       where.source = { contains: 'lanjigarh', mode: 'insensitive' };
     }
+
+    // Regional admin scoping
+    if (user?.role === 'PARAMANANDPUR_ADMIN') {
+      where.destination = { contains: 'Paramanandpur', mode: 'insensitive' };
+    } else if (user?.role === 'DHARAMGARH_ADMIN') {
+      where.destination = { contains: 'Dharamgarh', mode: 'insensitive' };
+    } else if (user?.role === 'BHAWANIPATNA_ADMIN') {
+      where.AND = [
+        {
+          OR: [
+            { destination: { contains: 'Paramanandpur', mode: 'insensitive' } },
+            { destination: { contains: 'Dharamgarh', mode: 'insensitive' } }
+          ]
+        }
+      ];
+    }
+
     if (status) {
       const normalizedStatus = normalizeOperationalStatus(status);
       where.status = normalizedStatus === 'IN_TRANSIT'
@@ -33,7 +50,7 @@ export async function GET(req: NextRequest) {
         : normalizedStatus;
     }
     if (search) {
-      where.OR = [
+      const searchOR = [
         { tripNumber: { contains: search, mode: 'insensitive' } },
         { source: { contains: search, mode: 'insensitive' } },
         { destination: { contains: search, mode: 'insensitive' } },
@@ -41,6 +58,11 @@ export async function GET(req: NextRequest) {
         { truck: { plateNumber: { contains: search, mode: 'insensitive' } } },
         { purchaseOrder: { poNumber: { contains: search, mode: 'insensitive' } } },
       ];
+      if (where.AND) {
+        where.AND.push({ OR: searchOR });
+      } else {
+        where.OR = searchOR;
+      }
     }
 
     const [trips, total] = await Promise.all([

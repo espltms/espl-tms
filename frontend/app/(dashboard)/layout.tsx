@@ -36,7 +36,7 @@ const navigationDivisions = [
   {
     title: "Core Division",
     items: [
-      { label: 'Executive Console', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Executive Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
       { label: 'Trip Dispatch & Loading', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
     ]

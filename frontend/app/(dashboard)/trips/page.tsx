@@ -218,6 +218,16 @@ export default function TripsPage() {
     return true;
   });
 
+  const filteredPurchaseOrders = purchaseOrders.filter(po => {
+    const isLanjigarhOk = !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh');
+    if (!isLanjigarhOk) return false;
+    if (isRegionalUser && userRegion) {
+      const route = getPoSourceDestination(po.poNumber);
+      return isMatchingDestination(route.destination, userRegion);
+    }
+    return true;
+  });
+
   const totalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
   const paginatedTrips = filteredTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -885,8 +895,7 @@ export default function TripsPage() {
         </h3>
         
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {purchaseOrders
-            .filter(po => !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh'))
+          {filteredPurchaseOrders
             .map(po => {
             const usagePercentage = (Number(po.allocatedQuantityTons) / Number(po.totalQuantityTons)) * 100;
             return (
@@ -1169,8 +1178,7 @@ export default function TripsPage() {
                     className="w-full bg-white border border-[#d1d5db] rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:border-brand-primary/50"
                   >
                     <option value="">Choose active PO...</option>
-                    {purchaseOrders
-                      .filter(po => !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh'))
+                    {filteredPurchaseOrders
                       .map(po => {
                         let labelText = `${po.poNumber} (${po.clientName})`;
                         if (po.poNumber === 'PO-VEDANTA-PRMNDPR-01') {

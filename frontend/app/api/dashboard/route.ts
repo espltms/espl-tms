@@ -42,7 +42,7 @@ const emptyDashboardPayload: DashboardPayload = {
 export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromRequest(req);
-    const isRegAdmin = user?.role === 'REGION_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+    const isRegAdmin = user?.role === 'REGION_ADMIN';
     if (isRegAdmin) {
       return NextResponse.json(emptyDashboardPayload, {
         headers: { 'Cache-Control': 'private, no-store' },

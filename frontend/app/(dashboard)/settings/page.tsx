@@ -35,7 +35,7 @@ const STATIC_ROLES = [
 ];
 
 const ALL_ROUTES = [
-  { path: '/dashboard', label: 'Executive Console (Core)' },
+  { path: '/dashboard', label: 'Executive Dashboard (Core)' },
   { path: '/trips', label: 'Trip Dispatch & Loading (Core)' },
   { path: '/unloading', label: 'Unloading Vehicle (Core)' },
   { path: '/fleet-master', label: 'Fleet Master (Fleet)' },
