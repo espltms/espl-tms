@@ -37,6 +37,49 @@ export default function FuelFinancesPage() {
   useEffect(() => {
     fetchSyncedValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []).then(setEntries);
     fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
+
+    // Asynchronously load fleet master and local trucks to populate the registry for all users (including regional admins)
+    Promise.all([
+      fetchSyncedValue<any[]>('tms_fleet_master', []),
+      fetchSyncedValue<TruckData[]>('tms_local_trucks', []),
+    ]).then(([fleetMaster, localTrucks]) => {
+      const fleetTrucks = fleetMaster.map(r => ({
+        id: r.id || `fm-${r.plateNumber}`,
+        plateNumber: r.plateNumber,
+        model: r.vehicleType || 'Tipper',
+        type: r.vehicleType || 'Tipper',
+        fleetCategory: r.fleetCategory || 'OWNED_FLEET',
+        capacity: '25 Tons',
+        fuelCard: '-',
+        health: 100,
+        status: 'RECEIVED' as any,
+        vendor: r.vendor || 'Vendor 1',
+        subVendor: r.subVendor || '-',
+        wheeler: r.wheeler || '12 Wheeler',
+        assignedDriverName: r.driverName || '-',
+      }));
+
+      setTrucks((prev) => {
+        const merged = [...prev];
+        localTrucks.forEach(lt => {
+          const index = merged.findIndex(m => m.plateNumber.toUpperCase() === lt.plateNumber.toUpperCase());
+          if (index >= 0) {
+            merged[index] = { ...merged[index], ...lt };
+          } else {
+            merged.push(lt);
+          }
+        });
+        fleetTrucks.forEach(ft => {
+          const index = merged.findIndex(m => m.plateNumber.toUpperCase() === ft.plateNumber.toUpperCase());
+          if (index >= 0) {
+            merged[index] = { ...merged[index], ...ft };
+          } else {
+            merged.push(ft);
+          }
+        });
+        return merged;
+      });
+    });
   }, []);
 
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
@@ -51,16 +94,10 @@ export default function FuelFinancesPage() {
         ? 'Bhawanipatna'
         : user?.regionName;
 
-  // Filter trucks for dropdown menu
+  // Filter trucks for dropdown menu (running status/trip is not required, display all trucks in registry)
   const dropdownTrucks = useMemo(() => {
-    return trucks.filter(truck => {
-      if (isRegionalUser && userRegion) {
-        const trip = assignedTrips.find(t => t.truckId === truck.id || t.truck?.plateNumber === truck.plateNumber);
-        return trip && isMatchingDestination(trip.destination, userRegion);
-      }
-      return true;
-    });
-  }, [trucks, isRegionalUser, userRegion, assignedTrips]);
+    return trucks;
+  }, [trucks]);
 
   // Set default selected truck
   useEffect(() => {
@@ -89,10 +126,9 @@ export default function FuelFinancesPage() {
     return entries.filter(entry => {
       if (isRegionalUser && userRegion) {
         const trip = assignedTrips.find(t => t.truckId === entry.truckId || t.truck?.plateNumber === entry.vehicleNo);
-        if (trip) {
-          return isMatchingDestination(trip.destination, userRegion);
+        if (trip && !isMatchingDestination(trip.destination, userRegion)) {
+          return false;
         }
-        return false;
       }
       return true;
     });
@@ -255,7 +291,7 @@ export default function FuelFinancesPage() {
               <label className="block text-slate-500 mb-1.5 uppercase font-bold tracking-wider text-[10px]">Vehicle No *</label>
               {dropdownTrucks.length === 0 ? (
                 <div className="flex items-center gap-1.5 rounded-xl border border-amber-100 bg-amber-50 p-3 text-amber-700 font-semibold">
-                  <Info className="h-4 w-4" /> No regional vehicles in transit.
+                  <Info className="h-4 w-4" /> No vehicles available in fleet registry.
                 </div>
               ) : (
                 <select
