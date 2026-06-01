@@ -10,7 +10,8 @@ const SHARED_KEYS = [
   'tms_local_trucks',
   'tms_local_drivers',
   'tms_truck_status_overrides',
-  'tms_custom_roles'
+  'tms_custom_roles',
+  'tms_fleet_master'
 ];
 
 const getEffectiveUserId = (userId: string, recordKey: string | null) => {
