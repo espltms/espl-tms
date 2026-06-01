@@ -190,6 +190,8 @@ export default function UnloadingVehiclePage() {
                       ? 'Bhawanipatna'
                       : user?.regionName;
 
+                const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+
                 const filteredRecords = records.filter(record => {
                   if (isRegionalUser && userRegion) {
                     const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
@@ -217,9 +219,19 @@ export default function UnloadingVehiclePage() {
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(getRecordTurnaround(record))}</td>
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => openUnloadingModal(record)} className={`rounded-lg border px-3 py-1.5 text-[10px] font-extrabold ${record.unloadingDateTime ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
-                      {record.unloadingDateTime ? 'Edit' : 'Unload'}
-                    </button>
+                    {!record.unloadingDateTime ? (
+                      <button onClick={() => openUnloadingModal(record)} className="rounded-lg border px-3 py-1.5 text-[10px] font-extrabold border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
+                        Unload
+                      </button>
+                    ) : canEdit ? (
+                      <button onClick={() => openUnloadingModal(record)} className="rounded-lg border px-3 py-1.5 text-[10px] font-extrabold border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                        Edit
+                      </button>
+                    ) : (
+                      <span className="inline-block rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[9px] font-bold text-slate-400 uppercase">
+                        Unloaded
+                      </span>
+                    )}
                   </td>
                 </tr>
                 ));
