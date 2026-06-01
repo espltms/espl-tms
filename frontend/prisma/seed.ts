@@ -139,21 +139,9 @@ async function main() {
     });
   }
 
-  // 3. Create Drivers
-  console.log('Seeding Drivers...');
-  for (const driver of tmsData.drivers) {
-    await prisma.driver.upsert({
-      where: { licenseNumber: driver.licenseNumber },
-      update: {},
-      create: {
-        fullName: driver.fullName,
-        licenseNumber: driver.licenseNumber,
-        phone: driver.phone,
-        status: driver.status as any,
-        complianceVerified: driver.verified,
-      },
-    });
-  }
+  // 3. Drivers are managed manually via the app UI — not seeded from demo data
+  // console.log('Seeding Drivers...');
+  // (Driver seeding removed — add real drivers through Driver Duty Logs UI)
 
   // 4. Create Trucks
   console.log('Seeding Trucks...');
