@@ -42,9 +42,16 @@ const navigationDivisions = [
     ]
   },
   {
-    title: "Fleet & Crew",
+    title: "Registry Division",
     items: [
       { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Vendor Master', path: '/vendor-master', icon: Building2, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Sub-Vendor Master', path: '/sub-vendor-master', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+    ]
+  },
+  {
+    title: "Fleet & Crew",
+    items: [
       { label: 'Vehicle Summary', path: '/vehicle-summary', icon: BarChart3, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER'] },
       { label: 'Driver Duty Logs', path: '/drivers', icon: Users, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'HR & Payroll Center', path: '/hr', icon: Users, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
