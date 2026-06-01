@@ -29,6 +29,8 @@ export default function FuelFinancesPage() {
   
   // Form states
   const [selectedTruckId, setSelectedTruckId] = useState('');
+  const [typedTruckPlate, setTypedTruckPlate] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [service, setService] = useState<'Diesel' | 'DEF' | 'Urea'>('Diesel');
   const [quantity, setQuantity] = useState('');
@@ -99,12 +101,7 @@ export default function FuelFinancesPage() {
     return trucks;
   }, [trucks]);
 
-  // Set default selected truck
-  useEffect(() => {
-    if (dropdownTrucks.length > 0 && !selectedTruckId) {
-      setSelectedTruckId(dropdownTrucks[0].id);
-    }
-  }, [dropdownTrucks, selectedTruckId]);
+
 
   const selectedTruck = useMemo(() => {
     return trucks.find(t => t.id === selectedTruckId);
@@ -112,6 +109,11 @@ export default function FuelFinancesPage() {
 
   const resolvedFleetCategory = useMemo(() => {
     return selectedTruck?.fleetCategory || 'OWNED_FLEET';
+  }, [selectedTruck]);
+
+  const resolvedFleetCategoryLabel = useMemo(() => {
+    if (!selectedTruck) return '—';
+    return selectedTruck.fleetCategory === 'OWNED_FLEET' ? 'Owned Fleet' : 'Attached Fleet';
   }, [selectedTruck]);
 
   // Auto-calculated value
@@ -175,6 +177,8 @@ export default function FuelFinancesPage() {
     // Reset quantity and rate inputs
     setQuantity('');
     setRate('');
+    setTypedTruckPlate('');
+    setSelectedTruckId('');
   };
 
   const handleDeleteEntry = (id: string) => {
@@ -294,18 +298,73 @@ export default function FuelFinancesPage() {
                   <Info className="h-4 w-4" /> No vehicles available in fleet registry.
                 </div>
               ) : (
-                <select
-                  required
-                  value={selectedTruckId}
-                  onChange={(e) => setSelectedTruckId(e.target.value)}
-                  className="fuel-input font-mono uppercase"
-                >
-                  {dropdownTrucks.map(truck => (
-                    <option key={truck.id} value={truck.id}>
-                      {truck.plateNumber} ({truck.model})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Type vehicle no or last 4 digits e.g. 1234"
+                    value={typedTruckPlate}
+                    onFocus={() => { if (typedTruckPlate.trim().length >= 3) setShowSuggestions(true); }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTypedTruckPlate(val);
+                      setShowSuggestions(val.trim().length >= 3);
+                      
+                      const normalizedVal = val.toUpperCase().replace(/[\s\-]/g, '');
+                      const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/[\s\-]/g, '') === normalizedVal);
+                      if (matched) {
+                        setSelectedTruckId(matched.id);
+                        setShowSuggestions(false);
+                      } else {
+                        setSelectedTruckId('');
+                      }
+                    }}
+                    onBlur={() => {
+                      // Small delay to let onMouseDown run first if suggestion is clicked
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    autoComplete="off"
+                    className="fuel-input uppercase font-mono font-bold tracking-wider"
+                  />
+                  {/* Auto-suggest dropdown */}
+                  {showSuggestions && typedTruckPlate.trim().length >= 3 && (() => {
+                    const query = typedTruckPlate.trim().toUpperCase().replace(/[\s\-]/g, '');
+                    const matches = trucks.filter(t => {
+                      const plate = t.plateNumber.toUpperCase().replace(/[\s\-]/g, '');
+                      return plate.includes(query) && plate !== query;
+                    }).slice(0, 8);
+                    if (matches.length === 0) return null;
+                    return (
+                      <div className="absolute z-[100] left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden animate-fade-in">
+                        <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{matches.length} vehicle{matches.length > 1 ? 's' : ''} found</span>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {matches.map((truck) => (
+                            <button
+                              key={truck.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setTypedTruckPlate(truck.plateNumber);
+                                setSelectedTruckId(truck.id);
+                                setShowSuggestions(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-blue-50/60 transition-colors border-b border-slate-50 last:border-0 group"
+                            >
+                              <span className="font-mono font-extrabold text-xs text-slate-800 tracking-wider group-hover:text-brand-primary transition-colors">
+                                {truck.plateNumber}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-semibold truncate">
+                                {truck.type || 'Vehicle'} · {truck.vendor || '—'}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
             </div>
 
@@ -316,7 +375,7 @@ export default function FuelFinancesPage() {
               <input
                 type="text"
                 disabled
-                value={resolvedFleetCategory === 'OWNED_FLEET' ? 'Owned Fleet' : 'Attached Fleet'}
+                value={resolvedFleetCategoryLabel}
                 className="fuel-input bg-slate-100 font-semibold text-slate-500 cursor-not-allowed border-slate-200"
               />
             </div>
@@ -388,7 +447,7 @@ export default function FuelFinancesPage() {
 
             <button
               type="submit"
-              disabled={dropdownTrucks.length === 0}
+              disabled={!selectedTruck}
               className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-4 py-3 text-xs font-extrabold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <Fuel className="h-4.5 w-4.5" /> Save Fuel Record
