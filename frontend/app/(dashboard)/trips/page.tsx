@@ -1224,7 +1224,7 @@ export default function TripsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div ref={suggestionsRef}>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Truck Vehicle Plate *</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Vehicle No *</label>
                   <div className="relative">
                     <input
                       type="text"
