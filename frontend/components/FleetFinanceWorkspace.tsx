@@ -88,7 +88,7 @@ export default function FleetFinanceWorkspace({
     repairAmount: '',
     repairDescription: '',
     entryDate: new Date().toISOString().split('T')[0],
-    status: 'COMPLETED' as OperationalStatus,
+    status: 'RECEIVED' as OperationalStatus,
   });
   const hasDateFilter = Boolean(dateRange.from || dateRange.to);
   const isWithinDateRange = (dateValue?: string) => {
@@ -149,7 +149,7 @@ export default function FleetFinanceWorkspace({
 
   const dropdownVehicles = useMemo(() => {
     return unloadedVehicles.filter(record =>
-      record.currentStatus !== 'COMPLETED' || record.id === selectedRecordId
+      record.currentStatus !== 'RECEIVED' || record.id === selectedRecordId
     );
   }, [unloadedVehicles, selectedRecordId]);
 
@@ -180,7 +180,7 @@ export default function FleetFinanceWorkspace({
         repairAmount: '',
         repairDescription: '',
         entryDate: new Date().toISOString().split('T')[0],
-        status: 'COMPLETED',
+        status: 'RECEIVED',
       });
       return;
     }
@@ -195,7 +195,7 @@ export default function FleetFinanceWorkspace({
       repairAmount: repairEntry ? String(repairEntry.amount) : '',
       repairDescription: repairEntry ? repairEntry.description : '',
       entryDate: recordEntries[0]?.entryDate || new Date().toISOString().split('T')[0],
-      status: selectedRecord.currentStatus || 'COMPLETED',
+      status: selectedRecord.currentStatus || 'RECEIVED',
     });
   }, [selectedRecordId, entries, selectedRecord]);
 
@@ -220,7 +220,7 @@ export default function FleetFinanceWorkspace({
   const dieselTotal = filteredEntries
     .filter(entry => entry.type === 'DIESEL_ENTRY')
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const completedCount = unloadedVehicles.filter(record => record.currentStatus === 'COMPLETED').length;
+  const completedCount = unloadedVehicles.filter(record => record.currentStatus === 'RECEIVED').length;
 
   const persistRecords = (nextRecords: LoadingRecord[]) => {
     saveSyncedValue(LOADING_RECORDS_KEY, nextRecords);
@@ -298,7 +298,7 @@ export default function FleetFinanceWorkspace({
       repairAmount: '',
       repairDescription: '',
       entryDate: new Date().toISOString().split('T')[0],
-      status: 'COMPLETED',
+      status: 'RECEIVED',
     });
   };
 

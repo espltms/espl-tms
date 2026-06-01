@@ -44,13 +44,13 @@ export default function WorkflowAlerts() {
 
   const alerts = useMemo(() => {
     const missingLoading = trips.filter(trip =>
-      normalizeOperationalStatus(trip.status) === 'SCHEDULED' &&
+      normalizeOperationalStatus(trip.status) === 'IN_TRANSIT' &&
       !loadingRecords.some(record => record.tripId === trip.id || record.tripNumber === trip.tripNumber)
     );
     const missingUnloading = loadingRecords.filter(record => !record.unloadingDateTime);
     const missingFinance = loadingRecords.filter(record =>
       record.unloadingDateTime &&
-      normalizeOperationalStatus(record.unloadingTruckStatus) !== 'COMPLETED' &&
+      normalizeOperationalStatus(record.unloadingTruckStatus) !== 'RECEIVED' &&
       !financeEntries.some(entry => entry.loadingRecordId === record.id)
     );
 
