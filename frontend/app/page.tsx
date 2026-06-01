@@ -5,104 +5,11 @@ import { useAuthStore } from '../store/auth.store';
 import { useRouter } from 'next/navigation';
 import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, PackageOpen } from 'lucide-react';
 
-const portalRoles = [
-  {
-    label: 'Super Admin',
-    value: 'SUPER_ADMIN',
-    icon: Crown,
-    accent: 'text-purple-600',
-    chip: 'bg-purple-500/10 text-purple-600',
-  },
-  {
-    label: 'System Admin',
-    value: 'SYS_ADMIN',
-    icon: Shield,
-    accent: 'text-purple-600',
-    chip: 'bg-purple-500/10 text-purple-600',
-  },
-  {
-    label: 'Paramanandpur Admin',
-    value: 'PARAMANANDPUR_ADMIN',
-    icon: Building2,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Dharamgarh Admin',
-    value: 'DHARAMGARH_ADMIN',
-    icon: Building2,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Bhawanipatna Admin',
-    value: 'BHAWANIPATNA_ADMIN',
-    icon: Building2,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Paramanandpur Unloader',
-    value: 'PARAMANANDPUR_UNLOADER',
-    icon: PackageOpen,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Dharamgarh Unloader',
-    value: 'DHARAMGARH_UNLOADER',
-    icon: PackageOpen,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Lanjigarh Loader',
-    value: 'LANJIGARH_LOADER',
-    icon: Truck,
-    accent: 'text-blue-600',
-    chip: 'bg-blue-500/10 text-blue-600',
-  },
-  {
-    label: 'Vendor -1',
-    value: 'VENDOR_1',
-    icon: Truck,
-    accent: 'text-emerald-600',
-    chip: 'bg-emerald-500/10 text-emerald-600',
-  },
-  {
-    label: 'Vendor -2',
-    value: 'VENDOR_2',
-    icon: Truck,
-    accent: 'text-emerald-600',
-    chip: 'bg-emerald-500/10 text-emerald-600',
-  },
-  {
-    label: 'Vendor -3',
-    value: 'VENDOR_3',
-    icon: Truck,
-    accent: 'text-emerald-600',
-    chip: 'bg-emerald-500/10 text-emerald-600',
-  },
-  {
-    label: 'Vendor -4',
-    value: 'VENDOR_4',
-    icon: Truck,
-    accent: 'text-emerald-600',
-    chip: 'bg-emerald-500/10 text-emerald-600',
-  },
-  {
-    label: 'Vendor -5',
-    value: 'VENDOR_5',
-    icon: Truck,
-    accent: 'text-emerald-600',
-    chip: 'bg-emerald-500/10 text-emerald-600',
-  },
-];
+
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated } = useAuthStore();
-  const [selectedRole, setSelectedRole] = useState(portalRoles[0]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -123,7 +30,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: selectedRole.value }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -149,10 +56,7 @@ export default function LoginPage() {
     }
   };
 
-  const selectRole = (role: typeof portalRoles[number]) => {
-    setSelectedRole(role);
-    setError('');
-  };
+
 
   if (isAuthenticated) {
     return (
@@ -218,37 +122,7 @@ export default function LoginPage() {
         <div className="glass-panel relative z-10 w-full max-w-md rounded-2xl border border-slate-200 p-5 shadow-glass shadow-glass-glow sm:p-8">
           <div className="mb-6 text-center md:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">Enterprise Portal Access</h2>
-            <p className="text-xs text-slate-500 mt-1">Choose your assigned access type before login</p>
-          </div>
-
-          <div className="mb-6">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              <Shield className="h-3.5 w-3.5 text-brand-primary" />
-              <span>Select Portal Role</span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 text-[11px] sm:grid-cols-3">
-              {portalRoles.map((role) => {
-                const Icon = role.icon;
-                const active = selectedRole.value === role.value;
-                return (
-                  <button
-                    key={role.value}
-                    type="button"
-                    onClick={() => selectRole(role)}
-                    className={`flex min-h-[56px] items-center gap-2 rounded-lg border p-2 text-left transition-colors ${
-                      active
-                        ? 'border-brand-primary/50 bg-brand-primary/5 text-slate-800 shadow-sm'
-                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-primary/30'
-                    }`}
-                  >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${role.chip}`}>
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="font-semibold leading-tight">{role.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <p className="text-xs text-slate-500 mt-1">Please login with your corporate credentials</p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4 sm:space-y-5">
@@ -299,9 +173,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-[11px] text-slate-400">
-            Selected role: <span className={`font-bold ${selectedRole.accent}`}>{selectedRole.label}</span>
-          </p>
+
         </div>
       </div>
     </main>

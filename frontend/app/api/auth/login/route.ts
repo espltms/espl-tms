@@ -4,10 +4,10 @@ import { createToken, comparePassword } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, role } = await req.json();
+    const { email, password } = await req.json();
 
-    if (!email || !password || !role) {
-      return NextResponse.json({ error: 'Email, password, and selected role are required' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
@@ -19,13 +19,6 @@ export async function POST(req: NextRequest) {
     const isValid = comparePassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    }
-
-    if (user.role !== role) {
-      return NextResponse.json(
-        { error: `Selected role does not match this account. Please choose ${user.role.replace(/_/g, ' ')}.` },
-        { status: 403 }
-      );
     }
 
     const token = await createToken({
