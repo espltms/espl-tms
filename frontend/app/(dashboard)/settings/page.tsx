@@ -44,13 +44,6 @@ const ALL_ROUTES = [
   { path: '/maintenance', label: 'Workshop & Maintenance (Fleet Finance)' },
   { path: '/fuel-finance', label: 'Fuel Finances (Fleet Finance)' },
   { path: '/hr', label: 'HR & Payroll Center (Fleet)' },
-  { path: '/yard', label: 'Yard & Bay Queue (Yard)' },
-  { path: '/weighbridge', label: 'Weighbridge Weighing (Yard)' },
-  { path: '/inventory', label: 'Store & Spare Inventory (Yard)' },
-  { path: '/owned-fleet', label: 'Owned Fleet Finance (Finance)' },
-  { path: '/attached-fleet', label: 'Attached Fleet Finance (Finance)' },
-  { path: '/billing', label: 'Billing & Matches (Finance)' },
-  { path: '/legal', label: 'Corporate Compliance (Finance)' },
   { path: '/settings', label: 'System Configuration (Finance)' },
 ];
 

@@ -60,20 +60,8 @@ const navigationDivisions = [
     ]
   },
   {
-    title: "Terminal & Yard",
-    items: [
-      { label: 'Yard & Bay Queue', path: '/yard', icon: ParkingCircle, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      { label: 'Weighbridge Weighing', path: '/weighbridge', icon: Scale, roles: ['SYS_ADMIN', 'DISPATCHER'] },
-      { label: 'Store & Spare Inventory', path: '/inventory', icon: Warehouse, roles: ['SYS_ADMIN', 'FINANCE_OFFICER', 'DISPATCHER'] },
-    ]
-  },
-  {
     title: "Finance & Law",
     items: [
-      { label: 'Owned Fleet Finance', path: '/owned-fleet', icon: Fuel, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
-      { label: 'Attached Fleet Finance', path: '/attached-fleet', icon: Truck, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
-      { label: 'Billing & Matches', path: '/billing', icon: BadgeCent, roles: ['SYS_ADMIN', 'FINANCE_OFFICER'] },
-      { label: 'Corporate Compliance', path: '/legal', icon: Building2, roles: ['SYS_ADMIN', 'COMPLIANCE_OFFICER', 'FINANCE_OFFICER'] },
       { label: 'System Configuration', path: '/settings', icon: Settings, roles: ['SYS_ADMIN'] },
     ]
   }
