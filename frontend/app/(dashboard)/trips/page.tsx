@@ -909,15 +909,12 @@ export default function TripsPage() {
                       <div className="text-xs font-bold text-slate-800 mt-1 truncate">{po.clientName}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5">{po.commodity}</div>
                     </div>
-                    <span className="rounded-full bg-brand-primary/10 px-2 py-0.5 text-[9px] font-bold text-brand-primary">
-                      {formatCurrency(po.ratePerTon)} / Ton
-                    </span>
+
                   </div>
 
                   <div className="mt-4">
                     <div className="flex justify-between text-[10px] text-slate-500 font-semibold mb-1">
                       <span>Allocated: {Number(po.allocatedQuantityTons).toLocaleString()} Tons</span>
-                      <span>Total: {Number(po.totalQuantityTons).toLocaleString()} Tons</span>
                     </div>
                     <div className="h-2 w-full bg-[#e2e8f0] rounded-full overflow-hidden">
                       <div 
