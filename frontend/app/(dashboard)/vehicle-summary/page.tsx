@@ -14,6 +14,21 @@ import { useAuthStore } from '@/store/auth.store';
 
 type TruckStatus = OperationalStatus;
 
+interface FuelFinanceEntry {
+  id: string;
+  vehicleNo: string;
+  truckId: string;
+  fleetCategory: 'OWNED_FLEET' | 'ATTACHED_FLEET';
+  date: string;
+  service: 'Diesel' | 'DEF' | 'Urea';
+  quantity: number;
+  rate: number;
+  value: number;
+}
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value || 0);
+
 interface LoadingRecord {
   id: string;
   tripId?: string;
@@ -86,9 +101,11 @@ export default function VehicleSummaryPage() {
   const [trips, setTrips] = useState(() => getTrips());
   const weighTickets = useMemo(() => getWeighTickets(), []);
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+  const [fuelEntries, setFuelEntries] = useState<FuelFinanceEntry[]>([]);
 
   useEffect(() => {
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
+    fetchSyncedValue<FuelFinanceEntry[]>('tms_fuel_finance_entries', []).then(setFuelEntries);
   }, []);
 
   useEffect(() => {
@@ -275,11 +292,24 @@ export default function VehicleSummaryPage() {
       acc[key].turnaroundMinutes += record.turnaroundMinutes;
     }
     return acc;
-  }, {})).map(summary => ({
-    ...summary,
-    tripCount: summary.trips.size,
-    avgTurnaround: summary.completedUnloads ? Math.round(summary.turnaroundMinutes / summary.completedUnloads) : 0,
-  })).sort((a, b) => b.tripCount - a.tripCount || b.totalLoadedQty - a.totalLoadedQty);
+  }, {})).map(summary => {
+    const vehicleFuelEntries = fuelEntries.filter(entry => 
+      entry.vehicleNo.toUpperCase().replace(/[^A-Z0-9]/ig, '') === summary.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '')
+    );
+    
+    const totalFuelValue = vehicleFuelEntries.reduce((sum, entry) => sum + (entry.value || 0), 0);
+    const totalDieselValue = vehicleFuelEntries
+      .filter(entry => entry.service === 'Diesel')
+      .reduce((sum, entry) => sum + (entry.value || 0), 0);
+
+    return {
+      ...summary,
+      tripCount: summary.trips.size,
+      avgTurnaround: summary.completedUnloads ? Math.round(summary.turnaroundMinutes / summary.completedUnloads) : 0,
+      totalFuelValue,
+      totalDieselValue,
+    };
+  }).sort((a, b) => b.tripCount - a.tripCount || b.totalLoadedQty - a.totalLoadedQty);
 
   const totals = summaries.reduce((acc, summary) => ({
     vehicles: acc.vehicles + 1,
@@ -397,13 +427,15 @@ export default function VehicleSummaryPage() {
                 <th className="px-6 py-4">Gross / Tare</th>
                 <th className="px-6 py-4">Avg TAT</th>
                 <th className="px-6 py-4">Challans</th>
+                <th className="px-6 py-4 text-right">Total Diesel Value</th>
+                <th className="px-6 py-4 text-right">Total Fuel Value</th>
                 <th className="px-6 py-4 text-right">Running Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {summaries.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
                     No vehicle activity found for this month session.
                   </td>
                 </tr>
@@ -432,6 +464,12 @@ export default function VehicleSummaryPage() {
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-700">{formatTurnaround(summary.avgTurnaround)}</td>
                   <td className="px-6 py-4 text-[10px] text-slate-500">{summary.challans.slice(0, 3).join(', ') || '-'}</td>
+                  <td className="px-6 py-4 font-mono font-bold text-slate-700 text-right">
+                    {formatCurrency(summary.totalDieselValue)}
+                  </td>
+                  <td className="px-6 py-4 font-mono font-bold text-slate-700 text-right">
+                    {formatCurrency(summary.totalFuelValue)}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(summary.latestStatus)}`}>
                       {getOperationalStatusLabel(summary.latestStatus)}
