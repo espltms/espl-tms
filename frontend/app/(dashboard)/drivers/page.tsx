@@ -315,6 +315,7 @@ export default function DriversPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Driver Name</th>
                 <th className="px-6 py-4">License</th>
                 <th className="px-6 py-4">Phone</th>
@@ -329,7 +330,7 @@ export default function DriversPage() {
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
               {paginatedDrivers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-3">
                       <User className="h-8 w-8 text-slate-400" />
                       <span className="text-sm font-semibold">No drivers found</span>
@@ -337,8 +338,9 @@ export default function DriversPage() {
                     </div>
                   </td>
                 </tr>
-              ) : paginatedDrivers.map(driver => (
+              ) : paginatedDrivers.map((driver, idx) => (
                 <tr key={driver.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="px-6 py-4 font-bold text-slate-400">{(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0">

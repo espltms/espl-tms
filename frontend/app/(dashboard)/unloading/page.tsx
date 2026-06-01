@@ -173,6 +173,7 @@ export default function UnloadingVehiclePage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Vehicle</th>
                 <th className="px-6 py-4">Loading Ref</th>
                 <th className="px-6 py-4">Loaded Qty</th>
@@ -212,11 +213,12 @@ export default function UnloadingVehiclePage() {
                 });
 
                 if (filteredRecords.length === 0) {
-                  return <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No loading records available for unloading.</td></tr>;
+                  return <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">No loading records available for unloading.</td></tr>;
                 }
 
-                return filteredRecords.map(record => (
+                return filteredRecords.map((record, idx) => (
                 <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                   <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{record.truckPlate}</td>
                   <td className="px-6 py-4"><div className="font-mono font-bold text-slate-700">{record.ticketNo}</div><div className="mt-0.5 text-[10px] text-slate-400">Challan: {record.challanNo}</div></td>
                   <td className="px-6 py-4 font-mono">{record.netWeight.toFixed(2)} {record.uom}</td>

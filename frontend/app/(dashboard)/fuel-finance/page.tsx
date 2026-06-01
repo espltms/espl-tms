@@ -233,6 +233,7 @@ export default function FuelFinancesPage() {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                  <th className="px-6 py-4">SL.</th>
                   <th className="px-6 py-4">Vehicle No</th>
                   <th className="px-6 py-4">Category</th>
                   <th className="px-6 py-4">Service</th>
@@ -246,12 +247,13 @@ export default function FuelFinancesPage() {
               <tbody className="divide-y divide-slate-100 text-slate-600">
                 {filteredEntries.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={9} className="px-6 py-8 text-center text-slate-500">
                       No fuel transactions recorded for this regional scope.
                     </td>
                   </tr>
-                ) : filteredEntries.map(entry => (
+                ) : filteredEntries.map((entry, idx) => (
                   <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-4 font-extrabold text-slate-800 font-mono tracking-wider">{entry.vehicleNo}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${

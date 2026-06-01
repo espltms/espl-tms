@@ -421,6 +421,7 @@ export default function MaintenancePage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-6 py-4">SL.</th>
                     <th className="px-6 py-4">Vehicle No</th>
                     <th className="px-6 py-4">Nature of R&M</th>
                     <th className="px-6 py-4">Occurrence Date</th>
@@ -434,12 +435,13 @@ export default function MaintenancePage() {
                 <tbody className="divide-y divide-slate-100 text-slate-600">
                   {filteredRepairEntries.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={9} className="px-6 py-10 text-center text-slate-400">
                         No Repair & Maintenance logs found for this regional scope. Click the button to add a new record.
                       </td>
                     </tr>
-                  ) : filteredRepairEntries.map(entry => (
+                  ) : filteredRepairEntries.map((entry, idx) => (
                     <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                       <td className="px-6 py-4 font-extrabold text-slate-800 font-mono tracking-wider">{entry.vehicleNo}</td>
                       <td className="px-6 py-4 font-semibold text-slate-700">{entry.natureOfRM}</td>
                       <td className="px-6 py-4 font-mono text-slate-500">{new Date(entry.dateOfOccurrence).toLocaleDateString('en-IN')}</td>
@@ -521,6 +523,7 @@ export default function MaintenancePage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-6 py-4">SL.</th>
                     <th className="px-6 py-4">Vehicle No</th>
                     <th className="px-6 py-4">Tyre Serial No</th>
                     <th className="px-6 py-4">Brand</th>
@@ -536,12 +539,13 @@ export default function MaintenancePage() {
                 <tbody className="divide-y divide-slate-100 text-slate-600">
                   {filteredTyreEntries.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={11} className="px-6 py-10 text-center text-slate-400">
                         No Tyre Workshop activities registered for this regional scope. Click the button to add a new record.
                       </td>
                     </tr>
-                  ) : filteredTyreEntries.map(entry => (
+                  ) : filteredTyreEntries.map((entry, idx) => (
                     <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                       <td className="px-6 py-4 font-extrabold text-slate-800 font-mono tracking-wider">{entry.vehicleNo}</td>
                       <td className="px-6 py-4 font-mono text-slate-700 font-semibold">{entry.tyreSerialNo}</td>
                       <td className="px-6 py-4 font-semibold">{entry.brand}</td>

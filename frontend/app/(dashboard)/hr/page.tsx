@@ -107,6 +107,7 @@ export default function HRPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Full Name</th>
                 <th className="px-6 py-4">Department / Role</th>
                 <th className="px-6 py-4">Base Salary</th>
@@ -116,8 +117,9 @@ export default function HRPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {employees.map(emp => (
+              {employees.map((emp, idx) => (
                 <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                   <td className="px-6 py-4">
                     <div>
                       <span className="font-extrabold text-slate-800">{emp.name}</span>
@@ -146,7 +148,7 @@ export default function HRPage() {
               ))}
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                     No HR or payroll records are present in the imported dataset.
                   </td>
                 </tr>

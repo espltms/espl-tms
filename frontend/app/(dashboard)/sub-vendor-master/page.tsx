@@ -245,6 +245,7 @@ export default function SubVendorMasterPage() {
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
+                        <th className="px-4 py-2.5">SL.</th>
                         <th className="px-4 py-2.5">Vehicle Plate</th>
                         <th className="px-4 py-2.5">Category</th>
                         <th className="px-4 py-2.5">Type</th>
@@ -254,9 +255,10 @@ export default function SubVendorMasterPage() {
                         <th className="px-4 py-2.5">Mobile</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-150 text-slate-600">
-                      {activeSubVendorRecord.vehicles.map(truck => (
+                    <tbody className="divide-y divide-slate-155 text-slate-600">
+                      {activeSubVendorRecord.vehicles.map((truck, idx) => (
                         <tr key={truck.id} className="hover:bg-slate-50/50">
+                          <td className="px-4 py-2.5 font-bold text-slate-400">{idx + 1}</td>
                           <td className="px-4 py-2.5 font-bold font-mono text-slate-800">{truck.plateNumber}</td>
                           <td className="px-4 py-2.5">
                             <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-bold ${

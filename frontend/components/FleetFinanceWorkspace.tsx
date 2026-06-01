@@ -364,6 +364,7 @@ export default function FleetFinanceWorkspace({
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400">
+                  <th className="px-6 py-3 uppercase tracking-wider">SL.</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Vehicle</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Trip / Challan</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Received Qty</th>
@@ -374,18 +375,19 @@ export default function FleetFinanceWorkspace({
               <tbody className="divide-y divide-slate-100 text-slate-600">
                 {unloadedVehicles.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                       {hasDateFilter
                         ? 'No unloaded vehicles found for this date range.'
                         : `No unloaded ${getFleetLabel(fleetCategory).toLowerCase()} vehicles yet.`}
                     </td>
                   </tr>
-                ) : unloadedVehicles.map(record => (
+                ) : unloadedVehicles.map((record, idx) => (
                   <tr
                     key={record.id}
                     onClick={() => setSelectedRecordId(record.id)}
                     className={`cursor-pointer hover:bg-slate-50 ${selectedRecord?.id === record.id ? 'bg-brand-primary/5' : ''}`}
                   >
+                    <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4 text-slate-400" />
@@ -539,6 +541,7 @@ export default function FleetFinanceWorkspace({
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400">
+                  <th className="px-6 py-3 uppercase tracking-wider">SL.</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Vehicle</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 uppercase tracking-wider">Description</th>
@@ -548,8 +551,9 @@ export default function FleetFinanceWorkspace({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600">
-                {filteredEntries.map(entry => (
+                {filteredEntries.map((entry, idx) => (
                   <tr key={entry.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3 font-mono font-bold text-slate-800">{entry.truckPlate}</td>
                     <td className="px-6 py-3 font-semibold text-slate-700">{getEntryLabel(entry.type)}</td>
                     <td className="px-6 py-3">{entry.description}</td>

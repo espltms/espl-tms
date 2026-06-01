@@ -539,6 +539,7 @@ export default function SettingsPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">SL.</th>
                     <th className="px-6 py-4">Full Name</th>
                     <th className="px-6 py-4">Identity Details</th>
                     <th className="px-6 py-4">Assigned Role</th>
@@ -547,8 +548,9 @@ export default function SettingsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
-                  {users.map(u => (
+                  {users.map((u, idx) => (
                     <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                       <td className="px-6 py-4">
                         <div className="font-extrabold text-slate-800">{u.fullName}</div>
                         <div className="text-[10px] text-slate-400 mt-0.5">ID: {u.id.substring(0, 8)}...</div>
@@ -599,7 +601,7 @@ export default function SettingsPage() {
                   ))}
                   {users.length === 0 && !loadingUsers && (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                         No active users registered.
                       </td>
                     </tr>
@@ -719,14 +721,16 @@ export default function SettingsPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">SL.</th>
                     <th className="px-6 py-4 w-1/4">Role Name</th>
                     <th className="px-6 py-4 w-2/3">Allowed Sidebar Screens</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
-                  {customRoles.map(cr => (
+                  {customRoles.map((cr, idx) => (
                     <tr key={cr.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                       <td className="px-6 py-4 font-extrabold text-slate-800">
                         <span className="inline-block rounded bg-purple-50 border border-purple-200 text-purple-700 px-2 py-0.5 text-[9px] font-bold uppercase font-mono tracking-wider">
                           {cr.name}
@@ -761,7 +765,7 @@ export default function SettingsPage() {
                   ))}
                   {customRoles.length === 0 && !loadingRoles && (
                     <tr>
-                      <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
                         No custom roles defined. System admins can configure custom roles above.
                       </td>
                     </tr>
@@ -810,6 +814,7 @@ export default function SettingsPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-[#e2e8f0] text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">SL.</th>
                     <th className="px-6 py-4">System Operator</th>
                     <th className="px-6 py-4">Security Action</th>
                     <th className="px-6 py-4">Transaction Payload Details</th>
@@ -818,8 +823,9 @@ export default function SettingsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
-                  {logs.map(log => (
+                  {logs.map((log, idx) => (
                     <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-brand-primary" />
@@ -840,7 +846,7 @@ export default function SettingsPage() {
                   ))}
                   {logs.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                         No audit log records are present in the imported dataset.
                       </td>
                     </tr>

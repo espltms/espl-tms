@@ -1000,6 +1000,7 @@ export default function TripsPage() {
                     />
                   </th>
                 )}
+                <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Vehicle no</th>
                 <th className="px-6 py-4">PO</th>
                 <th className="px-6 py-4">Commodity</th>
@@ -1021,7 +1022,7 @@ export default function TripsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
-              {paginatedTrips.map(trip => {
+              {paginatedTrips.map((trip, idx) => {
                 const matchedTruck = trucks.find(t => t.plateNumber.toUpperCase() === trip.truck.plateNumber.toUpperCase());
                 const rawHealth = matchedTruck ? matchedTruck.health : 90;
                 const health = getTruckDynamicHealth(trip.truck.plateNumber, rawHealth, fleetMasterRecords);
@@ -1058,6 +1059,7 @@ export default function TripsPage() {
                         />
                       </td>
                     )}
+                    <td className="px-6 py-4 font-bold text-slate-400">{(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                     <td className="px-6 py-4 font-mono font-bold text-slate-800 tracking-wider whitespace-nowrap">{trip.truck.plateNumber}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800 font-mono">{trip.purchaseOrder.poNumber}</td>
                     <td className="px-6 py-4 text-slate-600">{trip.purchaseOrder.commodity || '—'}</td>
@@ -1106,7 +1108,7 @@ export default function TripsPage() {
               })}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={isDeleteMode ? 19 : 18} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 20 : 19} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>

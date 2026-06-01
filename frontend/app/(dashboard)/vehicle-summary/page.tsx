@@ -420,6 +420,7 @@ export default function VehicleSummaryPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Vehicle</th>
                 <th className="px-6 py-4">Vendor</th>
                 <th className="px-6 py-4">Trips</th>
@@ -435,12 +436,13 @@ export default function VehicleSummaryPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {summaries.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={11} className="px-6 py-10 text-center text-slate-500">
                     No vehicle activity found for this month session.
                   </td>
                 </tr>
-              ) : summaries.map(summary => (
+              ) : summaries.map((summary, idx) => (
                 <tr key={summary.truckId} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-slate-400">{idx + 1}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Truck className="h-4 w-4 text-slate-400" />
