@@ -87,7 +87,7 @@ purchase_orders = [
         "id": "po-vedanta-prmndpr",
         "poNumber": "PO-VEDANTA-PRMNDPR-01",
         "clientName": "Vedanta Limited (Lanjigarh)",
-        "commodity": "Fly Ash (Grade I)",
+        "commodity": "Fly Ash",
         "totalQuantityTons": 500000.0,
         "allocatedQuantityTons": 0.0,
         "ratePerTon": 240.0,
@@ -97,7 +97,7 @@ purchase_orders = [
         "id": "po-vedanta-drmgrh",
         "poNumber": "PO-VEDANTA-DRMGRH-02",
         "clientName": "Vedanta Limited (Lanjigarh)",
-        "commodity": "Pond Ash (Grade II)",
+        "commodity": "Fly Ash",
         "totalQuantityTons": 300000.0,
         "allocatedQuantityTons": 0.0,
         "ratePerTon": 280.0,
@@ -176,7 +176,7 @@ for idx, row in df1.iterrows():
         "purchaseOrder": {
             "poNumber": "PO-VEDANTA-PRMNDPR-01",
             "clientName": "Vedanta Limited (Lanjigarh)",
-            "commodity": "Fly Ash (Grade I)"
+            "commodity": "Fly Ash"
         }
     }
     trips.append(trip)
@@ -188,7 +188,7 @@ for idx, row in df1.iterrows():
             "ticketNo": f"TKT-WB-{ticket}",
             "tripNo": trip_no,
             "truckPlate": plate,
-            "material": "Fly Ash (Grade I)",
+            "material": "Fly Ash",
             "grossTons": round(qty + 15.2, 2),
             "tareTons": 15.2,
             "netTons": qty,
@@ -252,7 +252,7 @@ for idx, row in df2.iterrows():
         "purchaseOrder": {
             "poNumber": "PO-VEDANTA-DRMGRH-02",
             "clientName": "Vedanta Limited (Lanjigarh)",
-            "commodity": "Pond Ash (Grade II)"
+            "commodity": "Fly Ash"
         }
     }
     trips.append(trip)
@@ -264,7 +264,7 @@ for idx, row in df2.iterrows():
             "ticketNo": f"TKT-WB-{ticket}",
             "tripNo": trip_no,
             "truckPlate": plate,
-            "material": "Pond Ash (Grade II)",
+            "material": "Fly Ash",
             "grossTons": round(qty + 15.3, 2),
             "tareTons": 15.3,
             "netTons": qty,
