@@ -199,7 +199,8 @@ export default function UnloadingVehiclePage() {
                       ? 'Bhawanipatna'
                       : user?.regionName;
 
-                const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+                const canEditFields = user?.role === 'SUPER_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+                const canEdit = canEditFields;
 
                 const filteredRecords = records.filter(record => {
                   if (isRegionalUser && userRegion) {
@@ -262,13 +263,18 @@ export default function UnloadingVehiclePage() {
               <button onClick={() => { setActiveRecord(null); setForm(emptyUnloadingForm); }} className="rounded-lg p-1.5 hover:bg-slate-200 text-slate-500 transition-all"><X className="h-4 w-4" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
+              {(() => {
+                const isFieldAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+                return (
+                  <>
               <Field label="Vehicle Number *">
                 <input 
                   type="text" 
                   required 
                   value={form.truckPlate} 
-                  onChange={(e) => setForm({ ...form, truckPlate: e.target.value })} 
-                  className="unload-input font-mono font-bold" 
+                  onChange={(e) => isFieldAdmin ? setForm({ ...form, truckPlate: e.target.value }) : undefined} 
+                  readOnly={!isFieldAdmin}
+                  className={`unload-input font-mono font-bold ${!isFieldAdmin ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
                   placeholder="e.g. OD08Z6368"
                 />
               </Field>
@@ -278,7 +284,7 @@ export default function UnloadingVehiclePage() {
                 </select>
               </Field>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Received Qty *"><input type="number" step="0.01" required value={form.receivedQty} onChange={(e) => setForm({ ...form, receivedQty: e.target.value })} className="unload-input font-mono font-bold" /></Field>
+                <Field label="Received Qty *"><input type="number" step="0.01" required value={form.receivedQty} onChange={(e) => isFieldAdmin ? setForm({ ...form, receivedQty: e.target.value }) : undefined} readOnly={!isFieldAdmin} className={`unload-input font-mono font-bold ${!isFieldAdmin ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`} /></Field>
                 <Field label="Date & Time of Unloading *"><input type="datetime-local" required value={form.unloadingDateTime} onChange={(e) => setForm({ ...form, unloadingDateTime: e.target.value })} className="unload-input" /></Field>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -292,6 +298,9 @@ export default function UnloadingVehiclePage() {
               <button type="submit" className="w-full rounded-xl bg-gradient-to-r from-brand-success to-emerald-600 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md">
                 Save Unloading Entry <PackageOpen className="h-4 w-4" />
               </button>
+                  </>
+                );
+              })()}
             </form>
           </div>
         </div>
