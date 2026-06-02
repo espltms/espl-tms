@@ -293,7 +293,7 @@ export default function TripsPage() {
           fuelCard: '-',
           health: getTruckDynamicHealth(r.plateNumber, 100, loadedRecords),
           status: 'SCHEDULED' as any,
-          vendor: r.vendor || 'Vendor 1',
+          vendor: normalizeVendorName(r.vendor || 'Eastern Stevedores'),
           subVendor: r.subVendor || '-',
           wheeler: r.wheeler || '12 Wheeler',
           assignedDriverName: r.driverName || '-',

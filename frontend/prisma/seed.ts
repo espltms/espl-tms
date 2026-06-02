@@ -68,14 +68,14 @@ async function main() {
       password: 'TMSAdminPassword2026!',
       fullName: 'Vendor -1',
       role: 'VENDOR_1',
-      vendorName: 'Vendor 1',
+      vendorName: 'Eastern Stevedores',
     },
     {
       email: 'vendor2@espl.com',
       password: 'TMSAdminPassword2026!',
       fullName: 'Vendor -2',
       role: 'VENDOR_2',
-      vendorName: 'Vendor 2',
+      vendorName: 'Mahaveer',
     },
     {
       email: 'vendor3@espl.com',

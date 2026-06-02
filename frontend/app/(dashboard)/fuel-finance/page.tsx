@@ -6,6 +6,7 @@ import { getTrucks, TruckData } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { isMatchingDestination } from '@/lib/workflowAutomation';
+import { normalizeVendorName } from '@/lib/operationalStatus';
 
 interface FuelFinanceEntry {
   id: string;
@@ -55,7 +56,7 @@ export default function FuelFinancesPage() {
         fuelCard: '-',
         health: 100,
         status: 'RECEIVED' as any,
-        vendor: r.vendor || 'Vendor 1',
+        vendor: normalizeVendorName(r.vendor || 'Eastern Stevedores'),
         subVendor: r.subVendor || '-',
         wheeler: r.wheeler || '12 Wheeler',
         assignedDriverName: r.driverName || '-',

@@ -566,7 +566,7 @@ export default function SettingsPage() {
                       </td>
                       <td className="px-6 py-4 text-[10px] text-slate-500 font-semibold">
                         {u.regionName && <div>Region: {u.regionName}</div>}
-                        {u.vendorName && <div>Vendor: {u.vendorName}</div>}
+                        {u.vendorName && <div>Vendor: {normalizeVendorName(u.vendorName)}</div>}
                         {!u.regionName && !u.vendorName && <span className="text-slate-400">Global Admin</span>}
                       </td>
                       <td className="px-6 py-4 text-right">

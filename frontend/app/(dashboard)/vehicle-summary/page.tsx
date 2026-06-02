@@ -8,6 +8,7 @@ import {
   getOperationalStatusClasses,
   getOperationalStatusLabel,
   normalizeOperationalStatus,
+  normalizeVendorName,
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
@@ -70,7 +71,7 @@ interface VehicleActivityRecord {
 }
 
 const LOADING_RECORDS_KEY = 'tms_loading_records';
-const VENDOR_NAMES = ['Vendor 1', 'Vendor 2', 'Vendor 3'];
+const VENDOR_NAMES = ['Eastern Stevedores', 'Mahaveer', 'Vendor 3'];
 
 const getFallbackVendorForPlate = (plateNumber: string) => {
   const total = plateNumber.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -169,7 +170,7 @@ export default function VehicleSummaryPage() {
           truckId: trip.truckId,
           truckPlate: trip.truck.plateNumber,
           model: truck?.model || trip.truck.model,
-          vendor: truck?.vendor || trip.vendorName || getFallbackVendorForPlate(trip.truck.plateNumber),
+          vendor: normalizeVendorName(truck?.vendor || trip.vendorName || getFallbackVendorForPlate(trip.truck.plateNumber)),
           subVendor: truck?.subVendor || 'Not provided in dataset',
           fleetCategory: truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet',
           loadedQty,
@@ -263,7 +264,7 @@ export default function VehicleSummaryPage() {
         truckId: key,
         plateNumber: record.truckPlate,
         model: truck?.model || record.model || trip?.truck.model || '-',
-        vendor: truck?.vendor || record.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate),
+        vendor: normalizeVendorName(truck?.vendor || record.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate)),
         subVendor: truck?.subVendor || record.subVendor || '-',
         fleetCategory: record.fleetCategory || (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet'),
         trips: new Set<string>(),

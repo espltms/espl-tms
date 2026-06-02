@@ -11,8 +11,8 @@ const users = [
   { email: 'place3.admin@espl.com', fullName: 'Place 3 Admin', role: 'REGION_ADMIN', regionName: 'Place-3', vendorName: null },
   { email: 'place4.admin@espl.com', fullName: 'Place 4 Admin', role: 'REGION_ADMIN', regionName: 'Place-4', vendorName: null },
   { email: 'place5.admin@espl.com', fullName: 'Place 5 Admin', role: 'REGION_ADMIN', regionName: 'Place-5', vendorName: null },
-  { email: 'vendor1@espl.com', fullName: 'Vendor 1', role: 'VENDOR', regionName: null, vendorName: 'Vendor 1' },
-  { email: 'vendor2@espl.com', fullName: 'Vendor 2', role: 'VENDOR', regionName: null, vendorName: 'Vendor 2' },
+  { email: 'vendor1@espl.com', fullName: 'Vendor 1', role: 'VENDOR', regionName: null, vendorName: 'Eastern Stevedores' },
+  { email: 'vendor2@espl.com', fullName: 'Vendor 2', role: 'VENDOR', regionName: null, vendorName: 'Mahaveer' },
   { email: 'vendor3@espl.com', fullName: 'Vendor 3', role: 'VENDOR', regionName: null, vendorName: 'Vendor 3' },
 ];
 

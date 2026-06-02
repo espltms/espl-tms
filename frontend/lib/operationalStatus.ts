@@ -43,10 +43,21 @@ export const normalizeVendorName = (name: string): string => {
   
   if (
     clean.includes('espl') ||
+    clean.includes('eslp') ||
     clean.includes('eastern') ||
+    clean.includes('esatern') ||
+    clean.includes('eastrn') ||
     clean.includes('stevedore') ||
+    clean.includes('stevidore') ||
+    clean.includes('stevedor') ||
     clean.includes('est') ||
-    clean.startsWith('east')
+    clean.startsWith('east') ||
+    clean.startsWith('esat') ||
+    clean.includes('vendor 1') ||
+    clean.includes('vendor-1') ||
+    clean.includes('vendor1') ||
+    clean.includes('v1') ||
+    clean.includes('v-1')
   ) {
     return 'Eastern Stevedores';
   }
@@ -55,7 +66,14 @@ export const normalizeVendorName = (name: string): string => {
     clean.includes('mahaveer') ||
     clean.includes('mahavir') ||
     clean.includes('mahveer') ||
-    clean.startsWith('maha')
+    clean.includes('mahaver') ||
+    clean.includes('mahavver') ||
+    clean.startsWith('maha') ||
+    clean.includes('vendor 2') ||
+    clean.includes('vendor-2') ||
+    clean.includes('vendor2') ||
+    clean.includes('v2') ||
+    clean.includes('v-2')
   ) {
     return 'Mahaveer';
   }
