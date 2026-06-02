@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { useRouter } from 'next/navigation';
-import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, PackageOpen } from 'lucide-react';
+import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, PackageOpen, Sun, Moon } from 'lucide-react';
 
 
 
@@ -14,6 +14,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'dark' : 'light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tms_theme', nextTheme);
+      if (nextTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -68,6 +89,15 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-x-hidden bg-[#f4f6f9] px-4 py-6 md:flex-row md:px-0 md:py-0">
+      {/* Floating Theme Toggle */}
+      <button 
+        onClick={toggleTheme}
+        title={theme === 'light' ? 'Switch to Night Mode' : 'Switch to Light Mode'}
+        className="absolute top-6 right-6 z-[200] rounded-xl border border-slate-200 bg-white p-2.5 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all shadow-sm"
+      >
+        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      </button>
+
       {/* Decorative background glow rings */}
       <div className="absolute -left-64 -top-64 h-[600px] w-[600px] rounded-full bg-brand-primary/5 blur-[120px] pointer-events-none" />
       <div className="absolute -right-64 -bottom-64 h-[600px] w-[600px] rounded-full bg-brand-secondary/5 blur-[120px] pointer-events-none" />

@@ -29,7 +29,9 @@ import {
   PackageOpen,
   BarChart3,
   Fuel,
-  Database
+  Database,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const navigationDivisions = [
@@ -141,6 +143,27 @@ export default function DashboardLayout({
   const { user, logout, isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'dark' : 'light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tms_theme', nextTheme);
+      if (nextTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  };
 
   const [customRoles, setCustomRoles] = useState<Record<string, string[]>>(() => {
     if (typeof window === 'undefined') return {};
@@ -322,6 +345,15 @@ export default function DashboardLayout({
             <button className="relative rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all">
               <Bell className="h-4 w-4" />
               <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-brand-secondary animate-ping" />
+            </button>
+
+            {/* Night mode toggle */}
+            <button 
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Switch to Night Mode' : 'Switch to Light Mode'}
+              className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all"
+            >
+              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
           </div>
         </header>
