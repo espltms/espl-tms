@@ -123,20 +123,22 @@ async function main() {
 
   // 2. Create Purchase Orders
   console.log('Seeding POs...');
+  const existingPOs = await prisma.purchaseOrder.findMany({ select: { poNumber: true, id: true } });
+  const existingPOMap = new Map(existingPOs.map(po => [po.poNumber, po.id]));
   for (const po of tmsData.purchaseOrders) {
-    await prisma.purchaseOrder.upsert({
-      where: { poNumber: po.poNumber },
-      update: {},
-      create: {
-        poNumber: po.poNumber,
-        clientName: po.clientName,
-        commodity: po.commodity,
-        totalQuantityTons: po.totalQuantityTons,
-        allocatedQuantityTons: po.allocatedQuantityTons,
-        ratePerTon: po.ratePerTon,
-        status: po.status as any,
-      },
-    });
+    if (!existingPOMap.has(po.poNumber)) {
+      await prisma.purchaseOrder.create({
+        data: {
+          poNumber: po.poNumber,
+          clientName: po.clientName,
+          commodity: po.commodity,
+          totalQuantityTons: po.totalQuantityTons,
+          allocatedQuantityTons: po.allocatedQuantityTons,
+          ratePerTon: po.ratePerTon,
+          status: po.status as any,
+        }
+      });
+    }
   }
 
   // 3. Drivers are managed manually via the app UI — not seeded from demo data
@@ -145,15 +147,15 @@ async function main() {
 
   // 4. Create Trucks
   console.log('Seeding Trucks...');
+  const existingTrucks = await prisma.truck.findMany({ select: { plateNumber: true, id: true } });
+  const existingTruckMap = new Map(existingTrucks.map(t => [t.plateNumber, t.id]));
+  
+  const trucksToCreate = [];
   for (const truck of tmsData.trucks) {
-    // extract numeric capacity
-    const capacityStr = truck.capacity.replace('T', '');
-    const capacityTons = parseFloat(capacityStr) || 0;
-
-    await prisma.truck.upsert({
-      where: { plateNumber: truck.plateNumber },
-      update: {},
-      create: {
+    if (!existingTruckMap.has(truck.plateNumber)) {
+      const capacityStr = truck.capacity.replace('T', '');
+      const capacityTons = parseFloat(capacityStr) || 0;
+      trucksToCreate.push({
         plateNumber: truck.plateNumber,
         model: truck.model,
         type: truck.type,
@@ -161,66 +163,88 @@ async function main() {
         fuelCard: truck.fuelCard,
         health: truck.health,
         status: truck.status as any,
-      },
-    });
+      });
+    }
+  }
+  if (trucksToCreate.length > 0) {
+    await prisma.truck.createMany({ data: trucksToCreate });
+    console.log(`Created ${trucksToCreate.length} new trucks.`);
   }
 
   // 5. Create Trips
   // For trips we need to map the truck and driver plates/names back to real IDs.
   // We will do a subset of trips for speed (e.g. first 500 if there are thousands).
   console.log('Seeding Trips...');
-  const limitTrips = tmsData.trips.slice(0, 500); // adjust as needed
+  const allTrucks = await prisma.truck.findMany({ select: { plateNumber: true, id: true } });
+  const truckMap = new Map(allTrucks.map(t => [t.plateNumber, t.id]));
+  const allDrivers = await prisma.driver.findMany({ select: { fullName: true, id: true } });
+  const driverMap = new Map(allDrivers.map(d => [d.fullName, d.id]));
+  const allPOs = await prisma.purchaseOrder.findMany({ select: { poNumber: true, id: true } });
+  const poMap = new Map(allPOs.map(po => [po.poNumber, po.id]));
   
-  for (const trip of limitTrips) {
-    // Find relations
-    const dbTruck = await prisma.truck.findUnique({ where: { plateNumber: trip.truck.plateNumber } });
-    const dbDriver = await prisma.driver.findFirst({ where: { fullName: trip.driver.fullName } });
-    const dbPo = await prisma.purchaseOrder.findUnique({ where: { poNumber: trip.purchaseOrder.poNumber } });
+  const existingTrips = await prisma.trip.findMany({ select: { tripNumber: true } });
+  const existingTripSet = new Set(existingTrips.map(t => t.tripNumber));
 
-    if (dbTruck && dbDriver && dbPo) {
-      await prisma.trip.upsert({
-        where: { tripNumber: trip.tripNumber },
-        update: {},
-        create: {
-          tripNumber: trip.tripNumber,
-          purchaseOrderId: dbPo.id,
-          driverId: dbDriver.id,
-          truckId: dbTruck.id,
-          source: trip.source,
-          destination: trip.destination,
-          distanceKm: trip.distanceKm,
-          estimatedQuantityTons: trip.estimatedQuantityTons,
-          actualLoadedTons: trip.actualLoadedTons || null,
-          actualDeliveredTons: trip.actualDeliveredTons || null,
-          status: trip.status as any,
-          scheduledStartDate: new Date(trip.scheduledStartDate),
-        },
+  const limitTrips = tmsData.trips.slice(0, 500); // adjust as needed
+  const tripsToCreate = [];
+  for (const trip of limitTrips) {
+    if (existingTripSet.has(trip.tripNumber)) continue;
+    const dbTruckId = truckMap.get(trip.truck.plateNumber);
+    const dbDriverId = driverMap.get(trip.driver.fullName);
+    const dbPoId = poMap.get(trip.purchaseOrder.poNumber);
+
+    if (dbTruckId && dbDriverId && dbPoId) {
+      tripsToCreate.push({
+        tripNumber: trip.tripNumber,
+        purchaseOrderId: dbPoId,
+        driverId: dbDriverId,
+        truckId: dbTruckId,
+        source: trip.source,
+        destination: trip.destination,
+        distanceKm: trip.distanceKm,
+        estimatedQuantityTons: trip.estimatedQuantityTons,
+        actualLoadedTons: trip.actualLoadedTons || null,
+        actualDeliveredTons: trip.actualDeliveredTons || null,
+        status: trip.status as any,
+        scheduledStartDate: new Date(trip.scheduledStartDate),
       });
     }
+  }
+  if (tripsToCreate.length > 0) {
+    await prisma.trip.createMany({ data: tripsToCreate });
+    console.log(`Created ${tripsToCreate.length} new trips.`);
   }
 
   // 6. Create Weigh Tickets
   console.log('Seeding Weigh Tickets...');
+  const allTrips = await prisma.trip.findMany({ select: { tripNumber: true, id: true } });
+  const tripMap = new Map(allTrips.map(t => [t.tripNumber, t.id]));
+  
+  const existingTickets = await prisma.weighTicket.findMany({ select: { ticketNo: true } });
+  const existingTicketSet = new Set(existingTickets.map(t => t.ticketNo));
+
+  const ticketsToCreate = [];
   for (const ticket of tmsData.weighTickets.slice(0, 500)) { // limit to first 500
-    const dbTrip = await prisma.trip.findUnique({ where: { tripNumber: ticket.tripNo } });
-    if (dbTrip) {
-      await prisma.weighTicket.upsert({
-        where: { ticketNo: ticket.ticketNo },
-        update: {},
-        create: {
-          ticketNo: ticket.ticketNo,
-          tripId: dbTrip.id,
-          truckPlate: ticket.truckPlate,
-          material: ticket.material,
-          grossTons: ticket.grossTons,
-          tareTons: ticket.tareTons,
-          netTons: ticket.netTons,
-          sealNumber: ticket.sealNumber,
-          status: ticket.status,
-          timestamp: new Date(ticket.timestamp),
-        },
+    if (existingTicketSet.has(ticket.ticketNo)) continue;
+    const dbTripId = tripMap.get(ticket.tripNo);
+    if (dbTripId) {
+      ticketsToCreate.push({
+        ticketNo: ticket.ticketNo,
+        tripId: dbTripId,
+        truckPlate: ticket.truckPlate,
+        material: ticket.material,
+        grossTons: ticket.grossTons,
+        tareTons: ticket.tareTons,
+        netTons: ticket.netTons,
+        sealNumber: ticket.sealNumber,
+        status: ticket.status,
+        timestamp: new Date(ticket.timestamp),
       });
     }
+  }
+  if (ticketsToCreate.length > 0) {
+    await prisma.weighTicket.createMany({ data: ticketsToCreate });
+    console.log(`Created ${ticketsToCreate.length} new weigh tickets.`);
   }
 
   console.log('Seed completed successfully.');
