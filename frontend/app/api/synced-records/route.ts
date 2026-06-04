@@ -11,8 +11,38 @@ const SHARED_KEYS = [
   'tms_local_drivers',
   'tms_truck_status_overrides',
   'tms_custom_roles',
-  'tms_fleet_master'
+  'tms_fleet_master',
+  'tms_vendor_profiles',
+  'tms_subvendor_profiles'
 ];
+
+const isUserAdmin = (role: string) => 
+  role === 'SUPER_ADMIN' || 
+  role === 'SYS_ADMIN' || 
+  role === 'REGION_ADMIN' || 
+  role.endsWith('_ADMIN');
+
+const isUserDispatcher = (role: string) => role === 'DISPATCHER';
+const isUserLoader = (role: string) => role.includes('LOADER');
+const isUserUnloader = (role: string) => role.includes('UNLOADER');
+
+function canUserWriteRecord(role: string, recordKey: string): boolean {
+  if (isUserAdmin(role)) return true;
+
+  switch (recordKey) {
+    case 'tms_assigned_trips':
+    case 'tms_loading_records':
+    case 'tms_local_trucks':
+    case 'tms_local_drivers':
+      return isUserDispatcher(role);
+
+    case 'tms_truck_status_overrides':
+      return isUserDispatcher(role) || isUserLoader(role) || isUserUnloader(role);
+
+    default:
+      return false;
+  }
+}
 
 const getEffectiveUserId = (userId: string, recordKey: string | null) => {
   if (recordKey && SHARED_KEYS.includes(recordKey)) {
@@ -89,6 +119,13 @@ export async function POST(req: NextRequest) {
 
   if (!recordKey) {
     return NextResponse.json({ error: 'recordKey is required' }, { status: 400 });
+  }
+
+  // Security check: Verify user has write access to shared data keys
+  if (SHARED_KEYS.includes(recordKey)) {
+    if (!canUserWriteRecord(user.role, recordKey)) {
+      return NextResponse.json({ error: 'Forbidden. You do not have permission to modify this shared data.' }, { status: 403 });
+    }
   }
 
   const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
