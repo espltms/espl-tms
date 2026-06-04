@@ -336,7 +336,7 @@ export default function DashboardLayout({
 
           {/* Time & Alert widgets */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-            {user?.role !== 'VENDOR' && <SectionExcelImport sectionName={currentSectionName} />}
+            {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName={currentSectionName} />}
             <SectionExcelExport sectionName={currentSectionName} />
 
             <ClockWidget />
