@@ -1,5 +1,5 @@
 # Multi-stage production Dockerfile for Hugging Face Spaces (Backend Only)
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
 # Copy backend package files and install dependencies
@@ -14,7 +14,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Runner stage
-FROM node:20-alpine AS runner
+FROM node:20 AS runner
 WORKDIR /app
 
 COPY backend/package*.json ./
