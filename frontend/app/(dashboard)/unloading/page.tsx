@@ -128,13 +128,27 @@ export default function UnloadingVehiclePage() {
     const unloadingTime = new Date(form.unloadingDateTime).getTime();
     const turnaroundMinutes = Math.max(0, Math.round((unloadingTime - loadingTime) / 60000));
 
-    const finalTruckPlate = form.truckPlate.toUpperCase().trim();
+    const isAdmin = user?.role === 'SUPER_ADMIN' || 
+                    user?.role === 'SYS_ADMIN' || 
+                    user?.role === 'REGION_ADMIN' || 
+                    user?.role === 'PARAMANANDPUR_ADMIN' || 
+                    user?.role === 'DHARAMGARH_ADMIN' || 
+                    user?.role === 'BHAWANIPATNA_ADMIN';
+
+    const finalTruckPlate = isAdmin 
+      ? form.truckPlate.toUpperCase().trim() 
+      : activeRecord.truckPlate.toUpperCase().trim();
+
+    const finalReceivedQty = isAdmin 
+      ? (parseFloat(form.receivedQty) || 0) 
+      : activeRecord.netWeight;
+
     const nextRecords = records.map(record =>
       record.id === activeRecord.id
         ? {
             ...record,
             truckPlate: finalTruckPlate,
-            receivedQty: isReceived ? (parseFloat(form.receivedQty) || 0) : undefined,
+            receivedQty: isReceived ? finalReceivedQty : undefined,
             unloadingDateTime: isReceived ? form.unloadingDateTime : undefined,
             turnaroundMinutes: isReceived ? turnaroundMinutes : undefined,
             unloadingTruckStatus: form.truckStatus,
@@ -269,7 +283,12 @@ export default function UnloadingVehiclePage() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto min-h-0 flex-1">
               {(() => {
-                const isFieldAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'BHAWANIPATNA_ADMIN';
+                const isFieldAdmin = user?.role === 'SUPER_ADMIN' || 
+                                     user?.role === 'SYS_ADMIN' || 
+                                     user?.role === 'REGION_ADMIN' || 
+                                     user?.role === 'PARAMANANDPUR_ADMIN' || 
+                                     user?.role === 'DHARAMGARH_ADMIN' || 
+                                     user?.role === 'BHAWANIPATNA_ADMIN';
                 return (
                   <>
               <Field label="Vehicle Number *">
