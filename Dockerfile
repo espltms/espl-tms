@@ -30,4 +30,4 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 7860
 ENV PORT=7860
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
