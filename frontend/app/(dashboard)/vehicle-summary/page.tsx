@@ -105,6 +105,11 @@ export default function VehicleSummaryPage() {
   const [fuelEntries, setFuelEntries] = useState<FuelFinanceEntry[]>([]);
 
   useEffect(() => {
+    // 1. Instant local load
+    setLoadingRecords(readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+    setFuelEntries(readLocalValue<FuelFinanceEntry[]>('tms_fuel_finance_entries', []));
+
+    // 2. Background Database sync
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
     fetchSyncedValue<FuelFinanceEntry[]>('tms_fuel_finance_entries', []).then(setFuelEntries);
   }, []);

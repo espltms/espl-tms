@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
-import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STATUS_OPTIONS, OperationalStatus, normalizeVendorName } from '@/lib/operationalStatus';
 import { getTruckDynamicHealth } from '@/lib/healthHelper';
 import { useAuthStore } from '@/store/auth.store';
@@ -257,17 +257,6 @@ export default function TripsPage() {
   };
 
   useEffect(() => {
-    fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
-      setTrips((currentTrips) => [
-        ...syncedTrips,
-        ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
-      ]);
-    });
-
-    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then((syncedRecords) => {
-      setLoadingRecords(syncedRecords);
-    });
-
     const getCapacityFromWheeler = (wheeler: string) => {
       const w = String(wheeler || '').toLowerCase();
       if (w.includes('6')) return '15.00';
@@ -280,7 +269,7 @@ export default function TripsPage() {
       return '25.00';
     };
 
-    fetchSyncedValue<any[]>('tms_fleet_master', []).then((loadedRecords) => {
+    const processFleetMaster = (loadedRecords: any[]) => {
       setFleetMasterRecords(loadedRecords);
       if (loadedRecords && loadedRecords.length > 0) {
         const fleetTrucks = loadedRecords.map(r => ({
@@ -299,7 +288,7 @@ export default function TripsPage() {
           assignedDriverName: r.driverName || '-',
         }));
 
-        setTrucks((prev) => {
+        setTrucks((prev: any[]) => {
           const merged = [...prev];
           fleetTrucks.forEach(ft => {
             const index = merged.findIndex(m => m.plateNumber.toUpperCase() === ft.plateNumber.toUpperCase());
@@ -324,7 +313,7 @@ export default function TripsPage() {
             assignedTruckPlate: r.plateNumber,
           }));
 
-        setDrivers((prev) => {
+        setDrivers((prev: any[]) => {
           const merged = [...prev];
           fleetDrivers.forEach(fd => {
             const index = merged.findIndex(m => m.fullName.toLowerCase() === fd.fullName.toLowerCase());
@@ -337,6 +326,41 @@ export default function TripsPage() {
           return merged;
         });
       }
+    };
+
+    // 1. Instant local load
+    const cachedTrips = readLocalValue<Trip[]>(ASSIGNED_TRIPS_KEY, []);
+    if (cachedTrips.length > 0) {
+      setTrips((currentTrips) => [
+        ...cachedTrips,
+        ...currentTrips.filter(trip => !cachedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
+      ]);
+    }
+
+    const cachedLoading = readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []);
+    if (cachedLoading.length > 0) {
+      setLoadingRecords(cachedLoading);
+    }
+
+    const cachedFleetMaster = readLocalValue<any[]>('tms_fleet_master', []);
+    if (cachedFleetMaster.length > 0) {
+      processFleetMaster(cachedFleetMaster);
+    }
+
+    // 2. Background Database sync
+    fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
+      setTrips((currentTrips) => [
+        ...syncedTrips,
+        ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
+      ]);
+    });
+
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then((syncedRecords) => {
+      setLoadingRecords(syncedRecords);
+    });
+
+    fetchSyncedValue<any[]>('tms_fleet_master', []).then((loadedRecords) => {
+      processFleetMaster(loadedRecords);
     });
   }, []);
 

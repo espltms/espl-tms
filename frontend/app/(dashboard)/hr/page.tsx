@@ -15,7 +15,7 @@ interface Employee {
 }
 
 import { getEmployees } from '@/app/data/dataHelper';
-import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 
 const MANUAL_EMPLOYEES_KEY = 'tms_manual_employees';
 
@@ -31,6 +31,11 @@ export default function HRPage() {
   };
 
   useEffect(() => {
+    // 1. Instant local load
+    const cachedManual = readLocalValue<Employee[]>(MANUAL_EMPLOYEES_KEY, []);
+    setEmployees([...cachedManual, ...getEmployees()]);
+
+    // 2. Background Database sync
     fetchSyncedValue<Employee[]>(MANUAL_EMPLOYEES_KEY, []).then((manualEmployees) => {
       setEmployees([...manualEmployees, ...getEmployees()]);
     });

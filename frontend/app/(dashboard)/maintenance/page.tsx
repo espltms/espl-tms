@@ -18,7 +18,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { getTrucks, TruckData } from '@/app/data/dataHelper';
-import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { isMatchingDestination } from '@/lib/workflowAutomation';
 
@@ -107,6 +107,12 @@ export default function MaintenancePage() {
   const [tyreCost, setTyreCost] = useState('');
 
   useEffect(() => {
+    // 1. Instant local load
+    setRepairEntries(readLocalValue<RepairMaintenanceEntry[]>(REPAIR_MAINTENANCE_KEY, []));
+    setTyreEntries(readLocalValue<TyreWorkshopEntry[]>(TYRE_WORKSHOP_KEY, []));
+    setAssignedTrips(readLocalValue<any[]>('tms_assigned_trips', []));
+
+    // 2. Background Database sync
     fetchSyncedValue<RepairMaintenanceEntry[]>(REPAIR_MAINTENANCE_KEY, []).then(setRepairEntries);
     fetchSyncedValue<TyreWorkshopEntry[]>(TYRE_WORKSHOP_KEY, []).then(setTyreEntries);
     fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);

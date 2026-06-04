@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Database, Plus, X, ArrowRight, Trash2, Search } from 'lucide-react';
-import { fetchSyncedValue, saveSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { normalizeVendorName } from '@/lib/operationalStatus';
 
@@ -242,6 +242,7 @@ export default function FleetMasterPage() {
 
   /* ── Load from synced storage ── */
   useEffect(() => {
+    setRecords(readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []));
     fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then((synced) => {
       setRecords(synced);
     });

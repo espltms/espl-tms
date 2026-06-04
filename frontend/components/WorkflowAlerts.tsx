@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { fetchSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import {
   ASSIGNED_TRIPS_KEY,
   FLEET_FINANCE_ENTRIES_KEY,
@@ -37,6 +37,12 @@ export default function WorkflowAlerts() {
   const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([]);
 
   useEffect(() => {
+    // 1. Instant local load
+    setTrips(readLocalValue<TripRecord[]>(ASSIGNED_TRIPS_KEY, []));
+    setLoadingRecords(readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+    setFinanceEntries(readLocalValue<FinanceEntry[]>(FLEET_FINANCE_ENTRIES_KEY, []));
+
+    // 2. Background Database sync
     fetchSyncedValue<TripRecord[]>(ASSIGNED_TRIPS_KEY, []).then(setTrips);
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
     fetchSyncedValue<FinanceEntry[]>(FLEET_FINANCE_ENTRIES_KEY, []).then(setFinanceEntries);

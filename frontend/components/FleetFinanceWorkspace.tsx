@@ -159,6 +159,24 @@ export default function FleetFinanceWorkspace({
   }, [entries, selectedRecord]);
 
   useEffect(() => {
+    // 1. Instant local load
+    setLoadingRecords(readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+    setAssignedTrips(readLocalValue<any[]>('tms_assigned_trips', []));
+    
+    const cachedTrucks = readLocalValue<TruckData[]>(LOCAL_TRUCKS_KEY, []);
+    if (cachedTrucks.length > 0) {
+      setTrucks((currentTrucks) => [
+        ...cachedTrucks,
+        ...currentTrucks.filter(truck => !cachedTrucks.some(syncedTruck => syncedTruck.id === truck.id)),
+      ]);
+    }
+    
+    const cachedEntries = readLocalValue<FleetFinanceEntry[]>(FLEET_FINANCE_ENTRIES_KEY, []);
+    if (cachedEntries.length > 0) {
+      setEntries(cachedEntries.filter(entry => entry.loadingRecordId && entry.truckPlate) as FleetFinanceEntry[]);
+    }
+
+    // 2. Background Database sync
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
     fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
     fetchSyncedValue<TruckData[]>(LOCAL_TRUCKS_KEY, []).then((syncedTrucks) => {

@@ -70,6 +70,11 @@ export default function UnloadingVehiclePage() {
   const [assignedTrips, setAssignedTrips] = useState<any[]>([]);
 
   useEffect(() => {
+    // 1. Instant local load
+    setRecords(readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
+    setAssignedTrips(readLocalValue<any[]>('tms_assigned_trips', []));
+
+    // 2. Background Database sync
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setRecords);
     fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
   }, []);

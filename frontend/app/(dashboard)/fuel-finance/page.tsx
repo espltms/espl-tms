@@ -38,14 +38,14 @@ export default function FuelFinancesPage() {
   const [rate, setRate] = useState('');
 
   useEffect(() => {
-    fetchSyncedValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []).then(setEntries);
-    fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
+    // 1. Instant local load
+    setEntries(readLocalValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []));
+    setAssignedTrips(readLocalValue<any[]>('tms_assigned_trips', []));
 
-    // Asynchronously load fleet master and local trucks to populate the registry for all users (including regional admins)
-    Promise.all([
-      fetchSyncedValue<any[]>('tms_fleet_master', []),
-      fetchSyncedValue<TruckData[]>('tms_local_trucks', []),
-    ]).then(([fleetMaster, localTrucks]) => {
+    const cachedFleetMaster = readLocalValue<any[]>('tms_fleet_master', []);
+    const cachedLocalTrucks = readLocalValue<TruckData[]>('tms_local_trucks', []);
+
+    const processTrucks = (fleetMaster: any[], localTrucks: TruckData[]) => {
       const fleetTrucks = fleetMaster.map(r => ({
         id: r.id || `fm-${r.plateNumber}`,
         plateNumber: r.plateNumber,
@@ -82,6 +82,21 @@ export default function FuelFinancesPage() {
         });
         return merged;
       });
+    };
+
+    if (cachedFleetMaster.length > 0 || cachedLocalTrucks.length > 0) {
+      processTrucks(cachedFleetMaster, cachedLocalTrucks);
+    }
+
+    // 2. Background Database sync
+    fetchSyncedValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []).then(setEntries);
+    fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
+
+    Promise.all([
+      fetchSyncedValue<any[]>('tms_fleet_master', []),
+      fetchSyncedValue<TruckData[]>('tms_local_trucks', []),
+    ]).then(([fleetMaster, localTrucks]) => {
+      processTrucks(fleetMaster, localTrucks);
     });
   }, []);
 

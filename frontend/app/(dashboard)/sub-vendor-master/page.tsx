@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { ShieldCheck, Search, X, Truck, Database, UserCheck } from 'lucide-react';
-import { fetchSyncedValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 
 interface FleetMasterRecord {
@@ -34,6 +34,10 @@ export default function SubVendorMasterPage() {
 
   // Load records from synced storage
   useEffect(() => {
+    // 1. Instant local load
+    setRecords(readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []));
+
+    // 2. Background Database sync
     fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then((synced) => {
       setRecords(synced);
     });
