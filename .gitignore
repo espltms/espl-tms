@@ -36,3 +36,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credentials and generated documents
+*login-credentials*
+espl-tms-login-credentials.pdf
+scripts/create_role_credentials_direct_pdf.py
+scripts/create_role_credentials_pdf.py
