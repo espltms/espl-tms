@@ -49,6 +49,147 @@ const ITEMS_PER_PAGE = 15;
 
 const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+const parseDateToDDMMYYYY = (val: string | number | undefined | null): string => {
+  if (val === undefined || val === null) return '-';
+  const str = String(val).trim();
+  if (!str || str === '-' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined') {
+    return '-';
+  }
+
+  // 1. Check if it's an Excel serial number (numeric value)
+  const num = Number(str);
+  if (!isNaN(num) && num > 30000 && num < 100000) {
+    const utcDate = new Date(Date.UTC(1899, 11, 30) + num * 24 * 60 * 60 * 1000);
+    const dd = String(utcDate.getUTCDate()).padStart(2, '0');
+    const mm = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = utcDate.getUTCFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  // 2. Strip any time portion (e.g., T00:00:00.000Z or space-separated time)
+  let datePart = str;
+  if (str.includes('T')) {
+    datePart = str.split('T')[0];
+  } else {
+    const spaceParts = str.split(/\s+/);
+    if (spaceParts.length > 1 && (spaceParts[0].includes('-') || spaceParts[0].includes('/') || spaceParts[0].includes('.'))) {
+      datePart = spaceParts[0];
+    }
+  }
+
+  // Normalize delimiters to '-'
+  const clean = datePart.replace(/[/\s.]+/g, '-');
+  const parts = clean.split('-');
+
+  // Helper to format 2-digit year to 4-digit (e.g. 25 -> 2025)
+  const formatYear = (yStr: string): string => {
+    if (yStr.length === 2) {
+      const yearNum = parseInt(yStr, 10);
+      return yearNum <= 50 ? `20${yStr.padStart(2, '0')}` : `19${yStr.padStart(2, '0')}`;
+    }
+    return yStr.padStart(4, '0');
+  };
+
+  const pad = (s: string) => s.padStart(2, '0');
+
+  const getLastDayOfMonth = (m: number, y: number) => {
+    return new Date(y, m, 0).getDate();
+  };
+
+  if (parts.length === 1) {
+    // Format: YYYY (e.g., 2025)
+    if (/^\d{4}$/.test(parts[0])) {
+      return `31-12-${parts[0]}`;
+    }
+    // Format: YY (e.g., 25)
+    if (/^\d{2}$/.test(parts[0])) {
+      return `31-12-${formatYear(parts[0])}`;
+    }
+  }
+
+  if (parts.length === 2) {
+    const p0 = parts[0];
+    const p1 = parts[1];
+
+    // Format: MM-YYYY or MM-YY
+    if (/^\d{1,2}$/.test(p0) && /^\d{2,4}$/.test(p1)) {
+      const mm = parseInt(p0, 10);
+      const yyyy = parseInt(formatYear(p1), 10);
+      if (mm >= 1 && mm <= 12) {
+        const lastDay = getLastDayOfMonth(mm, yyyy);
+        return `${pad(String(lastDay))}-${pad(String(mm))}-${yyyy}`;
+      }
+    }
+
+    // Format: YYYY-MM
+    if (/^\d{4}$/.test(p0) && /^\d{1,2}$/.test(p1)) {
+      const yyyy = parseInt(p0, 10);
+      const mm = parseInt(p1, 10);
+      if (mm >= 1 && mm <= 12) {
+        const lastDay = getLastDayOfMonth(mm, yyyy);
+        return `${pad(String(lastDay))}-${pad(String(mm))}-${yyyy}`;
+      }
+    }
+  }
+
+  if (parts.length === 3) {
+    const p0 = parts[0];
+    const p1 = parts[1];
+    const p2 = parts[2];
+
+    // Check if it's YYYY-MM-DD or YYYY-DD-MM
+    if (p0.length === 4) {
+      const year = p0;
+      const mm = parseInt(p1, 10);
+      const dd = parseInt(p2, 10);
+      if (mm >= 1 && mm <= 12) {
+        return `${pad(p2)}-${pad(p1)}-${year}`;
+      } else if (dd >= 1 && dd <= 12) {
+        return `${pad(p1)}-${pad(p2)}-${year}`;
+      }
+      return `${pad(p2)}-${pad(p1)}-${year}`;
+    }
+
+    // Check if it's DD-MM-YYYY or MM-DD-YYYY
+    if (p2.length === 4) {
+      const year = p2;
+      const val0 = parseInt(p0, 10);
+      const val1 = parseInt(p1, 10);
+
+      if (val1 >= 1 && val1 <= 12) {
+        return `${pad(p0)}-${pad(p1)}-${year}`;
+      }
+      if (val0 >= 1 && val0 <= 12) {
+        return `${pad(p1)}-${pad(p0)}-${year}`;
+      }
+      return `${pad(p0)}-${pad(p1)}-${year}`;
+    }
+
+    // If both are 2 digits (e.g. DD-MM-YY or YY-MM-DD or YY-DD-MM)
+    if (p0.length === 2 && p2.length === 2) {
+      const val0 = parseInt(p0, 10);
+      const val1 = parseInt(p1, 10);
+      const val2 = parseInt(p2, 10);
+
+      const yrA = 2000 + val2;
+      const yrB = 2000 + val0;
+      const isYrAValid = yrA >= 2015 && yrA <= 2040;
+      const isYrBValid = yrB >= 2015 && yrB <= 2040;
+
+      if (isYrBValid && !isYrAValid) {
+        // YY-MM-DD
+        return `${pad(p2)}-${pad(p1)}-${yrB}`;
+      } else {
+        // Default DD-MM-YY
+        return `${pad(p0)}-${pad(p1)}-${yrA}`;
+      }
+    }
+  }
+
+  return str;
+};
+
+
 const emptyForm = {
   plateNumber: '',
   fleetCategory: 'OWNED_FLEET' as FleetCategory,
@@ -132,13 +273,13 @@ export default function FleetMasterPage() {
         const vehicleType = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
         const wheeler = getCellValue(detail.import.headers, row, ['wheeler', 'wheelers', 'no of wheels']);
         const rcNo = getCellValue(detail.import.headers, row, ['rc no', 'rc number', 'rc', 'registration']);
-        const fitnessFrom = getCellValue(detail.import.headers, row, ['fitness validity from', 'fitness from', 'fitness start']);
-        const fitnessTo = getCellValue(detail.import.headers, row, ['fitness validity to', 'fitness to', 'fitness end', 'fitness expiry']);
-        const insuranceUpto = getCellValue(detail.import.headers, row, ['insurance validity upto', 'insurance validity', 'insurance upto', 'insurance expiry', 'insurance']);
-        const pucValidity = getCellValue(detail.import.headers, row, ['puc validity', 'puc', 'puc expiry']);
+        const fitnessFrom = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['fitness validity from', 'fitness from', 'fitness start']));
+        const fitnessTo = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['fitness validity to', 'fitness to', 'fitness end', 'fitness expiry']));
+        const insuranceUpto = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['insurance validity upto', 'insurance validity', 'insurance upto', 'insurance expiry', 'insurance']));
+        const pucValidity = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['puc validity', 'puc', 'puc expiry']));
         const driverName = getCellValue(detail.import.headers, row, ['name of the driver', 'driver name', 'driver', 'name of driver']);
         const driverDL = getCellValue(detail.import.headers, row, ['dl', 'dl no', 'dl number', 'driving license', 'license', 'licence']);
-        const dlValidityTill = getCellValue(detail.import.headers, row, ['dl validity till', 'dl validity', 'dl expiry', 'license expiry']);
+        const dlValidityTill = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['dl validity till', 'dl validity', 'dl expiry', 'license expiry']));
         const driverMobile = getCellValue(detail.import.headers, row, ['mob no of the driver', 'mob no', 'mobile', 'mobile no', 'phone', 'driver phone', 'driver mobile', 'contact']);
 
         return {
@@ -203,13 +344,13 @@ export default function FleetMasterPage() {
       vehicleType: form.vehicleType,
       wheeler: form.wheeler,
       rcNo: form.rcNo || '-',
-      fitnessValidityFrom: form.fitnessValidityFrom || '-',
-      fitnessValidityTo: form.fitnessValidityTo || '-',
-      insuranceValidityUpto: form.insuranceValidityUpto || '-',
-      pucValidity: form.pucValidity || '-',
+      fitnessValidityFrom: form.fitnessValidityFrom ? parseDateToDDMMYYYY(form.fitnessValidityFrom) : '-',
+      fitnessValidityTo: form.fitnessValidityTo ? parseDateToDDMMYYYY(form.fitnessValidityTo) : '-',
+      insuranceValidityUpto: form.insuranceValidityUpto ? parseDateToDDMMYYYY(form.insuranceValidityUpto) : '-',
+      pucValidity: form.pucValidity ? parseDateToDDMMYYYY(form.pucValidity) : '-',
       driverName: form.driverName || '-',
       driverDL: form.driverDL || '-',
-      dlValidityTill: form.dlValidityTill || '-',
+      dlValidityTill: form.dlValidityTill ? parseDateToDDMMYYYY(form.dlValidityTill) : '-',
       driverMobile: form.driverMobile || '-',
     };
 
