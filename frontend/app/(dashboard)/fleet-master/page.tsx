@@ -329,7 +329,8 @@ export default function FleetMasterPage() {
       setRecords(prev => {
         const next = [...prev];
         importedRecords.forEach(ir => {
-          const idx = next.findIndex(r => r.plateNumber.toUpperCase() === ir.plateNumber.toUpperCase());
+          const cleanPlate = (p: string) => p.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const idx = next.findIndex(r => cleanPlate(r.plateNumber) === cleanPlate(ir.plateNumber));
           if (idx >= 0) {
             const merged = { ...next[idx] };
             Object.keys(ir).forEach(key => {
