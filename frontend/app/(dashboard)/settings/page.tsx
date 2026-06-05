@@ -584,13 +584,15 @@ export default function SettingsPage() {
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
-                              <button
-                                onClick={() => handleDeleteUser(u.id)}
-                                className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                title="Remove Account"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              {u.id !== 'global-system-data' && (
+                                <button
+                                  onClick={() => handleDeleteUser(u.id)}
+                                  className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                  title="Remove Account"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </>
                           ) : u.id === currentUser?.id ? (
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-2">Self</span>

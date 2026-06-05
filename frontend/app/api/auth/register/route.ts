@@ -126,6 +126,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'You cannot delete your own account.' }, { status: 400 });
     }
 
+    if (userId === 'global-system-data') {
+      return NextResponse.json({ error: 'System system-data user cannot be deleted.' }, { status: 400 });
+    }
+
     await prisma.user.delete({
       where: { id: userId },
     });
