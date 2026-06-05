@@ -787,7 +787,7 @@ export default function TripsPage() {
       netWeight: requestedQty,
       loadingDateTime: new Date(loadingDateTime).toISOString(),
       ticketNo: ticketNo.toUpperCase(),
-      challanNo: challanNo.toUpperCase(),
+      challanNo: getNextChallanNumber(destination, []).toUpperCase(),
       uom: 'Metric Ton',
       truckStatus: 'IN_TRANSIT'
     };
