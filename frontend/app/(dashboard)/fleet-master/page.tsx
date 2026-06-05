@@ -208,6 +208,17 @@ const emptyForm = {
   driverMobile: '',
 };
 
+const sanitizeFleetRecords = (recordsList: FleetMasterRecord[]): FleetMasterRecord[] => {
+  return recordsList.map(r => {
+    const isOwned = normalizeVendorName(r.vendor || '') === 'Eastern Stevedores';
+    const expectedCategory = isOwned ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
+    if (r.fleetCategory !== expectedCategory) {
+      return { ...r, fleetCategory: expectedCategory as FleetCategory };
+    }
+    return r;
+  });
+};
+
 export default function FleetMasterPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<FleetMasterRecord[]>([]);
@@ -242,15 +253,22 @@ export default function FleetMasterPage() {
 
   /* ── Load from synced storage ── */
   useEffect(() => {
-    setRecords(readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []));
+    const local = readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []);
+    setRecords(sanitizeFleetRecords(local));
+
     fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then((synced) => {
-      setRecords(synced);
+      const sanitized = sanitizeFleetRecords(synced);
+      setRecords(sanitized);
+      if (JSON.stringify(synced) !== JSON.stringify(sanitized)) {
+        saveSyncedValue(FLEET_MASTER_KEY, sanitized);
+      }
     });
   }, []);
 
   /* ── Persist helper ── */
   const persistRecords = (next: FleetMasterRecord[]) => {
-    saveSyncedValue(FLEET_MASTER_KEY, next);
+    const sanitized = sanitizeFleetRecords(next);
+    saveSyncedValue(FLEET_MASTER_KEY, sanitized);
   };
 
   /* ── Excel import listener ── */
@@ -268,7 +286,6 @@ export default function FleetMasterPage() {
 
       const importedRecords = detail.import.rows.map((row, index): FleetMasterRecord => {
         const plateNumber = getCellValue(detail.import.headers, row, ['vehicle no', 'vehicle_no', 'plate number', 'vehicle number', 'vehicle no.']).toUpperCase();
-        const fleetCategoryVal = getCellValue(detail.import.headers, row, ['fleet category', 'category']);
         const vendor = normalizeVendorName(getCellValue(detail.import.headers, row, ['vendor', 'vendor name', 'vendor company']));
         const subVendor = getCellValue(detail.import.headers, row, ['sub vendor', 'sub-vendor', 'sub_vendor', 'subvendor', 'owner', 'owner name']);
         const vehicleType = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'type']);
@@ -283,10 +300,14 @@ export default function FleetMasterPage() {
         const dlValidityTill = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['dl validity till', 'dl validity', 'dl expiry', 'license expiry']));
         const driverMobile = getCellValue(detail.import.headers, row, ['mob no of the driver', 'mob no', 'mobile', 'mobile no', 'phone', 'driver phone', 'driver mobile', 'contact']);
 
+        const resolvedCategory: FleetCategory = vendor === 'Eastern Stevedores'
+          ? 'OWNED_FLEET'
+          : 'ATTACHED_FLEET';
+
         return {
           id: `fm-import-${Date.now()}-${index}`,
           plateNumber: plateNumber === '-' ? `VEH-${Date.now()}-${index}` : plateNumber,
-          fleetCategory: (fleetCategoryVal.toLowerCase().includes('attached') ? 'ATTACHED_FLEET' : 'OWNED_FLEET') as FleetCategory,
+          fleetCategory: resolvedCategory,
           vendor,
           subVendor,
           vehicleType: vehicleType === '-' ? 'Tipper' : vehicleType,
@@ -317,13 +338,17 @@ export default function FleetMasterPage() {
                 (merged as any)[key] = val;
               }
             });
+            // Ensure the category remains correctly resolved based on vendor name even after merging
+            const finalVendor = merged.vendor || '';
+            merged.fleetCategory = normalizeVendorName(finalVendor) === 'Eastern Stevedores' ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
             next[idx] = merged;
           } else {
             next.push(ir);
           }
         });
-        persistRecords(next);
-        return next;
+        const sanitized = sanitizeFleetRecords(next);
+        saveSyncedValue(FLEET_MASTER_KEY, sanitized);
+        return sanitized;
       });
       setCurrentPage(1);
     };
@@ -336,10 +361,13 @@ export default function FleetMasterPage() {
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const isOwned = normalizeVendorName(form.vendor) === 'Eastern Stevedores';
+    const resolvedCategory: FleetCategory = isOwned ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
+
     const newRecord: FleetMasterRecord = {
       id: `fm-local-${Date.now()}`,
       plateNumber: form.plateNumber.toUpperCase(),
-      fleetCategory: form.fleetCategory,
+      fleetCategory: resolvedCategory,
       vendor: normalizeVendorName(form.vendor) || '-',
       subVendor: form.subVendor || '-',
       vehicleType: form.vehicleType,
@@ -624,12 +652,26 @@ export default function FleetMasterPage() {
                     <input type="text" required placeholder="e.g. OD-08-AB-1234" value={form.plateNumber} onChange={(e) => setForm({...form, plateNumber: e.target.value})} className="fleet-master-input uppercase font-mono" />
                   </Field>
                   <Field label="Fleet Category">
-                    <select value={form.fleetCategory} onChange={(e) => setForm({...form, fleetCategory: e.target.value as FleetCategory})} className="fleet-master-input">
+                    <select disabled value={form.fleetCategory} className="fleet-master-input bg-slate-100 text-slate-500 cursor-not-allowed">
                       {FLEET_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                   </Field>
                   <Field label="Vendor">
-                    <input type="text" placeholder="Vendor company name" value={form.vendor} onChange={(e) => setForm({...form, vendor: e.target.value})} className="fleet-master-input" />
+                    <input 
+                      type="text" 
+                      placeholder="Vendor company name" 
+                      value={form.vendor} 
+                      onChange={(e) => {
+                        const newVendor = e.target.value;
+                        const isOwned = normalizeVendorName(newVendor) === 'Eastern Stevedores';
+                        setForm({
+                          ...form,
+                          vendor: newVendor,
+                          fleetCategory: isOwned ? 'OWNED_FLEET' : 'ATTACHED_FLEET'
+                        });
+                      }} 
+                      className="fleet-master-input" 
+                    />
                   </Field>
                   <Field label="Sub-Vendor">
                     <input type="text" placeholder="Sub vendor / owner name" value={form.subVendor} onChange={(e) => setForm({...form, subVendor: e.target.value})} className="fleet-master-input" />
