@@ -57,7 +57,7 @@ interface Trip {
   purchaseOrder: { poNumber: string; clientName: string; commodity: string };
 }
 
-export default function UnloadedTripsPage() {
+export default function CompletedTripsPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<LoadingRecord[]>([]);
   const [assignedTrips, setAssignedTrips] = useState<Trip[]>([]);
@@ -101,7 +101,7 @@ export default function UnloadedTripsPage() {
     return `${hours}h ${remainingMinutes}m`;
   };
 
-  // 2. Filter for unloaded trucks (running status is RECEIVED / unloaded)
+  // 2. Filter for completed trips (truck running status is RECEIVED)
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
                          user?.role === 'DISPATCHER' || 
                          user?.role === 'PARAMANANDPUR_ADMIN' || 
@@ -118,11 +118,11 @@ export default function UnloadedTripsPage() {
         ? 'Bhawanipatna'
         : user?.regionName;
 
-  const unloadedRecords = useMemo(() => {
+  const completedRecords = useMemo(() => {
     return records.filter(record => {
-      // Filter for unloaded status
-      const isUnloaded = record.truckStatus === 'RECEIVED' || record.unloadingTruckStatus === 'RECEIVED' || !!record.unloadingDateTime;
-      if (!isUnloaded) return false;
+      // Filter for unloaded/received status representing a completed trip
+      const isCompleted = record.truckStatus === 'RECEIVED' || record.unloadingTruckStatus === 'RECEIVED' || !!record.unloadingDateTime;
+      if (!isCompleted) return false;
 
       // Filter by region if regional admin
       if (isRegionalUser && userRegion) {
@@ -137,7 +137,7 @@ export default function UnloadedTripsPage() {
 
   // 3. Apply vehicle and challan searches
   const filteredRecords = useMemo(() => {
-    return unloadedRecords.filter(record => {
+    return completedRecords.filter(record => {
       const cleanSearch = vehicleSearch.toUpperCase().replace(/[^A-Z0-9]/g, '');
       const cleanPlate = record.truckPlate.toUpperCase().replace(/[^A-Z0-9]/g, '');
       const matchesVehicle = !cleanSearch || cleanPlate.includes(cleanSearch);
@@ -146,7 +146,7 @@ export default function UnloadedTripsPage() {
       
       return matchesVehicle && matchesChallan;
     });
-  }, [unloadedRecords, vehicleSearch, challanSearch]);
+  }, [completedRecords, vehicleSearch, challanSearch]);
 
   // 4. Aggregates calculation
   const stats = useMemo(() => {
@@ -183,8 +183,8 @@ export default function UnloadedTripsPage() {
       {/* Title & Refresh Button */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Unloaded Trips Summary</h2>
-          <p className="text-xs text-slate-500 mt-1">Audit complete transit parameters, turnaround cycles, and received quantities for all unloaded vehicles</p>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Completed Trips Summary</h2>
+          <p className="text-xs text-slate-500 mt-1">Audit complete transit parameters, turnaround cycles, and received quantities for all completed trips</p>
         </div>
         <button
           onClick={fetchData}
@@ -199,7 +199,7 @@ export default function UnloadedTripsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Unloaded Vehicles</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Completed Trips</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">{stats.totalCount}</span>
             <span className="text-[10px] text-slate-400">fully received</span>
@@ -308,7 +308,7 @@ export default function UnloadedTripsPage() {
                         <Scale className="h-4 w-4 animate-spin text-brand-primary" /> Synchronizing data logs...
                       </span>
                     ) : (
-                      'No matching unloaded trip records found.'
+                      'No matching completed trip records found.'
                     )}
                   </td>
                 </tr>
@@ -390,7 +390,7 @@ export default function UnloadedTripsPage() {
                           <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span className="font-bold text-slate-700">{formatTurnaround(record.turnaroundMinutes)}</span>
                         </div>
-                        <div className="text-[9px] text-slate-400 mt-0.5 uppercase font-semibold">Unloaded turnaround</div>
+                        <div className="text-[9px] text-slate-400 mt-0.5 uppercase font-semibold">Completed turnaround</div>
                       </td>
                       <td className="px-5 py-4 text-right">
                         {record.unloadingDateTime ? (
@@ -403,7 +403,7 @@ export default function UnloadedTripsPage() {
                                 timeStyle: 'short' 
                               })}
                             </div>
-                            <div className="text-[9px] text-slate-400 uppercase font-semibold">Unloaded timestamp</div>
+                            <div className="text-[9px] text-slate-400 uppercase font-semibold">Completed timestamp</div>
                           </div>
                         ) : (
                           <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Pending</span>
