@@ -5,23 +5,17 @@ import {
   PackageCheck, 
   Search, 
   X, 
-  Truck, 
-  Calendar, 
-  User, 
-  Clock, 
-  TrendingDown, 
   RefreshCw, 
-  Scale, 
-  FileText,
-  MapPin,
-  HelpCircle
+  Scale,
+  Trash2
 } from 'lucide-react';
-import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { 
   LOADING_RECORDS_KEY, 
   isMatchingDestination 
 } from '@/lib/workflowAutomation';
+import { getOperationalStatusClasses, getOperationalStatusLabel } from '@/lib/operationalStatus';
 
 interface LoadingRecord {
   id: string;
@@ -63,6 +57,27 @@ export default function CompletedTripsPage() {
   const [assignedTrips, setAssignedTrips] = useState<Trip[]>([]);
   const [fleetMaster, setFleetMaster] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const isAdmin = user?.role === 'SUPER_ADMIN' || 
+                  user?.role === 'SYS_ADMIN' || 
+                  user?.role === 'REGION_ADMIN' || 
+                  user?.role === 'PARAMANANDPUR_ADMIN' || 
+                  user?.role === 'DHARAMGARH_ADMIN' || 
+                  user?.role === 'BHAWANIPATNA_ADMIN';
+  const canDelete = isAdmin;
+
+  const persistRecords = (nextRecords: LoadingRecord[]) => {
+    saveSyncedValue(LOADING_RECORDS_KEY, nextRecords);
+  };
+
+  const deleteRecords = (idsToDelete: string[]) => {
+    const nextRecords = records.filter(r => !idsToDelete.includes(r.id));
+    setRecords(nextRecords);
+    persistRecords(nextRecords);
+    setSelectedIds(prev => prev.filter(id => !idsToDelete.includes(id)));
+  };
 
   // Search states
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -284,22 +299,82 @@ export default function CompletedTripsPage() {
 
       {/* Records Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <PackageCheck className="h-4.5 w-4.5 text-brand-primary" /> Registry Entries ({filteredRecords.length})
           </h3>
+          {canDelete && (
+            <div className="flex items-center gap-2 shrink-0">
+              {isDeleteMode ? (
+                <>
+                  {selectedIds.length > 0 && (
+                    <button
+                      onClick={() => {
+                        deleteRecords(selectedIds);
+                        setIsDeleteMode(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete Selected ({selectedIds.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsDeleteMode(false);
+                      setSelectedIds([]);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsDeleteMode(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  Select to Delete
+                </button>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                {isDeleteMode && (
+                  <th className="w-10 px-5 py-4">
+                    <input
+                      type="checkbox"
+                      checked={filteredRecords.length > 0 && filteredRecords.every(r => selectedIds.includes(r.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSelections = [...selectedIds];
+                          filteredRecords.forEach(r => {
+                            if (!newSelections.includes(r.id)) {
+                              newSelections.push(r.id);
+                            }
+                          });
+                          setSelectedIds(newSelections);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => !filteredRecords.some(r => r.id === id)));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">Vehicle No</th>
                 <th className="px-5 py-4">PO</th>
                 <th className="px-5 py-4">Challan No</th>
                 <th className="px-5 py-4">Ticket No</th>
                 <th className="px-5 py-4">Date of Received</th>
+                <th className="px-5 py-4">Running Status</th>
                 <th className="px-5 py-4">Vendor</th>
                 <th className="px-5 py-4">Sub Vendor</th>
               </tr>
@@ -307,7 +382,7 @@ export default function CompletedTripsPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 10 : 9} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     {loading ? (
                       <span className="flex items-center justify-center gap-2 text-slate-400">
                         <Scale className="h-4 w-4 animate-spin text-brand-primary" /> Synchronizing data logs...
@@ -329,7 +404,23 @@ export default function CompletedTripsPage() {
                   const subVendor = matchedTruck?.subVendor || '—';
 
                   return (
-                    <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
+                      {isDeleteMode && (
+                        <td className="px-5 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(record.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, record.id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== record.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary h-3.5 w-3.5 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
                       <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
                         {record.truckPlate}
@@ -356,6 +447,11 @@ export default function CompletedTripsPage() {
                         ) : (
                           <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Pending</span>
                         )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold ${getOperationalStatusClasses(record.unloadingTruckStatus || record.truckStatus || 'RECEIVED')}`}>
+                          {getOperationalStatusLabel(record.unloadingTruckStatus || record.truckStatus || 'RECEIVED')}
+                        </span>
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-700">
                         {matchedTrip?.vendorName || '—'}
