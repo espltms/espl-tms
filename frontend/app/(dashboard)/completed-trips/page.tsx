@@ -61,6 +61,7 @@ export default function CompletedTripsPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<LoadingRecord[]>([]);
   const [assignedTrips, setAssignedTrips] = useState<Trip[]>([]);
+  const [fleetMaster, setFleetMaster] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Search states
@@ -74,14 +75,18 @@ export default function CompletedTripsPage() {
       // Fetch local values first
       const localRecords = readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []);
       const localTrips = readLocalValue<Trip[]>('tms_assigned_trips', []);
+      const localFleet = readLocalValue<any[]>('tms_fleet_master', []);
       setRecords(localRecords);
       setAssignedTrips(localTrips);
+      setFleetMaster(localFleet);
 
       // Sync from DB
       const syncedRecords = await fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []);
       const syncedTrips = await fetchSyncedValue<Trip[]>('tms_assigned_trips', []);
+      const syncedFleet = await fetchSyncedValue<any[]>('tms_fleet_master', []);
       setRecords(syncedRecords);
       setAssignedTrips(syncedTrips);
+      setFleetMaster(syncedFleet);
     } catch (e) {
       console.error("Error loading registry details:", e);
     } finally {
@@ -290,13 +295,13 @@ export default function CompletedTripsPage() {
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
-                <th className="px-5 py-4">Vehicle</th>
-                <th className="px-5 py-4">References</th>
-                <th className="px-5 py-4">Transit Details</th>
-                <th className="px-5 py-4">Corporate Client</th>
-                <th className="px-5 py-4">weighment metrics</th>
-                <th className="px-5 py-4">Turnaround cycle</th>
-                <th className="px-5 py-4 text-right">Filing DateTime</th>
+                <th className="px-5 py-4">Vehicle No</th>
+                <th className="px-5 py-4">PO</th>
+                <th className="px-5 py-4">Challan No</th>
+                <th className="px-5 py-4">Ticket No</th>
+                <th className="px-5 py-4">Date of Received</th>
+                <th className="px-5 py-4">Vendor</th>
+                <th className="px-5 py-4">Sub Vendor</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
@@ -318,96 +323,45 @@ export default function CompletedTripsPage() {
                     t => t.tripNumber === record.tripNumber || t.id === record.tripId
                   );
 
-                  const loadedQty = record.netWeight;
-                  const receivedQty = record.receivedQty ?? loadedQty;
-                  const weightLoss = Math.max(0, loadedQty - receivedQty);
+                  const matchedTruck = fleetMaster.find(
+                    t => t.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === record.truckPlate.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                  );
+                  const subVendor = matchedTruck?.subVendor || '—';
 
                   return (
                     <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <Truck className="h-4 w-4 text-slate-400 shrink-0" />
-                          <div>
-                            <div className="font-mono font-extrabold text-slate-800 leading-none">{record.truckPlate}</div>
-                            {matchedTrip?.truck?.model && (
-                              <div className="text-[10px] text-slate-400 mt-1">{matchedTrip.truck.model}</div>
-                            )}
-                          </div>
-                        </div>
+                      <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
+                        {record.truckPlate}
                       </td>
-                      <td className="px-5 py-4 space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="h-3 w-3 text-slate-400" />
-                          <span className="font-semibold text-slate-500">Challan:</span>
-                          <span className="font-mono font-bold text-slate-700">{record.challanNo}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <span>Ticket:</span>
-                          <span className="font-mono font-semibold">{record.ticketNo}</span>
-                        </div>
+                      <td className="px-5 py-4 font-mono font-bold text-slate-700">
+                        {matchedTrip?.purchaseOrder?.poNumber || '—'}
                       </td>
-                      <td className="px-5 py-4 space-y-1">
-                        <div className="flex items-center gap-1 text-slate-700 font-semibold">
-                          <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
-                          <span>{matchedTrip?.source || 'Lanjigarh'}</span>
-                          <span className="text-slate-400">→</span>
-                          <span>{matchedTrip?.destination || 'Stockyard'}</span>
-                        </div>
-                        {matchedTrip?.vendorName && (
-                          <div className="text-[9px] font-bold text-brand-secondary bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 w-fit uppercase font-sans">
-                            {matchedTrip.vendorName}
-                          </div>
-                        )}
+                      <td className="px-5 py-4 font-mono font-bold text-slate-700">
+                        {record.challanNo}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-semibold text-slate-600">
+                        {record.ticketNo}
                       </td>
                       <td className="px-5 py-4">
-                        {matchedTrip ? (
-                          <div>
-                            <div className="font-bold text-slate-800 leading-none">{matchedTrip.purchaseOrder.clientName}</div>
-                            <div className="text-[10px] text-slate-400 mt-1 uppercase font-semibold">{matchedTrip.purchaseOrder.commodity}</div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="text-slate-500">Loaded:</div>
-                          <div className="font-mono font-bold text-slate-700">{loadedQty.toFixed(2)} {record.uom}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-slate-500">Received:</div>
-                          <div className="font-mono font-extrabold text-emerald-700">{receivedQty.toFixed(2)} {record.uom}</div>
-                        </div>
-                        {weightLoss > 0 && (
-                          <div className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded px-1.5 py-0.5 w-fit flex items-center gap-1">
-                            <TrendingDown className="h-3 w-3" /> Leakage: {weightLoss.toFixed(2)} {record.uom}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          <span className="font-bold text-slate-700">{formatTurnaround(record.turnaroundMinutes)}</span>
-                        </div>
-                        <div className="text-[9px] text-slate-400 mt-0.5 uppercase font-semibold">Completed turnaround</div>
-                      </td>
-                      <td className="px-5 py-4 text-right">
                         {record.unloadingDateTime ? (
-                          <div className="space-y-1">
-                            <div className="font-mono font-bold text-slate-700 leading-none">
-                              {new Date(record.unloadingDateTime).toLocaleString('en-IN', { 
-                                timeZone: 'Asia/Kolkata', 
-                                hour12: true, 
-                                dateStyle: 'medium', 
-                                timeStyle: 'short' 
-                              })}
-                            </div>
-                            <div className="text-[9px] text-slate-400 uppercase font-semibold">Completed timestamp</div>
+                          <div className="font-semibold text-slate-700">
+                            {new Date(record.unloadingDateTime).toLocaleString('en-IN', { 
+                              timeZone: 'Asia/Kolkata', 
+                              hour12: true, 
+                              dateStyle: 'medium', 
+                              timeStyle: 'short' 
+                            })}
                           </div>
                         ) : (
                           <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Pending</span>
                         )}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {matchedTrip?.vendorName || '—'}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {subVendor}
                       </td>
                     </tr>
                   );
