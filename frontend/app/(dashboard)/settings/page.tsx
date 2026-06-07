@@ -38,6 +38,7 @@ const ALL_ROUTES = [
   { path: '/dashboard', label: 'Executive Dashboard (Core)' },
   { path: '/trips', label: 'Trip Dispatch & Loading (Core)' },
   { path: '/unloading', label: 'Unloading Vehicle (Core)' },
+  { path: '/unloaded-trips', label: 'Unloaded Trips (Core)' },
   { path: '/fleet-master', label: 'Fleet Master (Registry)' },
   { path: '/vendor-master', label: 'Vendor Master (Registry)' },
   { path: '/sub-vendor-master', label: 'Sub-Vendor Master (Registry)' },

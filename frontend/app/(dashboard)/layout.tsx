@@ -41,6 +41,7 @@ const navigationDivisions = [
       { label: 'Executive Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
       { label: 'Trip Dispatch & Loading', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+      { label: 'Unloaded Trips', path: '/unloaded-trips', icon: PackageCheck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
     ]
   },
   {
