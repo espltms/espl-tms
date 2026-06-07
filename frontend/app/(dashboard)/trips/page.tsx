@@ -1269,13 +1269,7 @@ export default function TripsPage() {
                         setShowSuggestions(val.trim().length >= 3);
                         
                         const normalizedVal = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        const matched = trucks.find(t => {
-                          const isPlateMatch = t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '') === normalizedVal;
-                          const inFleetMaster = fleetMasterRecords.some(r => 
-                            r.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                          );
-                          return isPlateMatch && inFleetMaster;
-                        });
+                        const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '') === normalizedVal);
                         if (matched) {
                           setTruckId(matched.id);
                           applyTruckSelection(matched);
