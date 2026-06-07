@@ -1268,8 +1268,14 @@ export default function TripsPage() {
                         setTypedTruckPlate(val);
                         setShowSuggestions(val.trim().length >= 3);
                         
-                        const normalizedVal = val.toUpperCase().replace(/\s+/g, '');
-                        const matched = trucks.find(t => t.plateNumber.toUpperCase().replace(/\s+/g, '') === normalizedVal);
+                        const normalizedVal = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        const matched = trucks.find(t => {
+                          const isPlateMatch = t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '') === normalizedVal;
+                          const inFleetMaster = fleetMasterRecords.some(r => 
+                            r.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                          );
+                          return isPlateMatch && inFleetMaster;
+                        });
                         if (matched) {
                           setTruckId(matched.id);
                           applyTruckSelection(matched);
@@ -1287,10 +1293,13 @@ export default function TripsPage() {
                     />
                     {/* Auto-suggest dropdown */}
                     {showSuggestions && typedTruckPlate.trim().length >= 3 && (() => {
-                      const query = typedTruckPlate.trim().toUpperCase().replace(/[\s\-]/g, '');
+                      const query = typedTruckPlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
                       const matches = trucks.filter(t => {
-                        const plate = t.plateNumber.toUpperCase().replace(/[\s\-]/g, '');
-                        return plate.includes(query) && plate !== query;
+                        const plate = t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        const inFleetMaster = fleetMasterRecords.some(r => 
+                          r.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                        );
+                        return inFleetMaster && plate.includes(query) && plate !== query;
                       }).slice(0, 8);
                       if (matches.length === 0) return null;
                       return (
