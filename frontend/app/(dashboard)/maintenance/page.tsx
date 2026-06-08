@@ -21,6 +21,7 @@ import { getTrucks, TruckData } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { isMatchingDestination } from '@/lib/workflowAutomation';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface RepairMaintenanceEntry {
   id: string;
@@ -353,28 +354,32 @@ export default function MaintenancePage() {
           <p className="text-xs text-slate-500 mt-1">Audit vehicle repairs, claim negotiations, and tyre workshop logs inside terminal bays</p>
         </div>
         
-        {/* Modern Switcher Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-100/80 border border-slate-200/80 p-1.5 rounded-2xl shadow-sm self-start">
-          <button
-            onClick={() => setActiveTab('REPAIR_MAINTENANCE')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'REPAIR_MAINTENANCE'
-                ? 'bg-white text-blue-600 shadow-sm border border-slate-200/40'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Wrench className="h-4 w-4" /> Repair & Maintenance
-          </button>
-          <button
-            onClick={() => setActiveTab('TYRE_WORKSHOP')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'TYRE_WORKSHOP'
-                ? 'bg-white text-blue-600 shadow-sm border border-slate-200/40'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Disc className="h-4 w-4" /> Tyre Workshop
-          </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <SectionExcelExport sectionName="Workshop & Maintenance" />
+          
+          {/* Modern Switcher Tabs */}
+          <div className="flex items-center gap-1.5 bg-slate-100/80 border border-slate-200/80 p-1.5 rounded-2xl shadow-sm self-start">
+            <button
+              onClick={() => setActiveTab('REPAIR_MAINTENANCE')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                activeTab === 'REPAIR_MAINTENANCE'
+                  ? 'bg-white text-blue-600 shadow-sm border border-slate-200/40'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Wrench className="h-4 w-4" /> Repair & Maintenance
+            </button>
+            <button
+              onClick={() => setActiveTab('TYRE_WORKSHOP')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                activeTab === 'TYRE_WORKSHOP'
+                  ? 'bg-white text-blue-600 shadow-sm border border-slate-200/40'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Disc className="h-4 w-4" /> Tyre Workshop
+            </button>
+          </div>
         </div>
       </div>
 

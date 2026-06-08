@@ -4,8 +4,6 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import SectionExcelExport from '@/components/SectionExcelExport';
-import SectionExcelImport from '@/components/SectionExcelImport';
 import { 
   LayoutDashboard, 
   Truck, 
@@ -337,9 +335,6 @@ export default function DashboardLayout({
 
           {/* Time & Alert widgets */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-            {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName={currentSectionName} />}
-            <SectionExcelExport sectionName={currentSectionName} />
-
             <ClockWidget />
 
             {/* Notification center */}

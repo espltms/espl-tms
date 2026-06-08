@@ -6,6 +6,8 @@ import { Database, Plus, X, ArrowRight, Trash2, Search } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { normalizeVendorName } from '@/lib/operationalStatus';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface FleetMasterRecord {
   id: string;
@@ -407,12 +409,16 @@ export default function FleetMasterPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Fleet Master</h2>
           <p className="text-xs text-slate-500 mt-1">Central master database for all fleet vehicles, documents, and assigned crew</p>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
-        >
-          <Plus className="h-4.5 w-4.5" /> Add Vehicle
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Fleet Master" />}
+          <SectionExcelExport sectionName="Fleet Master" />
+          <button
+            onClick={() => setModalOpen(true)}
+            className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
+          >
+            <Plus className="h-4.5 w-4.5" /> Add Vehicle
+          </button>
+        </div>
       </div>
 
       {/* Stats Row */}

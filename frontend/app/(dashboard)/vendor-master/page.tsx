@@ -5,6 +5,8 @@ import { Building2, Search, X, Truck, Database, BarChart3, Edit, FileSpreadsheet
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { normalizeVendorName } from '@/lib/operationalStatus';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface FleetMasterRecord {
   id: string;
@@ -289,6 +291,10 @@ export default function VendorMasterPage() {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Vendor Master</h2>
           <p className="text-xs text-slate-500 mt-1">Cross-vendor master directories and analytical fleet distributions</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Vendor Master" />}
+          <SectionExcelExport sectionName="Vendor Master" />
         </div>
       </div>
 

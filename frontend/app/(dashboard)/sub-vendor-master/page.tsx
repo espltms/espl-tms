@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { ShieldCheck, Search, X, Truck, Database, UserCheck, Edit } from 'lucide-react';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface FleetMasterRecord {
   id: string;
@@ -283,6 +285,10 @@ export default function SubVendorMasterPage() {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Sub-Vendor Master</h2>
           <p className="text-xs text-slate-500 mt-1">Registry directory for vehicle owners and subcontracted sub-vendors</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Sub-Vendor Master" />}
+          <SectionExcelExport sectionName="Sub-Vendor Master" />
         </div>
       </div>
 

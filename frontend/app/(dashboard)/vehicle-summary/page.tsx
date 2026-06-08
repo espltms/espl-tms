@@ -12,6 +12,7 @@ import {
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 type TruckStatus = OperationalStatus;
 
@@ -330,6 +331,9 @@ export default function VehicleSummaryPage() {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Vehicle Summary</h2>
           <p className="text-xs text-slate-500 mt-1">Comprehensive overview of vehicle trip and tonnage performance</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Vehicle Summary" />
         </div>
       </div>
 

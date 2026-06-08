@@ -7,6 +7,7 @@ import {
   MapPin, Calendar, FileText, CreditCard, Eye, Edit2, Trash2,
   AlertTriangle, IndianRupee, Star, Award, Briefcase
 } from 'lucide-react';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface Driver {
   id: string;
@@ -227,13 +228,16 @@ export default function DriversPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Driver Control Tower</h2>
           <p className="text-xs text-slate-500 mt-1">Audit crew duty logs, safety records, and driver hours of service constraints</p>
         </div>
-        <button
-          onClick={() => { setFormData(emptyDriver); setEditingId(null); setFormStep(0); setShowModal(true); }}
-          id="onboard-new-driver-btn"
-          className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-glass-glow"
-        >
-          <UserPlus className="h-4 w-4" /> Onboard New Driver
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Driver Duty Logs" />
+          <button
+            onClick={() => { setFormData(emptyDriver); setEditingId(null); setFormStep(0); setShowModal(true); }}
+            id="onboard-new-driver-btn"
+            className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-glass-glow"
+          >
+            <UserPlus className="h-4 w-4" /> Onboard New Driver
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

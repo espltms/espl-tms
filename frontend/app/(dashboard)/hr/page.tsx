@@ -16,6 +16,7 @@ interface Employee {
 
 import { getEmployees } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 const MANUAL_EMPLOYEES_KEY = 'tms_manual_employees';
 
@@ -67,12 +68,15 @@ export default function HRPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">HR & Employee Payroll</h2>
           <p className="text-xs text-slate-500 mt-1">Manage corporate personnel records, employee base salaries, and driver allowance indexes (₹ / INR)</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
-        >
-          <Plus className="h-4.5 w-4.5" /> Enlist New Employee
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="HR & Payroll Center" />
+          <button 
+            onClick={() => setShowModal(true)}
+            className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-5 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-md"
+          >
+            <Plus className="h-4.5 w-4.5" /> Enlist New Employee
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

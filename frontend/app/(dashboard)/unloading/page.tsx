@@ -10,6 +10,7 @@ import {
 } from '@/lib/operationalStatus';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import {
   LOADING_RECORDS_KEY,
   TRUCK_STATUS_OVERRIDES_KEY,
@@ -216,9 +217,14 @@ export default function UnloadingVehiclePage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Unloading Vehicle</h2>
-        <p className="text-xs text-slate-500 mt-1">Update loaded vehicle records with received quantity, unloading time, truck status, and turnaround time</p>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Unloading Vehicle</h2>
+          <p className="text-xs text-slate-500 mt-1">Update loaded vehicle records with received quantity, unloading time, truck status, and turnaround time</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Unloading Vehicle" />
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

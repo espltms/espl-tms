@@ -7,6 +7,7 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import { isMatchingDestination } from '@/lib/workflowAutomation';
 import { normalizeVendorName } from '@/lib/operationalStatus';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface FuelFinanceEntry {
   id: string;
@@ -213,6 +214,9 @@ export default function FuelFinancesPage() {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Fuel & Consumables Finances</h2>
           <p className="text-xs text-slate-500 mt-1">Manage and audit diesel, DEF, and urea transactions and consumption across your active fleet</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Fuel Finances" />
         </div>
       </div>
 

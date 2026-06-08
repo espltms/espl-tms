@@ -22,6 +22,8 @@ import { getOperationalStatusClasses, getOperationalStatusLabel, OPERATIONAL_STA
 import { getTruckDynamicHealth } from '@/lib/healthHelper';
 import { useAuthStore } from '@/store/auth.store';
 import { updateAssignedTripStatus, upsertTruckStatusOverride, isMatchingDestination } from '@/lib/workflowAutomation';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 
 interface PurchaseOrder {
   id: string;
@@ -903,12 +905,16 @@ export default function TripsPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Freight Dispatch & Loading Board</h2>
           <p className="text-xs text-slate-500 mt-1">Consolidated dispatch planning, dynamic health checking, and vehicle loading logs.</p>
         </div>
-        <button
-          onClick={openAssignModal}
-          className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-4 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-glass-glow"
-        >
-          <Plus className="h-4.5 w-4.5" /> Assign New Trip Dispatch & Load
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Trip Dispatch & Loading" />}
+          <SectionExcelExport sectionName="Trip Dispatch & Loading" />
+          <button
+            onClick={openAssignModal}
+            className="rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 px-4 py-3 text-xs font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 font-sans font-extrabold shadow-glass-glow"
+          >
+            <Plus className="h-4.5 w-4.5" /> Assign New Trip Dispatch & Load
+          </button>
+        </div>
       </div>
 
       {/* PO Progress */}

@@ -9,6 +9,7 @@ import {
   Scale,
   Trash2
 } from 'lucide-react';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { fetchSyncedValue, readLocalValue, saveSyncedValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { 
@@ -206,14 +207,17 @@ export default function CompletedTripsPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Completed Trips Summary</h2>
           <p className="text-xs text-slate-500 mt-1">Audit complete transit parameters, turnaround cycles, and received quantities for all completed trips</p>
         </div>
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm disabled:opacity-60 shrink-0 self-start md:self-auto"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Refreshing...' : 'Refresh Records'}
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Completed Trips" />
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm disabled:opacity-60 shrink-0"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Refreshing...' : 'Refresh Records'}
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
