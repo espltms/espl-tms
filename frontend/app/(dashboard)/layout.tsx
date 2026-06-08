@@ -13,7 +13,6 @@ import {
   User as UserIcon, 
   Menu, 
   Compass, 
-  Bell, 
   Clock,
   Wrench,
   Warehouse,
@@ -337,11 +336,7 @@ export default function DashboardLayout({
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <ClockWidget />
 
-            {/* Notification center */}
-            <button className="relative rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-brand-secondary animate-ping" />
-            </button>
+
 
             {/* Night mode toggle */}
             <button 
