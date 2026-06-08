@@ -196,19 +196,39 @@ html.dark .text-slate-800 {
 }
 
 html.dark .text-slate-700 {
-  color: #e2e8f0 !important;
+  color: #f1f5f9 !important;
 }
 
 html.dark .text-slate-600 {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 html.dark .text-slate-500 {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
 }
 
 html.dark .text-slate-400 {
-  color: #64748b !important;
+  color: #94a3b8 !important;
+}
+
+/* Custom Text Color Enhancements for Dark Mode */
+html.dark .text-blue-700 {
+  color: #60a5fa !important; /* blue-400 */
+}
+html.dark .text-blue-600 {
+  color: #93c5fd !important; /* blue-300 */
+}
+html.dark .text-blue-500 {
+  color: #a5f3fc !important; /* Cyan-200 / very light blue for subtexts */
+}
+html.dark .text-violet-700 {
+  color: #c084fc !important; /* violet-400 */
+}
+html.dark .text-violet-500 {
+  color: #e9d5ff !important; /* violet-200 */
+}
+html.dark .text-emerald-600 {
+  color: #34d399 !important; /* emerald-400 */
 }
 
 /* Gradients */
@@ -243,12 +263,27 @@ html.dark textarea::placeholder {
 }
 
 /* Hover background states */
-html.dark .hover\:bg-slate-50:hover {
-  background-color: rgba(255, 255, 255, 0.02) !important;
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-50\/50:hover,
+html.dark .hover\:bg-slate-50\/80:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
-html.dark .hover\:bg-slate-100:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-100\/80:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark .hover\:bg-slate-200:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .hover\:bg-blue-50:hover {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+html.dark .hover\:bg-brand-primary\/10:hover {
+  background-color: rgba(37, 99, 235, 0.15) !important;
 }
 
 html.dark .hover\:text-slate-800:hover {
