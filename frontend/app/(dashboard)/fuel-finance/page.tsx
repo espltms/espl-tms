@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { isMatchingDestination } from '@/lib/workflowAutomation';
 import { normalizeVendorName } from '@/lib/operationalStatus';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import SectionExcelImport from '@/components/SectionExcelImport';
 
 interface FuelFinanceEntry {
   id: string;
@@ -22,6 +23,44 @@ interface FuelFinanceEntry {
 }
 
 const FUEL_FINANCES_KEY = 'tms_fuel_finance_entries';
+
+const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const parseImportedDateToYYYYMMDD = (value: string | number | undefined | null): string => {
+  if (value === undefined || value === null) return '';
+  const str = String(value).trim();
+  if (!str || str === '-' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined') {
+    return '';
+  }
+
+  const num = Number(str);
+  if (!isNaN(num) && num > 30000 && num < 100000) {
+    const jsDate = new Date((num - 25569) * 86400 * 1000);
+    return jsDate.toISOString().split('T')[0];
+  }
+
+  const parsed = new Date(str);
+  if (Number.isNaN(parsed.getTime())) {
+    const parts = str.replace(/[/\s.]+/g, '-').split('-');
+    if (parts.length === 3) {
+      const p0 = parts[0];
+      const p1 = parts[1];
+      const p2 = parts[2];
+
+      if (p0.length === 4) {
+        const mm = parseInt(p1, 10);
+        if (mm >= 1 && mm <= 12) {
+          return `${p0}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`;
+        }
+      }
+      if (p2.length === 4) {
+        return `${p2}-${p1.padStart(2, '0')}-${p0.padStart(2, '0')}`;
+      }
+    }
+    return '';
+  }
+  return parsed.toISOString().split('T')[0];
+};
 
 export default function FuelFinancesPage() {
   const { user } = useAuthStore();
@@ -100,6 +139,88 @@ export default function FuelFinancesPage() {
       processTrucks(fleetMaster, localTrucks);
     });
   }, []);
+
+  useEffect(() => {
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: { id: string; fileName: string; importedAt: string; headers: string[]; rows: string[][] } }>).detail;
+      if (!detail || detail.sectionName !== 'Fuel Finances') return;
+
+      const importedEntries = detail.import.rows.map((row, index): FuelFinanceEntry => {
+        const vehicleNo = getCellValue(detail.import.headers, row, ['vehicle no', 'vehicle number', 'plate number', 'vehicle', 'truck']).toUpperCase();
+        const date = parseImportedDateToYYYYMMDD(getCellValue(detail.import.headers, row, ['date', 'transaction date', 'timestamp']));
+        
+        const serviceVal = getCellValue(detail.import.headers, row, ['service', 'fuel type', 'consumable', 'type']).toLowerCase();
+        let service: 'Diesel' | 'DEF' | 'Urea' = 'Diesel';
+        if (serviceVal.includes('def')) service = 'DEF';
+        else if (serviceVal.includes('urea')) service = 'Urea';
+        else if (serviceVal.includes('diesel')) service = 'Diesel';
+
+        const qtyVal = getCellValue(detail.import.headers, row, ['quantity', 'qty', 'litres', 'liters', 'volume']);
+        const quantity = parseFloat(qtyVal) || 0;
+
+        const rateVal = getCellValue(detail.import.headers, row, ['rate', 'price per unit', 'rate per unit']);
+        const rate = parseFloat(rateVal) || 0;
+
+        const valVal = getCellValue(detail.import.headers, row, ['value', 'total value', 'cost', 'total cost', 'amount']);
+        const value = parseFloat(valVal) || (quantity * rate);
+
+        // Find truckId and fleetCategory
+        const matchedTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '') === vehicleNo.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+        const truckId = matchedTruck ? matchedTruck.id : `truck-auto-${vehicleNo}`;
+        const fleetCategory = matchedTruck ? (matchedTruck.fleetCategory || 'OWNED_FLEET') : 'OWNED_FLEET';
+
+        return {
+          id: `fuel-import-${Date.now()}-${index}`,
+          vehicleNo,
+          truckId,
+          fleetCategory,
+          date,
+          service,
+          quantity,
+          rate,
+          value
+        };
+      }).filter(e => e.vehicleNo && e.vehicleNo !== '-');
+
+      if (importedEntries.length === 0) return;
+
+      setEntries(prev => {
+        const next = [...prev];
+        importedEntries.forEach(idr => {
+          const cleanPlate = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const idx = next.findIndex(r => 
+            cleanPlate(r.vehicleNo) === cleanPlate(idr.vehicleNo) && 
+            r.date === idr.date && 
+            r.service === idr.service
+          );
+          if (idx >= 0) {
+            const merged = { ...next[idx] };
+            Object.keys(idr).forEach(key => {
+              const val = idr[key as keyof FuelFinanceEntry];
+              if (val !== undefined && val !== '-' && val !== '') {
+                (merged as any)[key] = val;
+              }
+            });
+            next[idx] = merged;
+          } else {
+            next.push(idr);
+          }
+        });
+        saveSyncedValue(FUEL_FINANCES_KEY, next);
+        return next;
+      });
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [entries, trucks]);
 
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
                          user?.role === 'PARAMANANDPUR_ADMIN' || 
@@ -216,6 +337,7 @@ export default function FuelFinancesPage() {
           <p className="text-xs text-slate-500 mt-1">Manage and audit diesel, DEF, and urea transactions and consumption across your active fleet</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Fuel Finances" />}
           <SectionExcelExport sectionName="Fuel Finances" />
         </div>
       </div>

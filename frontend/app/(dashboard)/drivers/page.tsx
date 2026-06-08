@@ -8,6 +8,10 @@ import {
   AlertTriangle, IndianRupee, Star, Award, Briefcase
 } from 'lucide-react';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
+import tmsData from '@/app/data/tms_data_client.json';
 
 interface Driver {
   id: string;
@@ -35,33 +39,75 @@ interface Driver {
   vehicleType: string;
 }
 
+const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const parseImportedDateToYYYYMMDD = (value: string | number | undefined | null): string => {
+  if (value === undefined || value === null) return '';
+  const str = String(value).trim();
+  if (!str || str === '-' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined') {
+    return '';
+  }
+
+  // 1. Check if it's an Excel serial number (numeric value)
+  const num = Number(str);
+  if (!isNaN(num) && num > 30000 && num < 100000) {
+    const jsDate = new Date((num - 25569) * 86400 * 1000);
+    return jsDate.toISOString().split('T')[0];
+  }
+
+  // 2. Regular date string
+  const parsed = new Date(str);
+  if (Number.isNaN(parsed.getTime())) {
+    const parts = str.replace(/[/\s.]+/g, '-').split('-');
+    if (parts.length === 3) {
+      const p0 = parts[0];
+      const p1 = parts[1];
+      const p2 = parts[2];
+
+      if (p0.length === 4) {
+        const mm = parseInt(p1, 10);
+        if (mm >= 1 && mm <= 12) {
+          return `${p0}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`;
+        }
+      }
+      if (p2.length === 4) {
+        return `${p2}-${p1.padStart(2, '0')}-${p0.padStart(2, '0')}`;
+      }
+    }
+    return '';
+  }
+  return parsed.toISOString().split('T')[0];
+};
+
+const mapDriverDataToDriver = (d: any): Driver => ({
+  id: d.id,
+  fullName: d.fullName || '',
+  fatherName: d.fatherName || '',
+  license: d.licenseNumber || d.license || '',
+  licenseExpiry: d.licenseExpiry || '',
+  phone: d.phone || '',
+  emergencyPhone: d.emergencyPhone || '',
+  email: d.email || '',
+  address: d.address || '',
+  city: d.city || '',
+  state: d.state || '',
+  pincode: d.pincode || '',
+  dateOfBirth: d.dateOfBirth || '',
+  joiningDate: d.joiningDate || '',
+  aadharNumber: d.aadharNumber || '',
+  panNumber: d.panNumber || '',
+  bloodGroup: d.bloodGroup || 'O+',
+  dutyHours: d.dutyHours || (d.status === 'ON_TRIP' ? '6.0 / 11h' : '0.0 / 11h'),
+  safetyScore: d.safetyScore !== undefined ? d.safetyScore : (d.verified ? 100 : 0),
+  status: d.status || 'AVAILABLE',
+  salary: d.salary || 0,
+  experience: d.experience || 0,
+  vehicleType: d.vehicleType || ''
+});
+
 import { getDrivers } from '@/app/data/dataHelper';
 
-const INITIAL_DRIVERS: Driver[] = getDrivers().map((d) => ({
-  id: d.id,
-  fullName: d.fullName,
-  fatherName: '',
-  license: d.licenseNumber,
-  licenseExpiry: '',
-  phone: d.phone,
-  emergencyPhone: '',
-  email: '',
-  address: '',
-  city: '',
-  state: '',
-  pincode: '',
-  dateOfBirth: '',
-  joiningDate: '',
-  aadharNumber: '',
-  panNumber: '',
-  bloodGroup: '',
-  dutyHours: d.status === 'ON_TRIP' ? '6.0 / 11h' : '0.0 / 11h',
-  safetyScore: d.verified ? 100 : 0,
-  status: (d.status === 'ON_TRIP' ? 'ON_TRIP' : 'AVAILABLE'),
-  salary: 0,
-  experience: 0,
-  vehicleType: ''
-}));
+const INITIAL_DRIVERS: Driver[] = getDrivers().map((d) => mapDriverDataToDriver(d));
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const VEHICLE_TYPES = ['Multi-Axle Trailer', 'Tanker', 'Tipper', 'Dalla', 'Flatbed', 'Container Carrier', 'Bulker', 'LPG Carrier', 'Car Carrier'];
@@ -82,7 +128,8 @@ const emptyDriver: Omit<Driver, 'id'> = {
 };
 
 export default function DriversPage() {
-  const [drivers, setDrivers] = useState<Driver[]>(() => INITIAL_DRIVERS);
+  const { user } = useAuthStore();
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState<Driver | null>(null);
   const [formStep, setFormStep] = useState(0);
@@ -96,12 +143,142 @@ export default function DriversPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 15;
 
+  const persistDriversState = (allDrivers: Driver[]) => {
+    const defaultIds = new Set((tmsData.drivers || []).map((d: any) => d.id));
+    const localDrivers = allDrivers.filter(d => !defaultIds.has(d.id));
+    saveSyncedValue('tms_local_drivers', localDrivers);
+  };
+
+  /* ── Load from synced storage ── */
+  useEffect(() => {
+    // 1. Instant local load
+    const initialDrivers = getDrivers().map(mapDriverDataToDriver);
+    setDrivers(initialDrivers);
+
+    // 2. Background Database sync
+    fetchSyncedValue<any[]>('tms_local_drivers', []).then((syncedLocalDrivers) => {
+      const isRegionalAdmin = () => {
+        if (typeof window === 'undefined') return false;
+        try {
+          const u = JSON.parse(window.localStorage.getItem('tms_user') || 'null');
+          return u?.role === 'REGION_ADMIN';
+        } catch {
+          return false;
+        }
+      };
+      
+      const defaultDrivers = isRegionalAdmin() ? [] : (tmsData.drivers || []);
+      const combined = [...syncedLocalDrivers, ...defaultDrivers].map(mapDriverDataToDriver);
+      setDrivers(combined);
+    });
+  }, []);
+
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(''), 3000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
+
+  /* ── Excel Import Event Listener ── */
+  useEffect(() => {
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: { id: string; fileName: string; importedAt: string; headers: string[]; rows: string[][] } }>).detail;
+      if (!detail || detail.sectionName !== 'Driver Duty Logs') return;
+
+      const importedDrivers = detail.import.rows.map((row, index): Driver => {
+        const fullName = getCellValue(detail.import.headers, row, ['full name', 'driver name', 'name', 'driver']);
+        const fatherName = getCellValue(detail.import.headers, row, ['father name', 'fathers name', 'father\'s name', 'father']);
+        const license = getCellValue(detail.import.headers, row, ['license', 'license number', 'license no', 'licence', 'dl', 'dl no', 'dl number']).toUpperCase();
+        const licenseExpiry = parseImportedDateToYYYYMMDD(getCellValue(detail.import.headers, row, ['license expiry', 'license validity', 'dl validity', 'dl expiry']));
+        const phone = getCellValue(detail.import.headers, row, ['phone', 'phone number', 'mobile', 'mobile number', 'mobile no', 'contact']);
+        const emergencyPhone = getCellValue(detail.import.headers, row, ['emergency phone', 'emergency mobile', 'emergency contact', 'emergency no']);
+        const email = getCellValue(detail.import.headers, row, ['email', 'email id', 'email address']);
+        const address = getCellValue(detail.import.headers, row, ['address', 'street', 'residential address']);
+        const city = getCellValue(detail.import.headers, row, ['city', 'town']);
+        const state = getCellValue(detail.import.headers, row, ['state', 'province']);
+        const pincode = getCellValue(detail.import.headers, row, ['pincode', 'pin code', 'pin', 'zip', 'zipcode']);
+        const dateOfBirth = parseImportedDateToYYYYMMDD(getCellValue(detail.import.headers, row, ['date of birth', 'dob', 'birth date']));
+        const joiningDate = parseImportedDateToYYYYMMDD(getCellValue(detail.import.headers, row, ['joining date', 'date of joining', 'doj'])) || new Date().toISOString().split('T')[0];
+        const aadharNumber = getCellValue(detail.import.headers, row, ['aadhar', 'aadhar number', 'aadhar no', 'adhaar']);
+        const panNumber = getCellValue(detail.import.headers, row, ['pan', 'pan number', 'pan no']).toUpperCase();
+        
+        let bloodGroup = getCellValue(detail.import.headers, row, ['blood group', 'blood']).toUpperCase().replace(/\s/g, '');
+        if (!BLOOD_GROUPS.includes(bloodGroup)) {
+          bloodGroup = 'O+';
+        }
+
+        const salaryVal = getCellValue(detail.import.headers, row, ['salary', 'wages', 'monthly salary']);
+        const salary = parseFloat(salaryVal) || 25000;
+
+        const experienceVal = getCellValue(detail.import.headers, row, ['experience', 'exp', 'years of experience']);
+        const experience = parseFloat(experienceVal) || 0;
+
+        const vehicleType = getCellValue(detail.import.headers, row, ['vehicle type', 'truck type', 'vehicle expertise']);
+
+        return {
+          id: `drv-import-${Date.now()}-${index}`,
+          fullName,
+          fatherName,
+          license,
+          licenseExpiry,
+          phone,
+          emergencyPhone,
+          email,
+          address,
+          city,
+          state,
+          pincode,
+          dateOfBirth,
+          joiningDate,
+          aadharNumber,
+          panNumber,
+          bloodGroup,
+          dutyHours: '0.0 / 11h',
+          safetyScore: 100,
+          status: 'AVAILABLE',
+          salary,
+          experience,
+          vehicleType,
+        };
+      }).filter(d => d.fullName && d.license);
+
+      if (importedDrivers.length === 0) return;
+
+      setDrivers(prev => {
+        const next = [...prev];
+        importedDrivers.forEach(idr => {
+          const cleanLicense = (l: string) => l.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const idx = next.findIndex(r => r.license && cleanLicense(r.license) === cleanLicense(idr.license));
+          if (idx >= 0) {
+            const merged = { ...next[idx] };
+            Object.keys(idr).forEach(key => {
+              const val = idr[key as keyof Driver];
+              if (val !== undefined && val !== '-' && val !== '') {
+                (merged as any)[key] = val;
+              }
+            });
+            next[idx] = merged;
+          } else {
+            next.push(idr);
+          }
+        });
+        persistDriversState(next);
+        return next;
+      });
+      setCurrentPage(1);
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [drivers]);
 
   const filteredDrivers = drivers.filter(d => {
     const matchesSearch = d.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -120,7 +297,7 @@ export default function DriversPage() {
     available: drivers.filter(d => d.status === 'AVAILABLE').length,
     onTrip: drivers.filter(d => d.status === 'ON_TRIP').length,
     suspended: drivers.filter(d => d.status === 'SUSPENDED').length,
-    avgSafety: Math.round(drivers.reduce((sum, d) => sum + d.safetyScore, 0) / drivers.length * 10) / 10,
+    avgSafety: drivers.length > 0 ? Math.round(drivers.reduce((sum, d) => sum + d.safetyScore, 0) / drivers.length * 10) / 10 : 0,
     totalSalary: drivers.reduce((sum, d) => sum + d.salary, 0),
   };
 
@@ -159,17 +336,21 @@ export default function DriversPage() {
   const handleSubmit = () => {
     if (!validateStep(2)) return;
 
+    let nextDrivers = [...drivers];
     if (editingId) {
-      setDrivers(prev => prev.map(d => d.id === editingId ? { ...formData, id: editingId } : d));
+      nextDrivers = drivers.map(d => d.id === editingId ? { ...formData, id: editingId } : d);
+      setDrivers(nextDrivers);
       setSuccessMessage(`Driver ${formData.fullName} updated successfully!`);
     } else {
       const newDriver: Driver = {
         ...formData,
         id: Date.now().toString(),
       };
-      setDrivers(prev => [...prev, newDriver]);
+      nextDrivers = [...drivers, newDriver];
+      setDrivers(nextDrivers);
       setSuccessMessage(`Driver ${formData.fullName} onboarded successfully!`);
     }
+    persistDriversState(nextDrivers);
     closeModal();
   };
 
@@ -190,7 +371,9 @@ export default function DriversPage() {
   };
 
   const confirmDelete = (id: string) => {
-    setDrivers(prev => prev.filter(d => d.id !== id));
+    const nextDrivers = drivers.filter(d => d.id !== id);
+    setDrivers(nextDrivers);
+    persistDriversState(nextDrivers);
     setShowDeleteConfirm(null);
     setSuccessMessage('Driver removed from system.');
   };
@@ -229,6 +412,7 @@ export default function DriversPage() {
           <p className="text-xs text-slate-500 mt-1">Audit crew duty logs, safety records, and driver hours of service constraints</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Driver Duty Logs" />}
           <SectionExcelExport sectionName="Driver Duty Logs" />
           <button
             onClick={() => { setFormData(emptyDriver); setEditingId(null); setFormStep(0); setShowModal(true); }}

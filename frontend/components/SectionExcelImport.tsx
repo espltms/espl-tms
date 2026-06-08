@@ -14,6 +14,93 @@ type ImportedSheet = {
 
 const normalize = (value: unknown) => String(value ?? '').replace(/\s+/g, ' ').trim();
 
+const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
+  'Fleet Master': [
+    'vehicle no', 'vehicle_no', 'plate number', 'vehicle number', 'vehicle no.',
+    'vendor', 'vendor name', 'vendor company',
+    'sub vendor', 'sub-vendor', 'sub_vendor', 'subvendor', 'owner', 'owner name',
+    'vehicle type', 'truck type', 'type',
+    'wheeler', 'wheelers', 'no of wheels',
+    'rc no', 'rc number', 'rc', 'registration',
+    'fitness validity from', 'fitness from', 'fitness start',
+    'fitness validity to', 'fitness to', 'fitness end', 'fitness expiry',
+    'insurance validity upto', 'insurance validity', 'insurance upto', 'insurance expiry', 'insurance',
+    'puc validity', 'puc', 'puc expiry',
+    'name of the driver', 'driver name', 'driver', 'name of driver',
+    'dl', 'dl no', 'dl number', 'driving license', 'license', 'licence',
+    'dl validity till', 'dl validity', 'dl expiry', 'license expiry',
+    'mob no of the driver', 'mob no', 'mobile', 'mobile no', 'phone', 'driver phone', 'driver mobile', 'contact'
+  ],
+  'Sub-Vendor Master': [
+    'sub-vendor', 'sub vendor', 'sub_vendor', 'subvendor', 'owner', 'owner name', 'name',
+    'mobile', 'mobile no', 'phone', 'contact',
+    'pan', 'pan no', 'pan number',
+    'gstin', 'gst', 'gstin no', 'gstin number'
+  ],
+  'Vendor Master': [
+    'vendor', 'vendor name', 'vendor company', 'name',
+    'mobile', 'mobile no', 'phone', 'contact',
+    'pan', 'pan no', 'pan number',
+    'gstin', 'gst', 'gstin no', 'gstin number'
+  ],
+  'Trip Dispatch & Loading': [
+    'truck', 'truck plate', 'vehicle', 'vehicle no', 'vehicle number', 'plate number', 'no plate', 'vehicle_no',
+    'po number', 'po no', 'purchase order', 'purchase order contract', 'contract', 'po',
+    'gross', 'gross weight', 'gross wt', 'gross wt.', 'gross tons', 'gross_weight', 'grosswt',
+    'tare', 'tare weight', 'tare wt', 'tare wt.', 'tare tons', 'tare_weight', 'tarewt',
+    'net wt', 'net wt.', 'net weight', 'netwt', 'netwt.', 'netweight', 'net tons', 'net qty', 'netqty', 'qty', 'quantity', 'estimated quantity', 'actual loaded', 'qty/net',
+    'ticket', 'ticket no', 'ticket number', 'weigh ticket', 'ticket_no',
+    'challan', 'challan no', 'challan number', 'challan_no',
+    'date', 'loading date', 'timestamp', 'datetime', 'time', 'date_val', 'time and date of loading',
+    'location', 'destination', 'unloading', 'unloading point', 'destination unloading', 'location/destination',
+    'source', 'origin', 'loading point', 'loading_point', 'source loading',
+    'vendor', 'vendor company', 'transporter', 'carrier', 'vendor name', 'company',
+    'vehicle type', 'truck type', 'type', 'vehicle_type', 'wheeler',
+    'driver', 'driver name', 'driver partner', 'driver_name',
+    'driver phone', 'phone', 'mobile', 'driver_phone', 'phone no', 'phone number',
+    'commodity', 'material', 'product', 'cargo', 'item',
+    'trip', 'trip no', 'trip number', 'trip_no'
+  ],
+  'Driver Duty Logs': [
+    'full name', 'driver name', 'name', 'driver',
+    'father name', 'fathers name', 'father\'s name', 'father',
+    'license', 'license number', 'license no', 'licence', 'dl', 'dl no', 'dl number',
+    'license expiry', 'license validity', 'dl validity', 'dl expiry',
+    'phone', 'phone number', 'mobile', 'mobile number', 'mobile no', 'contact',
+    'emergency phone', 'emergency mobile', 'emergency contact', 'emergency no',
+    'email', 'email id', 'email address',
+    'address', 'street', 'residential address',
+    'city', 'town',
+    'state', 'province',
+    'pincode', 'pin code', 'pin', 'zip', 'zipcode',
+    'date of birth', 'dob', 'birth date',
+    'joining date', 'date of joining', 'doj',
+    'aadhar', 'aadhar number', 'aadhar no', 'adhaar',
+    'pan', 'pan number', 'pan no',
+    'blood group', 'blood',
+    'salary', 'wages', 'monthly salary',
+    'experience', 'exp', 'years of experience',
+    'vehicle type', 'truck type', 'vehicle expertise'
+  ],
+  'HR & Payroll Center': [
+    'name', 'full name', 'employee name', 'employee',
+    'email', 'corporate email', 'email address', 'email id',
+    'department', 'role', 'dept',
+    'salary', 'base salary', 'monthly salary', 'pay',
+    'allowance', 'transit allowance', 'daily allowance',
+    'safety score', 'safety index', 'safety score (%)', 'safety',
+    'join date', 'joining date', 'hire date', 'doj'
+  ],
+  'Fuel Finances': [
+    'vehicle no', 'vehicle number', 'plate number', 'vehicle', 'truck',
+    'date', 'transaction date', 'timestamp',
+    'service', 'fuel type', 'consumable', 'type',
+    'quantity', 'qty', 'litres', 'liters', 'volume',
+    'rate', 'price per unit', 'rate per unit',
+    'value', 'total value', 'cost', 'total cost', 'amount'
+  ]
+};
+
 const storageKeyFor = (sectionName: string) => {
   const slug = sectionName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
   return `tms_imported_excel_${slug}`;
@@ -143,6 +230,18 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         }
       } else {
         headers = Array.from({ length: maxColumns }, (_, idx) => row0[idx] || `Column ${idx + 1}`);
+      }
+
+      // Validate headers against expected section columns
+      const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const expectedAliases = SECTION_COLUMN_ALIASES[sectionName] || [];
+      if (expectedAliases.length > 0) {
+        const normalizedExpected = expectedAliases.map(normalizeHeader);
+        const normalizedExcelHeaders = headers.map(normalizeHeader);
+        const hasAnyMatch = normalizedExcelHeaders.some(h => normalizedExpected.includes(h));
+        if (!hasAnyMatch) {
+          throw new Error('The file structure or data is incorrect for this section.');
+        }
       }
 
       const rows = nonEmptyRows.slice(startRowIndex).map(row => headers.map((_, idx) => row[idx] || ''));

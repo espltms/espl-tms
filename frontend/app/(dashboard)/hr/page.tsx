@@ -17,10 +17,51 @@ interface Employee {
 import { getEmployees } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import { useAuthStore } from '@/store/auth.store';
 
 const MANUAL_EMPLOYEES_KEY = 'tms_manual_employees';
 
+const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const parseImportedDateToYYYYMMDD = (value: string | number | undefined | null): string => {
+  if (value === undefined || value === null) return '';
+  const str = String(value).trim();
+  if (!str || str === '-' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined') {
+    return '';
+  }
+
+  const num = Number(str);
+  if (!isNaN(num) && num > 30000 && num < 100000) {
+    const jsDate = new Date((num - 25569) * 86400 * 1000);
+    return jsDate.toISOString().split('T')[0];
+  }
+
+  const parsed = new Date(str);
+  if (Number.isNaN(parsed.getTime())) {
+    const parts = str.replace(/[/\s.]+/g, '-').split('-');
+    if (parts.length === 3) {
+      const p0 = parts[0];
+      const p1 = parts[1];
+      const p2 = parts[2];
+
+      if (p0.length === 4) {
+        const mm = parseInt(p1, 10);
+        if (mm >= 1 && mm <= 12) {
+          return `${p0}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`;
+        }
+      }
+      if (p2.length === 4) {
+        return `${p2}-${p1.padStart(2, '0')}-${p0.padStart(2, '0')}`;
+      }
+    }
+    return '';
+  }
+  return parsed.toISOString().split('T')[0];
+};
+
 export default function HRPage() {
+  const { user } = useAuthStore();
   const [employees, setEmployees] = useState<Employee[]>(() => getEmployees());
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,6 +82,85 @@ export default function HRPage() {
       setEmployees([...manualEmployees, ...getEmployees()]);
     });
   }, []);
+
+  useEffect(() => {
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: { id: string; fileName: string; importedAt: string; headers: string[]; rows: string[][] } }>).detail;
+      if (!detail || detail.sectionName !== 'HR & Payroll Center') return;
+
+      const importedEmployees = detail.import.rows.map((row, index): Employee => {
+        const name = getCellValue(detail.import.headers, row, ['name', 'full name', 'employee name', 'employee']);
+        const email = getCellValue(detail.import.headers, row, ['email', 'corporate email', 'email address', 'email id']);
+        const deptVal = getCellValue(detail.import.headers, row, ['department', 'role', 'dept']).toUpperCase();
+        
+        let department = 'DRIVER_PARTNER';
+        if (deptVal.includes('DRIVER')) department = 'DRIVER_PARTNER';
+        else if (deptVal.includes('FINANCE')) department = 'FINANCE_OFFICER';
+        else if (deptVal.includes('LOGISTICS') || deptVal.includes('OPS') || deptVal.includes('OPERATION')) department = 'LOGISTICS_OPS';
+        else if (deptVal.includes('SYS') || deptVal.includes('ADMIN')) department = 'SYS_ADMIN';
+        else if (deptVal.includes('HR') || deptVal.includes('MANAGER')) department = 'HR_MANAGER';
+
+        const salaryVal = getCellValue(detail.import.headers, row, ['salary', 'base salary', 'monthly salary', 'pay']);
+        const salary = parseFloat(salaryVal) || 0;
+
+        const allowanceVal = getCellValue(detail.import.headers, row, ['allowance', 'transit allowance', 'daily allowance']);
+        const allowance = parseFloat(allowanceVal) || 0;
+
+        const safetyVal = getCellValue(detail.import.headers, row, ['safety score', 'safety index', 'safety score (%)', 'safety']);
+        const safetyScore = parseFloat(safetyVal) || 100;
+
+        const joinDate = parseImportedDateToYYYYMMDD(getCellValue(detail.import.headers, row, ['join date', 'joining date', 'hire date', 'doj'])) || new Date().toISOString().split('T')[0];
+
+        return {
+          id: `manual-import-${Date.now()}-${index}`,
+          name,
+          email,
+          department,
+          salary,
+          allowance,
+          safetyScore,
+          joinDate
+        };
+      }).filter(emp => emp.name && emp.email);
+
+      if (importedEmployees.length === 0) return;
+
+      setEmployees(prev => {
+        const next = [...prev];
+        importedEmployees.forEach(idr => {
+          const cleanEmail = (e: string) => e.toLowerCase().trim();
+          const idx = next.findIndex(r => r.email && cleanEmail(r.email) === cleanEmail(idr.email));
+          if (idx >= 0) {
+            const merged = { ...next[idx] };
+            Object.keys(idr).forEach(key => {
+              const val = idr[key as keyof Employee];
+              if (val !== undefined && val !== '-' && val !== '') {
+                (merged as any)[key] = val;
+              }
+            });
+            next[idx] = merged;
+          } else {
+            next.push(idr);
+          }
+        });
+
+        // Sync ONLY manual employees (whose ID starts with 'manual-')
+        const manualOnly = next.filter(emp => emp.id.startsWith('manual-'));
+        saveSyncedValue(MANUAL_EMPLOYEES_KEY, manualOnly);
+        return next;
+      });
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [employees]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +189,7 @@ export default function HRPage() {
           <p className="text-xs text-slate-500 mt-1">Manage corporate personnel records, employee base salaries, and driver allowance indexes (₹ / INR)</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="HR & Payroll Center" />}
           <SectionExcelExport sectionName="HR & Payroll Center" />
           <button 
             onClick={() => setShowModal(true)}
