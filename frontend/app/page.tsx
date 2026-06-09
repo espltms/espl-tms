@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuthStore } from '../store/auth.store';
 import { useRouter } from 'next/navigation';
 import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, PackageOpen, Sun, Moon } from 'lucide-react';
@@ -105,7 +106,7 @@ export default function LoginPage() {
       {/* Left side: Premium Branding & Live Statistics */}
       <div className="relative hidden h-full w-1/2 flex-col justify-between p-16 md:flex">
         <div className="flex items-center gap-3">
-          <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-12 w-auto" />
+          <Image src="/images/espl-logo.png" alt="ESPL Logo" width={180} height={48} priority className="h-12 w-auto" />
           <span className="font-sans text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent">
             ESPL <span className="text-brand-primary">TMS</span>
           </span>

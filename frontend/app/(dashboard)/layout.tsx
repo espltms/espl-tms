@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useAuthStore } from '../../store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -253,7 +254,7 @@ export default function DashboardLayout({
         <div className="flex flex-col min-h-0 flex-1">
           {/* Logo Brand Header */}
           <div className="flex h-16 items-center gap-3 px-6 border-b border-[#e2e8f0]">
-            <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
+            <Image src="/images/espl-logo.png" alt="ESPL Logo" width={135} height={36} priority className="h-9 w-auto" />
             <span className="font-sans text-lg font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent">
               ESPL <span className="text-brand-primary">TMS</span>
             </span>
@@ -361,7 +362,7 @@ export default function DashboardLayout({
           <div className="flex h-full w-[86vw] max-w-80 flex-col justify-between border-r border-[#e2e8f0] bg-white shadow-2xl overflow-hidden">
             <div className="flex flex-col min-h-0 flex-1">
               <div className="flex h-16 items-center gap-3 px-5 border-b border-[#e2e8f0] shrink-0">
-                <img src="/images/espl-logo.png" alt="ESPL Logo" className="h-9 w-auto" />
+                <Image src="/images/espl-logo.png" alt="ESPL Logo" width={135} height={36} priority className="h-9 w-auto" />
                 <span className="font-sans text-xl font-extrabold text-slate-800">ESPL TMS</span>
               </div>
               <nav className="flex-1 overflow-y-auto space-y-5 px-4 py-5">

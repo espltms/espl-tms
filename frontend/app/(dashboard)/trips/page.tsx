@@ -210,28 +210,37 @@ export default function TripsPage() {
         ? 'Bhawanipatna'
         : user?.regionName;
 
-  const filteredTrips = trips.filter(trip => {
-    if (isLanjigarhLoader) {
-      return trip.source && trip.source.toLowerCase().includes('lanjigarh');
-    }
-    if (isRegionalUser && userRegion) {
-      return isMatchingDestination(trip.destination, userRegion);
-    }
-    return true;
-  });
+  const filteredTrips = useMemo(() => {
+    return trips.filter(trip => {
+      if (isLanjigarhLoader) {
+        return trip.source && trip.source.toLowerCase().includes('lanjigarh');
+      }
+      if (isRegionalUser && userRegion) {
+        return isMatchingDestination(trip.destination, userRegion);
+      }
+      return true;
+    });
+  }, [trips, isLanjigarhLoader, isRegionalUser, userRegion]);
 
-  const filteredPurchaseOrders = purchaseOrders.filter(po => {
-    const isLanjigarhOk = !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh');
-    if (!isLanjigarhOk) return false;
-    if (isRegionalUser && userRegion) {
-      const route = getPoSourceDestination(po.poNumber);
-      return isMatchingDestination(route.destination, userRegion);
-    }
-    return true;
-  });
+  const filteredPurchaseOrders = useMemo(() => {
+    return purchaseOrders.filter(po => {
+      const isLanjigarhOk = !isLanjigarhLoader || getPoSourceDestination(po.poNumber).source.toLowerCase().includes('lanjigarh');
+      if (!isLanjigarhOk) return false;
+      if (isRegionalUser && userRegion) {
+        const route = getPoSourceDestination(po.poNumber);
+        return isMatchingDestination(route.destination, userRegion);
+      }
+      return true;
+    });
+  }, [purchaseOrders, isLanjigarhLoader, isRegionalUser, userRegion]);
 
-  const totalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
-  const paginatedTrips = filteredTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
+  }, [filteredTrips.length]);
+
+  const paginatedTrips = useMemo(() => {
+    return filteredTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filteredTrips, currentPage]);
 
   const getNextChallanNumber = (destinationName: string, tempRecords: LoadingRecord[]) => {
     const dest = String(destinationName || 'Paramanandpur Stockyard').trim().replace(/[^a-zA-Z]/g, '').toUpperCase();
