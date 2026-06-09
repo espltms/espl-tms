@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException 
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { JwtAuthGuard } from '../../infrastructure/security/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
 import * as bcrypt from 'bcrypt';
 
 @Controller('auth')
@@ -11,6 +12,7 @@ export class AuthController {
     private jwtService: JwtService,
   ) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // Limit login attempts to 10 per minute per IP
   @Post('login')
   async login(@Body() body: any) {
     const { email, password } = body;

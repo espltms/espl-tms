@@ -86,6 +86,31 @@ export async function GET(req: NextRequest) {
   await ensureGlobalUserExists(effectiveUserId);
 
   if (recordKey) {
+    if (recordKey === 'tms_fleet_master') {
+      const trucks = await prisma.truck.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      const payload = trucks.map(t => ({
+        id: t.id,
+        plateNumber: t.plateNumber,
+        fleetCategory: t.fleetCategory,
+        vendor: t.vendor || '-',
+        subVendor: t.subVendor || '-',
+        vehicleType: t.type,
+        wheeler: t.wheeler || '12 Wheeler',
+        rcNo: t.rcNo || '-',
+        fitnessValidityFrom: t.fitnessValidityFrom || '-',
+        fitnessValidityTo: t.fitnessValidityTo || '-',
+        insuranceValidityUpto: t.insuranceValidityUpto || '-',
+        pucValidity: t.pucValidity || '-',
+        driverName: t.driverName || '-',
+        driverDL: t.driverDL || '-',
+        dlValidityTill: t.dlValidityTill || '-',
+        driverMobile: t.driverMobile || '-',
+      }));
+      return NextResponse.json({ payload });
+    }
+
     const record = await prisma.syncedRecord.findUnique({
       where: {
         userId_recordType_recordKey: {
@@ -130,6 +155,84 @@ export async function POST(req: NextRequest) {
 
   const effectiveUserId = getEffectiveUserId(user.userId, recordKey);
   await ensureGlobalUserExists(effectiveUserId);
+
+  if (recordKey === 'tms_fleet_master') {
+    if (!Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Payload must be an array' }, { status: 400 });
+    }
+
+    try {
+      const platesInPayload = payload
+        .filter(item => item && item.plateNumber)
+        .map(item => item.plateNumber.toUpperCase().trim());
+
+      await prisma.$transaction(async (tx) => {
+        // 1. Upsert all trucks in the payload
+        for (const item of payload) {
+          if (!item.plateNumber) continue;
+          const plate = item.plateNumber.toUpperCase().trim();
+
+          await tx.truck.upsert({
+            where: { plateNumber: plate },
+            update: {
+              fleetCategory: item.fleetCategory || 'OWNED_FLEET',
+              vendor: item.vendor || null,
+              subVendor: item.subVendor || null,
+              type: item.vehicleType || 'Tipper',
+              wheeler: item.wheeler || null,
+              rcNo: item.rcNo || null,
+              fitnessValidityFrom: item.fitnessValidityFrom || null,
+              fitnessValidityTo: item.fitnessValidityTo || null,
+              insuranceValidityUpto: item.insuranceValidityUpto || null,
+              pucValidity: item.pucValidity || null,
+              driverName: item.driverName || null,
+              driverDL: item.driverDL || null,
+              dlValidityTill: item.dlValidityTill || null,
+              driverMobile: item.driverMobile || null,
+            },
+            create: {
+              plateNumber: plate,
+              model: 'Generic Model',
+              capacityTons: 40.0,
+              type: item.vehicleType || 'Tipper',
+              fleetCategory: item.fleetCategory || 'OWNED_FLEET',
+              status: 'AVAILABLE',
+              health: 100,
+              vendor: item.vendor || null,
+              subVendor: item.subVendor || null,
+              wheeler: item.wheeler || null,
+              rcNo: item.rcNo || null,
+              fitnessValidityFrom: item.fitnessValidityFrom || null,
+              fitnessValidityTo: item.fitnessValidityTo || null,
+              insuranceValidityUpto: item.insuranceValidityUpto || null,
+              pucValidity: item.pucValidity || null,
+              driverName: item.driverName || null,
+              driverDL: item.driverDL || null,
+              dlValidityTill: item.dlValidityTill || null,
+              driverMobile: item.driverMobile || null,
+            },
+          });
+        }
+
+        // 2. Delete any trucks not in active payload list (excluding trucks with associated trips)
+        try {
+          await tx.truck.deleteMany({
+            where: {
+              plateNumber: { notIn: platesInPayload },
+              trips: { none: {} },
+            },
+          });
+        } catch (e) {
+          console.warn('Omitted trucks deletion skipped for referenced records:', e);
+        }
+      });
+
+      return NextResponse.json({ record: { recordKey, payload } });
+    } catch (err: any) {
+      console.error('Sync error:', err);
+      return NextResponse.json({ error: 'Sync failed: ' + err.message }, { status: 500 });
+    }
+  }
 
   const record = await prisma.syncedRecord.upsert({
     where: {
