@@ -111,6 +111,49 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ payload });
     }
 
+    if (recordKey === 'tms_assigned_trips') {
+      const trips = await prisma.trip.findMany({
+        include: {
+          driver: true,
+          truck: true,
+          purchaseOrder: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const payload = trips.map(t => ({
+        id: t.id,
+        tripNumber: t.tripNumber,
+        source: t.source,
+        destination: t.destination,
+        distanceKm: Number(t.distanceKm),
+        estimatedQuantityTons: Number(t.estimatedQuantityTons),
+        actualLoadedTons: t.actualLoadedTons ? Number(t.actualLoadedTons) : null,
+        actualDeliveredTons: t.actualDeliveredTons ? Number(t.actualDeliveredTons) : null,
+        status: t.status,
+        scheduledStartDate: t.scheduledStartDate.toISOString(),
+        actualStartDate: t.actualStartDate?.toISOString() || null,
+        actualEndDate: t.actualEndDate?.toISOString() || null,
+        driver: {
+          id: t.driverId,
+          fullName: t.driver.fullName,
+          phone: t.driver.phone,
+        },
+        truck: {
+          id: t.truckId,
+          plateNumber: t.truck.plateNumber,
+          model: t.truck.model,
+        },
+        purchaseOrder: {
+          id: t.purchaseOrderId,
+          poNumber: t.purchaseOrder.poNumber,
+          clientName: t.purchaseOrder.clientName,
+          commodity: t.purchaseOrder.commodity,
+        },
+      }));
+      return NextResponse.json({ payload });
+    }
+
     const record = await prisma.syncedRecord.findUnique({
       where: {
         userId_recordType_recordKey: {
@@ -231,6 +274,150 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
       console.error('Sync error:', err);
       return NextResponse.json({ error: 'Sync failed: ' + err.message }, { status: 500 });
+    }
+  }
+
+  if (recordKey === 'tms_assigned_trips') {
+    if (!Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Payload must be an array' }, { status: 400 });
+    }
+
+    try {
+      const tripNumbersInPayload = payload
+        .filter(item => item && item.tripNumber)
+        .map(item => item.tripNumber.toUpperCase().trim());
+
+      await prisma.$transaction(async (tx) => {
+        for (const item of payload) {
+          if (!item.tripNumber) continue;
+          const tripNo = item.tripNumber.toUpperCase().trim();
+
+          // 1. Resolve Purchase Order
+          let dbPoId = '';
+          if (item.purchaseOrder && item.purchaseOrder.poNumber) {
+            const po = await tx.purchaseOrder.findUnique({
+              where: { poNumber: item.purchaseOrder.poNumber },
+            });
+            if (po) {
+              dbPoId = po.id;
+            } else {
+              const newPo = await tx.purchaseOrder.create({
+                data: {
+                  poNumber: item.purchaseOrder.poNumber,
+                  clientName: item.purchaseOrder.clientName || 'Generic Client',
+                  commodity: item.purchaseOrder.commodity || 'Fly Ash',
+                  totalQuantityTons: 10000.0,
+                  ratePerTon: 300.0,
+                  status: 'ACTIVE',
+                },
+              });
+              dbPoId = newPo.id;
+            }
+          }
+
+          // 2. Resolve Driver
+          let dbDriverId = '';
+          if (item.driver && item.driver.fullName) {
+            const driver = await tx.driver.findFirst({
+              where: { fullName: item.driver.fullName },
+            });
+            if (driver) {
+              dbDriverId = driver.id;
+            } else {
+              const newDriver = await tx.driver.create({
+                data: {
+                  fullName: item.driver.fullName,
+                  licenseNumber: `DL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                  phone: item.driver.phone || `+9199999${Math.floor(10000 + Math.random() * 90000)}`,
+                  status: 'AVAILABLE',
+                },
+              });
+              dbDriverId = newDriver.id;
+            }
+          }
+
+          // 3. Resolve Truck
+          let dbTruckId = '';
+          if (item.truck && item.truck.plateNumber) {
+            const plate = item.truck.plateNumber.toUpperCase().trim();
+            const truck = await tx.truck.findUnique({
+              where: { plateNumber: plate },
+            });
+            if (truck) {
+              dbTruckId = truck.id;
+            } else {
+              const newTruck = await tx.truck.create({
+                data: {
+                  plateNumber: plate,
+                  model: item.truck.model || 'Generic Model',
+                  capacityTons: 40.0,
+                  type: 'Tipper',
+                  status: 'AVAILABLE',
+                },
+              });
+              dbTruckId = newTruck.id;
+            }
+          }
+
+          if (!dbPoId || !dbDriverId || !dbTruckId) {
+            continue;
+          }
+
+          // 4. Upsert Trip
+          await tx.trip.upsert({
+            where: { tripNumber: tripNo },
+            update: {
+              purchaseOrderId: dbPoId,
+              driverId: dbDriverId,
+              truckId: dbTruckId,
+              source: item.source || 'Lanjigarh',
+              destination: item.destination || 'Paramanandpur',
+              distanceKm: item.distanceKm || 0,
+              estimatedQuantityTons: item.estimatedQuantityTons || 0,
+              actualLoadedTons: item.actualLoadedTons || null,
+              actualDeliveredTons: item.actualDeliveredTons || null,
+              status: item.status || 'SCHEDULED',
+              scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
+              actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
+              actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+            },
+            create: {
+              tripNumber: tripNo,
+              purchaseOrderId: dbPoId,
+              driverId: dbDriverId,
+              truckId: dbTruckId,
+              source: item.source || 'Lanjigarh',
+              destination: item.destination || 'Paramanandpur',
+              distanceKm: item.distanceKm || 0,
+              estimatedQuantityTons: item.estimatedQuantityTons || 0,
+              actualLoadedTons: item.actualLoadedTons || null,
+              actualDeliveredTons: item.actualDeliveredTons || null,
+              status: item.status || 'SCHEDULED',
+              scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
+              actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
+              actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+            },
+          });
+        }
+
+        // 5. Delete omitted trips (unless they have invoices or weigh tickets linked)
+        try {
+          await tx.trip.deleteMany({
+            where: {
+              tripNumber: { notIn: tripNumbersInPayload },
+              weighTickets: { none: {} },
+              invoices: { none: {} },
+            },
+          });
+        } catch (e) {
+          console.warn('Omitted trips deletion skipped for referenced records:', e);
+        }
+      });
+
+      return NextResponse.json({ record: { recordKey, payload } });
+    } catch (err: any) {
+      console.error('Trips sync error:', err);
+      return NextResponse.json({ error: 'Trips sync failed: ' + err.message }, { status: 500 });
     }
   }
 
