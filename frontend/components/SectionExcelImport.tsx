@@ -252,58 +252,198 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         throw new Error('This file does not contain readable rows.');
       }
 
-      const maxColumns = Math.max(...nonEmptyRows.map(row => row.length));
+      const normalizeHeader = (value: string) => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
       const row0 = nonEmptyRows[0] || [];
-      const row1 = nonEmptyRows[1] || [];
-      
-      const isSubHeaderRow = row1.some(val => {
-        const v = String(val).toLowerCase();
-        return v === 'from' || v === 'to' || v.includes('validity') || v.includes('upto') || v === 'till';
-      });
+      const isUnified = row0.some(val => normalizeHeader(val) === 'vendorcode');
 
       let headers: string[] = [];
-      let startRowIndex = 1;
+      let rows: string[][] = [];
 
-      if (isSubHeaderRow) {
-        startRowIndex = 2; // skips the sub-header row as data
-        let lastParentHeader = '';
-        for (let idx = 0; idx < maxColumns; idx++) {
-          const parent = (row0[idx] || '').trim();
-          const child = (row1[idx] || '').trim();
-          
-          if (parent) {
-            lastParentHeader = parent;
-          }
-          
-          let combined = '';
-          if (lastParentHeader && child) {
-            if (child.toLowerCase() === lastParentHeader.toLowerCase()) {
-              combined = lastParentHeader;
-            } else {
-              combined = `${lastParentHeader} ${child}`;
+      if (isUnified) {
+        const getLeftMetadata = (label: string): string => {
+          const normLabel = normalizeHeader(label);
+          for (const row of nonEmptyRows) {
+            if (row[0] && normalizeHeader(row[0]) === normLabel) {
+              return String(row[2] || '').trim();
             }
-          } else {
-            combined = child || lastParentHeader || `Column ${idx + 1}`;
           }
-          headers.push(combined);
+          return '';
+        };
+
+        const doNo = getLeftMetadata('dono') || getLeftMetadata('dono.');
+        const poNo = getLeftMetadata('po') || getLeftMetadata('pono') || getLeftMetadata('ponumber');
+        const siding = getLeftMetadata('siding');
+        const mines = getLeftMetadata('mines') || getLeftMetadata('mine');
+        const coalCompany = getLeftMetadata('coalcompany');
+        const doQty = getLeftMetadata('doqty') || getLeftMetadata('doqty.');
+        const coalType = getLeftMetadata('coaltype');
+
+        if (sectionName === 'DO Master') {
+          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'status'];
+          rows = [[doNo, poNo, siding, mines, coalCompany, doQty, coalType, 'Active']];
+        } 
+        else if (sectionName === 'RR Entry' || sectionName === 'Quality Tracking' || sectionName === 'Deduction & Penalty') {
+          const rrHeaderIdx = nonEmptyRows.findIndex(row => row[5] && normalizeHeader(row[5]) === 'rrno');
+          
+          if (rrHeaderIdx === -1) {
+            throw new Error('Could not find RR table in the reconciliation sheet.');
+          }
+
+          const rrHeaders = nonEmptyRows[rrHeaderIdx].slice(5).map(h => String(h || '').trim());
+          const dataRows: string[][] = [];
+
+          for (let rIdx = rrHeaderIdx + 1; rIdx < nonEmptyRows.length; rIdx++) {
+            const row = nonEmptyRows[rIdx];
+            const firstCol = String(row[0] || '').trim();
+            if (firstCol && (normalizeHeader(firstCol) === 'coalcost' || normalizeHeader(firstCol) === 'total' || normalizeHeader(firstCol) === 'po')) {
+              break;
+            }
+            const rrNo = String(row[5] || '').trim();
+            if (rrNo) {
+              const vals = row.slice(5).map(v => String(v || '').trim());
+              while (vals.length < rrHeaders.length) {
+                vals.push('');
+              }
+              dataRows.push(vals);
+            }
+          }
+
+          const getRRCellValue = (rowVals: string[], aliasList: string[]) => {
+            const normAliases = aliasList.map(normalizeHeader);
+            const idx = rrHeaders.findIndex(h => normAliases.includes(normalizeHeader(h)));
+            return idx >= 0 ? rowVals[idx] : '';
+          };
+
+          if (sectionName === 'RR Entry') {
+            headers = ['do no', 'siding', 'rr no', 'rr date', 'loading date', 'receipt date', 'rr act qty', 'rr ch qty', 'vll qty', 'grn qty', 'normalised qty'];
+            rows = dataRows.map(rowVals => {
+              const rrNo = getRRCellValue(rowVals, ['rr no', 'rr number', 'rr_no']);
+              const rrDate = getRRCellValue(rowVals, ['rr date', 'rr_date']);
+              const loadingDate = getRRCellValue(rowVals, ['date of loading', 'loading date', 'loading_date']);
+              const receiptDate = getRRCellValue(rowVals, ['date of receipt', 'receipt date', 'receipt_date']);
+              const rrActQty = getRRCellValue(rowVals, ['rr act qty', 'actual quantity']);
+              const rrChQty = getRRCellValue(rowVals, ['rr ch qty', 'challan qty']);
+              const vllQty = getRRCellValue(rowVals, ['vll qty', 'vll quantity']);
+              const grnQty = getRRCellValue(rowVals, ['grn qty', 'grn quantity']);
+              const normalisedQty = getRRCellValue(rowVals, ['normalised qty', 'normalized qty']);
+
+              return [doNo, siding, rrNo, rrDate, loadingDate, receiptDate, rrActQty, rrChQty, vllQty, grnQty, normalisedQty];
+            });
+          } 
+          else if (sectionName === 'Quality Tracking') {
+            headers = ['do no', 'rr no', 'tm', 'im', 'ash', 'vm', 'fc', 'gcv adb', 'gcv arb', 'quality penalty'];
+            rows = dataRows.map(rowVals => {
+              const rrNo = getRRCellValue(rowVals, ['rr no', 'rr number', 'rr_no']);
+              const tm = getRRCellValue(rowVals, ['tm']);
+              const im = getRRCellValue(rowVals, ['im']);
+              const ash = getRRCellValue(rowVals, ['ash']);
+              const vm = getRRCellValue(rowVals, ['vm adb', 'vm', 'volatile matter']);
+              const fc = getRRCellValue(rowVals, ['fc %', 'fc', 'fixed carbon']);
+              const gcvAdb = getRRCellValue(rowVals, ['gcvadb', 'gcv adb']);
+              const gcvArb = getRRCellValue(rowVals, ['gcvarb', 'gcv arb']);
+
+              return [doNo, rrNo, tm, im, ash, vm, fc, gcvAdb, gcvArb, '0'];
+            });
+          } 
+          else if (sectionName === 'Deduction & Penalty') {
+            headers = ['do no', 'rr no', 'dead freight', 'punitive', 'dc', 'shortage', 'quality slippage', 'railway leakage', 'final deduction'];
+            rows = dataRows.map(rowVals => {
+              const rrNo = getRRCellValue(rowVals, ['rr no', 'rr number', 'rr_no']);
+              const deadFreight = getRRCellValue(rowVals, ['dead freight']);
+              const punitive = getRRCellValue(rowVals, ['punitive']);
+              const dc = getRRCellValue(rowVals, ['dc']);
+              const dfNum = parseFloat(deadFreight) || 0;
+              const punNum = parseFloat(punitive) || 0;
+              const dcNum = parseFloat(dc) || 0;
+              const finalDeduction = dfNum + punNum + dcNum;
+
+              return [doNo, rrNo, deadFreight, punitive, dc, '0', '0', '0', String(finalDeduction)];
+            });
+          }
+        } 
+        else if (sectionName === 'Billing & Payment') {
+          const billHeaderIdx = nonEmptyRows.findIndex(row => row[0] && normalizeHeader(row[0]) === 'slno');
+
+          if (billHeaderIdx === -1) {
+            throw new Error('Could not find Billing table in the reconciliation sheet.');
+          }
+
+          headers = ['do no', 'bill no', 'bill date', 'bill qty', 'bill amount', 'tds', 'advance paid', 'final payable', 'remarks'];
+          rows = [];
+
+          for (let rIdx = billHeaderIdx + 1; rIdx < nonEmptyRows.length; rIdx++) {
+            const row = nonEmptyRows[rIdx];
+            const firstCol = String(row[0] || '').trim();
+            if (firstCol && normalizeHeader(firstCol) === 'total') {
+              break;
+            }
+            const slNo = firstCol;
+            const billNo = String(row[1] || '').trim();
+            if (slNo && billNo) {
+              const billDate = String(row[2] || '').trim();
+              const billQty = String(row[3] || '').trim();
+              const billAmount = String(row[4] || '').trim();
+              const tds = String(row[5] || '').trim();
+              const advancePaid = String(row[6] || '').trim();
+              const finalPayable = String(row[9] || '').trim();
+
+              rows.push([doNo, billNo, billDate, billQty, billAmount, tds, advancePaid, finalPayable, '']);
+            }
+          }
+        } else {
+          throw new Error('Unsupported section for unified reconciliation sheet import.');
         }
       } else {
-        headers = Array.from({ length: maxColumns }, (_, idx) => row0[idx] || `Column ${idx + 1}`);
-      }
+        const maxColumns = Math.max(...nonEmptyRows.map(row => row.length));
+        const row1 = nonEmptyRows[1] || [];
+        
+        const isSubHeaderRow = row1.some(val => {
+          const v = String(val).toLowerCase();
+          return v === 'from' || v === 'to' || v.includes('validity') || v.includes('upto') || v === 'till';
+        });
 
-      // Validate headers against expected section columns
-      const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const expectedAliases = SECTION_COLUMN_ALIASES[sectionName] || [];
-      if (expectedAliases.length > 0) {
-        const normalizedExpected = expectedAliases.map(normalizeHeader);
-        const normalizedExcelHeaders = headers.map(normalizeHeader);
-        const hasAnyMatch = normalizedExcelHeaders.some(h => normalizedExpected.includes(h));
-        if (!hasAnyMatch) {
-          throw new Error('The file structure or data is incorrect for this section.');
+        let startRowIndex = 1;
+
+        if (isSubHeaderRow) {
+          startRowIndex = 2; // skips the sub-header row as data
+          let lastParentHeader = '';
+          for (let idx = 0; idx < maxColumns; idx++) {
+            const parent = (row0[idx] || '').trim();
+            const child = (row1[idx] || '').trim();
+            
+            if (parent) {
+              lastParentHeader = parent;
+            }
+            
+            let combined = '';
+            if (lastParentHeader && child) {
+              if (child.toLowerCase() === lastParentHeader.toLowerCase()) {
+                combined = lastParentHeader;
+              } else {
+                combined = `${lastParentHeader} ${child}`;
+              }
+            } else {
+              combined = child || lastParentHeader || `Column ${idx + 1}`;
+            }
+            headers.push(combined);
+          }
+        } else {
+          headers = Array.from({ length: maxColumns }, (_, idx) => row0[idx] || `Column ${idx + 1}`);
         }
-      }
 
-      const rows = nonEmptyRows.slice(startRowIndex).map(row => headers.map((_, idx) => row[idx] || ''));
+        // Validate headers against expected section columns
+        const expectedAliases = SECTION_COLUMN_ALIASES[sectionName] || [];
+        if (expectedAliases.length > 0) {
+          const normalizedExpected = expectedAliases.map(normalizeHeader);
+          const normalizedExcelHeaders = headers.map(normalizeHeader);
+          const hasAnyMatch = normalizedExcelHeaders.some(h => normalizedExpected.includes(h));
+          if (!hasAnyMatch) {
+            throw new Error('The file structure or data is incorrect for this section.');
+          }
+        }
+
+        rows = nonEmptyRows.slice(startRowIndex).map(row => headers.map((_, idx) => row[idx] || ''));
+      }
 
       const importedSheet: ImportedSheet = {
         id: `${Date.now()}-${file.name}`,
