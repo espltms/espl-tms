@@ -16,27 +16,12 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../do-master/page';
-import { RREntryRecord } from '../rr-entry/page';
+import { DOMasterRecord, RREntryRecord, QualityTrackingRecord } from '../types';
 
 const QUALITY_TRACKING_KEY = 'tms_coal_quality_tracking';
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
-
-export interface QualityTrackingRecord {
-  id: string;
-  doNo: string;
-  rrNo: string;
-  tm: number; // Total Moisture
-  im: number; // Inherent Moisture
-  ash: number; // Ash
-  vm: number; // Volatile Matter
-  fc: number; // Fixed Carbon
-  gcvAdb: number; // GCV Air Dried Basis
-  gcvArb: number; // GCV As Received Basis
-  qualityPenalty: number;
-}
 
 type ImportedSheet = {
   id: string;

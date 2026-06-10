@@ -18,26 +18,11 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../do-master/page';
+import { DOMasterRecord, RREntryRecord } from '../types';
 
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
-
-export interface RREntryRecord {
-  id: string;
-  doNo: string;
-  siding: string;
-  rrNo: string;
-  rrDate: string;
-  loadingDate: string;
-  receiptDate: string;
-  rrActQty: number;
-  rrChQty: number;
-  vllQty: number;
-  grnQty: number;
-  normalisedQty: number;
-}
 
 type ImportedSheet = {
   id: string;

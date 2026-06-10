@@ -20,11 +20,7 @@ import {
 } from 'lucide-react';
 import { readLocalValue } from '@/lib/syncedStorage';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../do-master/page';
-import { RREntryRecord } from '../rr-entry/page';
-import { QualityTrackingRecord } from '../quality-tracking/page';
-import { DeductionPenaltyRecord } from '../deduction-penalty/page';
-import { BillingPaymentRecord } from '../billing-payment/page';
+import { DOMasterRecord, RREntryRecord, QualityTrackingRecord, DeductionPenaltyRecord, BillingPaymentRecord } from '../types';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';

@@ -16,28 +16,13 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../do-master/page';
-import { RREntryRecord } from '../rr-entry/page';
-import { QualityTrackingRecord } from '../quality-tracking/page';
+import { DOMasterRecord, RREntryRecord, QualityTrackingRecord, DeductionPenaltyRecord } from '../types';
 
 const DEDUCTION_PENALTY_KEY = 'tms_coal_deduction_penalty';
 const QUALITY_TRACKING_KEY = 'tms_coal_quality_tracking';
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
-
-export interface DeductionPenaltyRecord {
-  id: string;
-  doNo: string;
-  rrNo: string;
-  deadFreight: number;
-  punitive: number;
-  dc: number; // Demurrage Charges
-  shortage: number;
-  qualitySlippage: number; // Pre-filled from Quality Tracking
-  railwayLeakage: number;
-  finalDeduction: number; // Sum of all above
-}
 
 type ImportedSheet = {
   id: string;

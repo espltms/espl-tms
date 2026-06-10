@@ -18,23 +18,10 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import { DOMasterRecord } from '../types';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
-
-export interface DOMasterRecord {
-  id: string;
-  doNo: string;
-  poNo: string;
-  siding: string;
-  mines: string;
-  coalCompany: string;
-  doQty: number;
-  coalType: string;
-  startDate: string;
-  endDate: string;
-  status: 'Active' | 'Completed' | 'Cancelled';
-}
 
 type ImportedSheet = {
   id: string;

@@ -17,24 +17,11 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../do-master/page';
+import { DOMasterRecord, BillingPaymentRecord } from '../types';
 
 const BILLING_PAYMENT_KEY = 'tms_coal_billing_payment';
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
-
-export interface BillingPaymentRecord {
-  id: string;
-  doNo: string;
-  billNo: string;
-  billDate: string;
-  billQty: number;
-  billAmount: number;
-  tds: number;
-  advancePaid: number;
-  finalPayable: number;
-  remarks: string;
-}
 
 type ImportedSheet = {
   id: string;
