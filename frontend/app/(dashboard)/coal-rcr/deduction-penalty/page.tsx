@@ -83,24 +83,24 @@ export default function DeductionPenaltyPage() {
         const doData = await doRes.json();
 
         if (dpData.success && qData.success && rrData.success && doData.success) {
-          setRecords(dpData.data);
-          setQualityRecords(qData.data);
-          setRrRecords(rrData.data);
-          setDoRecords(doData.data);
-          localStorage.setItem(DEDUCTION_PENALTY_KEY, JSON.stringify(dpData.data));
-          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data));
-          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
-          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+          setRecords(dpData.data || []);
+          setQualityRecords(qData.data || []);
+          setRrRecords(rrData.data || []);
+          setDoRecords(doData.data || []);
+          localStorage.setItem(DEDUCTION_PENALTY_KEY, JSON.stringify(dpData.data || []));
+          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data || []));
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data || []));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
         }
       } else {
         const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
         const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
         const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
         const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(localDeductions);
-        setQualityRecords(localQualities);
-        setRrRecords(localRRs);
-        setDoRecords(localDOs);
+        setRecords(localDeductions || []);
+        setQualityRecords(localQualities || []);
+        setRrRecords(localRRs || []);
+        setDoRecords(localDOs || []);
       }
     } catch (e) {
       console.error("Error fetching Deduction records:", e);
@@ -108,10 +108,10 @@ export default function DeductionPenaltyPage() {
       const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(localDeductions);
-      setQualityRecords(localQualities);
-      setRrRecords(localRRs);
-      setDoRecords(localDOs);
+      setRecords(localDeductions || []);
+      setQualityRecords(localQualities || []);
+      setRrRecords(localRRs || []);
+      setDoRecords(localDOs || []);
     } finally {
       setLoading(false);
     }
@@ -213,7 +213,8 @@ export default function DeductionPenaltyPage() {
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
     if (!form.doNo) return [];
-    return rrRecords.filter(rr => rr.doNo === form.doNo);
+    const safeRRs = rrRecords || [];
+    return safeRRs.filter(rr => rr && rr.doNo === form.doNo);
   }, [form.doNo, rrRecords]);
 
   // Pre-fill Quality Slippage and Auto-calculate Final Deduction
@@ -260,7 +261,8 @@ export default function DeductionPenaltyPage() {
 
   // Handle DO change
   const handleDOChange = (doNo: string) => {
-    const rrs = rrRecords.filter(rr => rr.doNo === doNo);
+    const safeRRs = rrRecords || [];
+    const rrs = safeRRs.filter(rr => rr && rr.doNo === doNo);
     const firstRR = rrs[0]?.rrNo || '';
     
     setForm(prev => ({
@@ -284,7 +286,9 @@ export default function DeductionPenaltyPage() {
 
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const safeRecords = records || [];
+    return safeRecords.filter(r => {
+      if (!r) return false;
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase());
@@ -303,10 +307,11 @@ export default function DeductionPenaltyPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalCount = records.length;
-    const totalDeduction = records.reduce((acc, r) => acc + Number(r.finalDeduction), 0);
-    const shortageDeduction = records.reduce((acc, r) => acc + Number(r.shortage), 0);
-    const qualityDeduction = records.reduce((acc, r) => acc + Number(r.qualitySlippage), 0);
+    const safeRecords = records || [];
+    const totalCount = safeRecords.length;
+    const totalDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.finalDeduction) : 0), 0);
+    const shortageDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.shortage) : 0), 0);
+    const qualityDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.qualitySlippage) : 0), 0);
     
     return { totalCount, totalDeduction, shortageDeduction, qualityDeduction };
   }, [records]);

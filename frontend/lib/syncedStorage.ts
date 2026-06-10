@@ -12,7 +12,9 @@ export const readLocalValue = <T>(key: string, fallback: T): T => {
     const isRegAdmin = user?.role === 'REGION_ADMIN';
     if (isRegAdmin) return fallback;
     const saved = window.localStorage.getItem(key);
-    return saved ? JSON.parse(saved) as T : fallback;
+    if (!saved || saved === 'null' || saved === 'undefined') return fallback;
+    const parsed = JSON.parse(saved);
+    return parsed === null || parsed === undefined ? fallback : parsed as T;
   } catch {
     return fallback;
   }

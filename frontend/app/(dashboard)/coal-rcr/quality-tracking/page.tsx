@@ -80,29 +80,29 @@ export default function QualityTrackingPage() {
         const doData = await doRes.json();
 
         if (qData.success && rrData.success && doData.success) {
-          setRecords(qData.data);
-          setRrRecords(rrData.data);
-          setDoRecords(doData.data);
-          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data));
-          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
-          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+          setRecords(qData.data || []);
+          setRrRecords(rrData.data || []);
+          setDoRecords(doData.data || []);
+          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data || []));
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data || []));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
         }
       } else {
         const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
         const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
         const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(localQualities);
-        setRrRecords(localRRs);
-        setDoRecords(localDOs);
+        setRecords(localQualities || []);
+        setRrRecords(localRRs || []);
+        setDoRecords(localDOs || []);
       }
     } catch (e) {
       console.error("Error fetching Quality records:", e);
       const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(localQualities);
-      setRrRecords(localRRs);
-      setDoRecords(localDOs);
+      setRecords(localQualities || []);
+      setRrRecords(localRRs || []);
+      setDoRecords(localDOs || []);
     } finally {
       setLoading(false);
     }
@@ -192,12 +192,14 @@ export default function QualityTrackingPage() {
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
     if (!form.doNo) return [];
-    return rrRecords.filter(rr => rr.doNo === form.doNo);
+    const safeRRs = rrRecords || [];
+    return safeRRs.filter(rr => rr && rr.doNo === form.doNo);
   }, [form.doNo, rrRecords]);
 
   // Handle DO selection
   const handleDOChange = (doNo: string) => {
-    const rrs = rrRecords.filter(rr => rr.doNo === doNo);
+    const safeRRs = rrRecords || [];
+    const rrs = safeRRs.filter(rr => rr && rr.doNo === doNo);
     setForm(prev => ({
       ...prev,
       doNo,
@@ -207,7 +209,9 @@ export default function QualityTrackingPage() {
 
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const safeRecords = records || [];
+    return safeRecords.filter(r => {
+      if (!r) return false;
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase());
@@ -226,18 +230,19 @@ export default function QualityTrackingPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalCount = records.length;
+    const safeRecords = records || [];
+    const totalCount = safeRecords.length;
     
     // Average GCV ADB and ARB
-    const countWithGCV = records.filter(r => r.gcvAdb > 0).length;
+    const countWithGCV = safeRecords.filter(r => r && r.gcvAdb > 0).length;
     const avgGcvAdb = countWithGCV > 0
-      ? Math.round(records.reduce((acc, r) => acc + Number(r.gcvAdb), 0) / countWithGCV)
+      ? Math.round(safeRecords.reduce((acc, r) => acc + (r ? Number(r.gcvAdb) : 0), 0) / countWithGCV)
       : 0;
     const avgGcvArb = countWithGCV > 0
-      ? Math.round(records.reduce((acc, r) => acc + Number(r.gcvArb), 0) / countWithGCV)
+      ? Math.round(safeRecords.reduce((acc, r) => acc + (r ? Number(r.gcvArb) : 0), 0) / countWithGCV)
       : 0;
       
-    const totalPenalty = records.reduce((acc, r) => acc + Number(r.qualityPenalty), 0);
+    const totalPenalty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.qualityPenalty) : 0), 0);
     
     return { totalCount, avgGcvAdb, avgGcvArb, totalPenalty };
   }, [records]);

@@ -158,23 +158,23 @@ export default function BillingPaymentPage() {
         const doData = await doRes.json();
 
         if (bpData.success && doData.success) {
-          setRecords(bpData.data);
-          setDoRecords(doData.data);
-          localStorage.setItem(BILLING_PAYMENT_KEY, JSON.stringify(bpData.data));
-          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+          setRecords(bpData.data || []);
+          setDoRecords(doData.data || []);
+          localStorage.setItem(BILLING_PAYMENT_KEY, JSON.stringify(bpData.data || []));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
         }
       } else {
         const localBillings = readLocalValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
         const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(localBillings);
-        setDoRecords(localDOs);
+        setRecords(localBillings || []);
+        setDoRecords(localDOs || []);
       }
     } catch (e) {
       console.error("Error fetching Billing records:", e);
       const localBillings = readLocalValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(localBillings);
-      setDoRecords(localDOs);
+      setRecords(localBillings || []);
+      setDoRecords(localDOs || []);
     } finally {
       setLoading(false);
     }
@@ -282,7 +282,9 @@ export default function BillingPaymentPage() {
 
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const safeRecords = records || [];
+    return safeRecords.filter(r => {
+      if (!r) return false;
       const matchesSearch = 
         r.billNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
@@ -302,10 +304,11 @@ export default function BillingPaymentPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalCount = records.length;
-    const totalBilled = records.reduce((acc, r) => acc + Number(r.billAmount), 0);
-    const totalAdvance = records.reduce((acc, r) => acc + Number(r.advancePaid), 0);
-    const totalPayable = records.reduce((acc, r) => acc + Number(r.finalPayable), 0);
+    const safeRecords = records || [];
+    const totalCount = safeRecords.length;
+    const totalBilled = safeRecords.reduce((acc, r) => acc + (r ? Number(r.billAmount) : 0), 0);
+    const totalAdvance = safeRecords.reduce((acc, r) => acc + (r ? Number(r.advancePaid) : 0), 0);
+    const totalPayable = safeRecords.reduce((acc, r) => acc + (r ? Number(r.finalPayable) : 0), 0);
     
     return { totalCount, totalBilled, totalAdvance, totalPayable };
   }, [records]);

@@ -161,23 +161,23 @@ export default function RREntryPage() {
         const doData = await doRes.json();
 
         if (rrData.success && doData.success) {
-          setRecords(rrData.data);
-          setDoRecords(doData.data);
-          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
-          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+          setRecords(rrData.data || []);
+          setDoRecords(doData.data || []);
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data || []));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
         }
       } else {
         const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
         const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(localRRs);
-        setDoRecords(localDOs);
+        setRecords(localRRs || []);
+        setDoRecords(localDOs || []);
       }
     } catch (e) {
       console.error("Error fetching RR records:", e);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(localRRs);
-      setDoRecords(localDOs);
+      setRecords(localRRs || []);
+      setDoRecords(localDOs || []);
     } finally {
       setLoading(false);
     }
@@ -295,7 +295,9 @@ export default function RREntryPage() {
 
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const safeRecords = records || [];
+    return safeRecords.filter(r => {
+      if (!r) return false;
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
@@ -315,9 +317,10 @@ export default function RREntryPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalCount = records.length;
-    const totalGrnQty = records.reduce((acc, r) => acc + Number(r.grnQty), 0);
-    const totalNormQty = records.reduce((acc, r) => acc + Number(r.normalisedQty), 0);
+    const safeRecords = records || [];
+    const totalCount = safeRecords.length;
+    const totalGrnQty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.grnQty) : 0), 0);
+    const totalNormQty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.normalisedQty) : 0), 0);
     
     return { totalCount, totalGrnQty, totalNormQty };
   }, [records]);

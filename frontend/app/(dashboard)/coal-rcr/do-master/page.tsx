@@ -152,19 +152,19 @@ export default function DOMasterPage() {
       if (response.ok) {
         const res = await response.json();
         if (res.success) {
-          setRecords(res.data);
-          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(res.data));
+          setRecords(res.data || []);
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(res.data || []));
         } else {
           throw new Error(res.error || 'Fetch failed');
         }
       } else {
         const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(local);
+        setRecords(local || []);
       }
     } catch (e) {
       console.error("Error fetching DO records:", e);
       const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(local);
+      setRecords(local || []);
     } finally {
       setLoading(false);
     }
@@ -267,7 +267,9 @@ export default function DOMasterPage() {
 
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const safeRecords = records || [];
+    return safeRecords.filter(r => {
+      if (!r) return false;
       const matchesSearch = 
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.poNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
@@ -289,10 +291,11 @@ export default function DOMasterPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalCount = records.length;
-    const activeCount = records.filter(r => r.status === 'Active').length;
-    const totalQty = records.reduce((acc, r) => acc + Number(r.doQty), 0);
-    const activeQty = records.filter(r => r.status === 'Active').reduce((acc, r) => acc + Number(r.doQty), 0);
+    const safeRecords = records || [];
+    const totalCount = safeRecords.length;
+    const activeCount = safeRecords.filter(r => r && r.status === 'Active').length;
+    const totalQty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
+    const activeQty = safeRecords.filter(r => r && r.status === 'Active').reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
     
     return { totalCount, activeCount, totalQty, activeQty };
   }, [records]);
