@@ -133,6 +133,7 @@ export default function RREntryPage() {
   const [editingRecord, setEditingRecord] = useState<RREntryRecord | null>(null);
   
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id?: string; ids?: string[] } | null>(null);
 
   useEffect(() => {
     if (toast) {
@@ -349,7 +350,7 @@ export default function RREntryPage() {
   // Open Modal for Add
   const handleOpenAdd = () => {
     if (doRecords.length === 0) {
-      alert("Please add at least one Delivery Order in the DO Master before creating an RR Entry!");
+      setToast({ message: "Please add at least one Delivery Order in the DO Master before creating an RR Entry!", type: 'error' });
       return;
     }
     setEditingRecord(null);
@@ -392,7 +393,7 @@ export default function RREntryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.rrNo || !form.grnQty) {
-      alert("Please fill in all required fields (DO No, RR No, GRN Qty)");
+      setToast({ message: "Please fill in all required fields (DO No, RR No, GRN Qty)", type: 'error' });
       return;
     }
 
@@ -424,7 +425,7 @@ export default function RREntryPage() {
 
       if (!response.ok) {
         const errData = await response.json();
-        alert(errData.error || "Failed to save RR record.");
+        setToast({ message: errData.error || "Failed to save RR record.", type: 'error' });
         return;
       }
 
@@ -435,33 +436,32 @@ export default function RREntryPage() {
       }
     } catch (error) {
       console.error("Error saving RR record:", error);
-      alert("An error occurred while saving the RR record.");
+      setToast({ message: "An error occurred while saving the RR record.", type: 'error' });
     }
   };
 
   // Delete Handler
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this RR Entry?")) return;
+  const executeSingleDelete = async (id: string) => {
     try {
       const token = localStorage.getItem('tms_token');
       const response = await fetch(`/api/coal-rcr/rr-entry?id=${id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!response.ok) {
+      if (response.ok) {
+        setToast({ message: "RR record successfully deleted.", type: 'success' });
+        fetchData();
+      } else {
         const errData = await response.json();
-        alert(errData.error || "Failed to delete RR record.");
-        return;
+        setToast({ message: errData.error || "Failed to delete RR record.", type: 'error' });
       }
-      fetchData();
     } catch (error) {
       console.error("Error deleting RR record:", error);
-      alert("An error occurred while deleting the RR record.");
+      setToast({ message: "An error occurred while deleting the RR record.", type: 'error' });
     }
   };
 
-  const deleteSelected = async () => {
-    if (!confirm(`Are you sure you want to delete these ${selectedIds.length} RR records?`)) return;
+  const executeBulkDelete = async (ids: string[]) => {
     setLoading(true);
     const token = localStorage.getItem('tms_token');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -469,7 +469,7 @@ export default function RREntryPage() {
     let failCount = 0;
 
     try {
-      await Promise.all(selectedIds.map(async (id) => {
+      await Promise.all(ids.map(async (id) => {
         try {
           const response = await fetch(`/api/coal-rcr/rr-entry?id=${id}`, {
             method: 'DELETE',
@@ -484,20 +484,75 @@ export default function RREntryPage() {
           failCount++;
         }
       }));
-      alert(`Bulk delete completed: ${successCount} RR records deleted, ${failCount} failed.`);
+      setToast({
+        message: `Bulk delete completed: ${successCount} RR records deleted, ${failCount} failed.`,
+        type: failCount > 0 ? 'info' : 'success'
+      });
       setSelectedIds([]);
       setIsDeleteMode(false);
       fetchData();
     } catch (error) {
       console.error("Error in bulk delete:", error);
-      alert("An error occurred during bulk delete.");
+      setToast({ message: "An error occurred during bulk delete.", type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = (id: string) => {
+    setDeleteConfirm({ id });
+  };
+
+  const handleBulkDelete = () => {
+    setDeleteConfirm({ ids: selectedIds });
+  };
+
   return (
     <div className="space-y-8 animate-fade-in text-slate-700">
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl flex flex-col gap-4 animate-scale-in">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="rounded-full bg-red-50 p-2">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-sans">
+                Confirm Deletion
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans font-semibold">
+              {deleteConfirm.ids 
+                ? `Are you sure you want to delete these ${deleteConfirm.ids.length} records? This action is permanent and cannot be undone.`
+                : "Are you sure you want to delete this record? This action is permanent and cannot be undone."
+              }
+            </p>
+            <div className="flex justify-end gap-2 mt-2 font-sans">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const target = deleteConfirm;
+                  setDeleteConfirm(null);
+                  if (target.ids) {
+                    await executeBulkDelete(target.ids);
+                  } else if (target.id) {
+                    await executeSingleDelete(target.id);
+                  }
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-red-700 active:scale-[0.98] transition-all shadow-sm"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
@@ -600,7 +655,7 @@ export default function RREntryPage() {
                 <>
                   {selectedIds.length > 0 && (
                     <button
-                      onClick={deleteSelected}
+                      onClick={handleBulkDelete}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

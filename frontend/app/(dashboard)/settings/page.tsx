@@ -79,6 +79,7 @@ export default function SettingsPage() {
   const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name?: string; type: 'ROLE' | 'USER' } | null>(null);
 
   // Custom Roles State
   const [customRoles, setCustomRoles] = useState<Array<{ id: string; name: string; routes: string[] }>>([]);
@@ -167,8 +168,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteRole = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the role ${name}? Users with this role may lose access.`)) return;
+  const executeDeleteRole = async (id: string, name: string) => {
     setRoleActionError('');
     setRoleActionSuccess('');
     try {
@@ -185,8 +185,12 @@ export default function SettingsPage() {
       setRoleActionSuccess(`Role ${name} deleted successfully.`);
       fetchCustomRoles();
     } catch (err: any) {
-      alert(err.message);
+      setRoleActionError(err.message || 'An error occurred during role deletion.');
     }
+  };
+
+  const handleDeleteRole = (id: string, name: string) => {
+    setDeleteConfirm({ id, name, type: 'ROLE' });
   };
 
   const fetchUsers = async () => {
@@ -260,9 +264,9 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user account?')) return;
-    
+  const executeDeleteUser = async (userId: string) => {
+    setError('');
+    setSuccess('');
     try {
       const response = await fetch(`/api/auth/register?id=${userId}`, {
         method: 'DELETE',
@@ -279,8 +283,12 @@ export default function SettingsPage() {
       setSuccess('User account deleted successfully.');
       fetchUsers();
     } catch (err: any) {
-      alert(err.message);
+      setError(err.message || 'An error occurred during user deletion.');
     }
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setDeleteConfirm({ id: userId, type: 'USER' });
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -325,6 +333,50 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl flex flex-col gap-4 animate-scale-in">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="rounded-full bg-red-50 p-2">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-sans">
+                Confirm Deletion
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans font-semibold">
+              {deleteConfirm.type === 'ROLE'
+                ? `Are you sure you want to delete the role ${deleteConfirm.name}? Users with this role may lose access.`
+                : "Are you sure you want to delete this user account? This action is permanent and cannot be undone."
+              }
+            </p>
+            <div className="flex justify-end gap-2 mt-2 font-sans text-xs">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const target = deleteConfirm;
+                  setDeleteConfirm(null);
+                  if (target.type === 'ROLE') {
+                    executeDeleteRole(target.id, target.name || '');
+                  } else {
+                    executeDeleteUser(target.id);
+                  }
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2.5 font-bold text-white hover:bg-red-700 active:scale-[0.98] transition-all shadow-sm"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">System Configuration & Settings</h2>

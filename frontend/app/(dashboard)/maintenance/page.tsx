@@ -15,7 +15,9 @@ import {
   ClipboardList,
   TrendingUp,
   Percent,
-  CheckCircle
+  CheckCircle,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { getTrucks, TruckData } from '@/app/data/dataHelper';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
@@ -65,6 +67,15 @@ const TYRE_WORKSHOP_KEY = 'tms_tyre_workshop_entries';
 export default function MaintenancePage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'REPAIR_MAINTENANCE' | 'TYRE_WORKSHOP'>('REPAIR_MAINTENANCE');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'REPAIR' | 'TYRE' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
   
   const [trucks, setTrucks] = useState<TruckData[]>(() => getTrucks());
   const [assignedTrips, setAssignedTrips] = useState<any[]>([]);
@@ -231,7 +242,7 @@ export default function MaintenancePage() {
     }
 
     if (!finalVehicleNo) {
-      alert('Please specify a valid Vehicle Number.');
+      setToast({ message: 'Please specify a valid Vehicle Number.', type: 'error' });
       return;
     }
 
@@ -260,6 +271,7 @@ export default function MaintenancePage() {
     setRepairEntries(updated);
     saveSyncedValue(REPAIR_MAINTENANCE_KEY, updated);
     setRepairModalOpen(false);
+    setToast({ message: "Repair entry saved successfully.", type: 'success' });
 
     // Reset fields
     setRmCustomVehicleNo('');
@@ -291,7 +303,7 @@ export default function MaintenancePage() {
     }
 
     if (!finalVehicleNo) {
-      alert('Please specify a valid Vehicle Number.');
+      setToast({ message: 'Please specify a valid Vehicle Number.', type: 'error' });
       return;
     }
 
@@ -314,6 +326,7 @@ export default function MaintenancePage() {
     setTyreEntries(updated);
     saveSyncedValue(TYRE_WORKSHOP_KEY, updated);
     setTyreModalOpen(false);
+    setToast({ message: "Tyre activity entry saved successfully.", type: 'success' });
 
     // Reset fields
     setTyreCustomVehicleNo('');
@@ -324,20 +337,26 @@ export default function MaintenancePage() {
     setTyreCost('');
   };
 
+  const executeDeleteRepair = (id: string) => {
+    const updated = repairEntries.filter(e => e.id !== id);
+    setRepairEntries(updated);
+    saveSyncedValue(REPAIR_MAINTENANCE_KEY, updated);
+    setToast({ message: "Repair entry successfully deleted.", type: 'success' });
+  };
+
+  const executeDeleteTyre = (id: string) => {
+    const updated = tyreEntries.filter(e => e.id !== id);
+    setTyreEntries(updated);
+    saveSyncedValue(TYRE_WORKSHOP_KEY, updated);
+    setToast({ message: "Tyre activity entry successfully deleted.", type: 'success' });
+  };
+
   const handleDeleteRepair = (id: string) => {
-    if (confirm('Are you sure you want to delete this repair ledger entry?')) {
-      const updated = repairEntries.filter(e => e.id !== id);
-      setRepairEntries(updated);
-      saveSyncedValue(REPAIR_MAINTENANCE_KEY, updated);
-    }
+    setDeleteConfirm({ id, type: 'REPAIR' });
   };
 
   const handleDeleteTyre = (id: string) => {
-    if (confirm('Are you sure you want to delete this tyre worklog entry?')) {
-      const updated = tyreEntries.filter(e => e.id !== id);
-      setTyreEntries(updated);
-      saveSyncedValue(TYRE_WORKSHOP_KEY, updated);
-    }
+    setDeleteConfirm({ id, type: 'TYRE' });
   };
 
   const formatCurrency = (val: number) => {
@@ -346,6 +365,47 @@ export default function MaintenancePage() {
 
   return (
     <div className="space-y-8 animate-fade-in text-xs font-sans">
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl flex flex-col gap-4 animate-scale-in">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="rounded-full bg-red-50 p-2">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-sans">
+                Confirm Deletion
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans font-semibold">
+              Are you sure you want to delete this {deleteConfirm.type === 'REPAIR' ? 'repair ledger entry' : 'tyre worklog entry'}? This action is permanent and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 mt-2 font-sans">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const target = deleteConfirm;
+                  setDeleteConfirm(null);
+                  if (target.type === 'REPAIR') {
+                    executeDeleteRepair(target.id);
+                  } else {
+                    executeDeleteTyre(target.id);
+                  }
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-red-700 active:scale-[0.98] transition-all shadow-sm"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Header and top tab switcher */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1156,6 +1216,33 @@ export default function MaintenancePage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl animate-slide-in max-w-md ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-amber-500/20 bg-amber-50/95 text-amber-950'
+        } backdrop-blur-md`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 font-bold" />
+          ) : toast.type === 'error' ? (
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+          ) : (
+            <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider">
+              {toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status'}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="rounded-lg p-1 hover:bg-black/5 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
