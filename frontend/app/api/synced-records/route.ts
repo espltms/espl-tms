@@ -13,7 +13,12 @@ const SHARED_KEYS = [
   'tms_custom_roles',
   'tms_fleet_master',
   'tms_vendor_profiles',
-  'tms_subvendor_profiles'
+  'tms_subvendor_profiles',
+  'tms_coal_do_master',
+  'tms_coal_rr_entry',
+  'tms_coal_quality_tracking',
+  'tms_coal_deduction_penalty',
+  'tms_coal_billing_payment'
 ];
 
 const isUserAdmin = (role: string) => 
