@@ -120,6 +120,8 @@ export default function DOMasterPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -402,6 +404,42 @@ export default function DOMasterPage() {
     }
   };
 
+  const deleteSelected = async () => {
+    if (!confirm(`Are you sure you want to delete these ${selectedIds.length} DO records?`)) return;
+    setLoading(true);
+    const token = localStorage.getItem('tms_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      await Promise.all(selectedIds.map(async (id) => {
+        try {
+          const response = await fetch(`/api/coal-rcr/do-master?id=${id}`, {
+            method: 'DELETE',
+            headers
+          });
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      }));
+      alert(`Bulk delete completed: ${successCount} DO records deleted, ${failCount} failed.`);
+      setSelectedIds([]);
+      setIsDeleteMode(false);
+      fetchData();
+    } catch (error) {
+      console.error("Error in bulk delete:", error);
+      alert("An error occurred during bulk delete.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in text-slate-700">
       {/* Header */}
@@ -508,12 +546,68 @@ export default function DOMasterPage() {
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-blue-600" /> DO Registries ({filteredRecords.length})
           </h3>
+          {user?.role?.endsWith('_ADMIN') && (
+            <div className="flex items-center gap-2">
+              {isDeleteMode ? (
+                <>
+                  {selectedIds.length > 0 && (
+                    <button
+                      onClick={deleteSelected}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete Selected ({selectedIds.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsDeleteMode(false);
+                      setSelectedIds([]);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsDeleteMode(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  Select to Delete
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                {isDeleteMode && (
+                  <th className="w-10 px-5 py-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedIds.includes(r.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSelections = [...selectedIds];
+                          paginatedRecords.forEach(r => {
+                            if (!newSelections.includes(r.id)) {
+                              newSelections.push(r.id);
+                            }
+                          });
+                          setSelectedIds(newSelections);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => !paginatedRecords.some(r => r.id === id)));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">DO No</th>
                 <th className="px-5 py-4">PO No</th>
@@ -530,7 +624,7 @@ export default function DOMasterPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching delivery orders...
                     </span>
@@ -538,13 +632,29 @@ export default function DOMasterPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No DO records found.
                   </td>
                 </tr>
               ) : (
                 paginatedRecords.map((r, idx) => (
-                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
+                    {isDeleteMode && (
+                      <td className="w-10 px-5 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(r.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds([...selectedIds, r.id]);
+                            } else {
+                              setSelectedIds(selectedIds.filter(id => id !== r.id));
+                            }
+                          }}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="px-5 py-4 font-bold text-slate-400 text-center">
                       {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
                     </td>
