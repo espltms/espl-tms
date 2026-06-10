@@ -29,7 +29,10 @@ import {
   Fuel,
   Database,
   Sun,
-  Moon
+  Moon,
+  FileText,
+  ClipboardList,
+  Activity
 } from 'lucide-react';
 
 const navigationDivisions = [
@@ -40,6 +43,17 @@ const navigationDivisions = [
       { label: 'Trip Dispatch & Loading', path: '/trips', icon: Truck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Unloading Vehicle', path: '/unloading', icon: PackageOpen, roles: ['SYS_ADMIN', 'DISPATCHER'] },
       { label: 'Completed Trips', path: '/completed-trips', icon: PackageCheck, roles: ['SYS_ADMIN', 'DISPATCHER'] },
+    ]
+  },
+  {
+    title: "Coal RCR Transportation",
+    items: [
+      { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'RR Entry', path: '/coal-rcr/rr-entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Quality Tracking', path: '/coal-rcr/quality-tracking', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Deduction / Penalty', path: '/coal-rcr/deduction-penalty', icon: Scale, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Billing/ Payment', path: '/coal-rcr/billing-payment', icon: BadgeCent, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'Summary Dashboard', path: '/coal-rcr/summary-dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
     ]
   },
   {
