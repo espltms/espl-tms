@@ -13,6 +13,9 @@ import {
   Layers
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { DOMasterRecord } from '../do-master/page';
 import { RREntryRecord } from '../rr-entry/page';
 import { QualityTrackingRecord } from '../quality-tracking/page';
@@ -36,7 +39,16 @@ export interface DeductionPenaltyRecord {
   finalDeduction: number; // Sum of all above
 }
 
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
 export default function DeductionPenaltyPage() {
+  const { user } = useAuthStore();
   const [records, setRecords] = useState<DeductionPenaltyRecord[]>([]);
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [rrRecords, setRrRecords] = useState<RREntryRecord[]>([]);
@@ -121,6 +133,95 @@ export default function DeductionPenaltyPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  /* ── Excel import listener ── */
+  useEffect(() => {
+    const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = async (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'Deduction & Penalty') return;
+
+      setLoading(true);
+      const token = localStorage.getItem('tms_token');
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const row of detail.import.rows) {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
+        const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
+        const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
+        const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
+        const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
+        const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
+        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+
+        if (!doNo || !rrNo) {
+          errorCount++;
+          continue;
+        }
+
+        let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
+        if (!qualitySlippageStr) {
+          const matchedQuality = qualityRecords.find(q => q.rrNo.toUpperCase().trim() === rrNo);
+          qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
+        }
+
+        const deadFreight = parseFloat(deadFreightStr) || 0;
+        const punitive = parseFloat(punitiveStr) || 0;
+        const dc = parseFloat(dcStr) || 0;
+        const shortage = parseFloat(shortageStr) || 0;
+        const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
+
+        const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
+
+        const recordData = {
+          doNo,
+          rrNo,
+          deadFreight,
+          punitive,
+          dc,
+          shortage,
+          qualitySlippage,
+          railwayLeakage,
+          finalDeduction
+        };
+
+        try {
+          const response = await fetch('/api/coal-rcr/deduction-penalty', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordData)
+          });
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error("Error importing Deduction row:", error);
+          errorCount++;
+        }
+      }
+
+      alert(`Excel Import completed: ${successCount} Deduction records successfully imported, ${errorCount} failed/skipped.`);
+      fetchData();
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [records, qualityRecords]);
 
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
@@ -353,6 +454,8 @@ export default function DeductionPenaltyPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Deduction & Penalty" />}
+          <SectionExcelExport sectionName="Deduction & Penalty" />
           <button
             onClick={handleOpenAdd}
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm shrink-0"

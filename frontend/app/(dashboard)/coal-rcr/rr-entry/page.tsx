@@ -15,6 +15,9 @@ import {
   FileText
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { DOMasterRecord } from '../do-master/page';
 
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
@@ -36,7 +39,98 @@ export interface RREntryRecord {
   normalisedQty: number;
 }
 
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
+const parseDateToYYYYMMDD = (val: unknown): string => {
+  if (val === undefined || val === null) return '';
+  const str = String(val).trim();
+  if (!str || str === '-' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined') {
+    return '';
+  }
+
+  const num = Number(str);
+  if (!isNaN(num) && num > 30000 && num < 100000) {
+    const utcDate = new Date(Date.UTC(1899, 11, 30) + num * 24 * 60 * 60 * 1000);
+    const dd = String(utcDate.getUTCDate()).padStart(2, '0');
+    const mm = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = utcDate.getUTCFullYear();
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  let datePart = str;
+  if (str.includes('T')) {
+    datePart = str.split('T')[0];
+  } else {
+    const spaceParts = str.split(/\s+/);
+    if (spaceParts.length > 1 && (spaceParts[0].includes('-') || spaceParts[0].includes('/') || spaceParts[0].includes('.'))) {
+      datePart = spaceParts[0];
+    }
+  }
+
+  const clean = datePart.replace(/[/\s.]+/g, '-');
+  const parts = clean.split('-');
+
+  const formatYear = (yStr: string): string => {
+    if (yStr.length === 2) {
+      const yearNum = parseInt(yStr, 10);
+      return yearNum <= 50 ? `20${yStr.padStart(2, '0')}` : `19${yStr.padStart(2, '0')}`;
+    }
+    return yStr.padStart(4, '0');
+  };
+
+  const pad = (s: string) => s.padStart(2, '0');
+
+  if (parts.length === 3) {
+    const p0 = parts[0];
+    const p1 = parts[1];
+    const p2 = parts[2];
+
+    if (p0.length === 4) {
+      return `${p0}-${pad(p1)}-${pad(p2)}`;
+    }
+
+    if (p2.length === 4) {
+      const year = p2;
+      const val0 = parseInt(p0, 10);
+      const val1 = parseInt(p1, 10);
+
+      if (val1 >= 1 && val1 <= 12) {
+        return `${year}-${pad(p1)}-${pad(p0)}`;
+      }
+      if (val0 >= 1 && val0 <= 12) {
+        return `${year}-${pad(p0)}-${pad(p1)}`;
+      }
+      return `${year}-${pad(p1)}-${pad(p0)}`;
+    }
+
+    if (p0.length === 2 && p2.length === 2) {
+      const val0 = parseInt(p0, 10);
+      const val1 = parseInt(p1, 10);
+      const val2 = parseInt(p2, 10);
+
+      const yrA = 2000 + val2;
+      const yrB = 2000 + val0;
+      const isYrBValid = yrB >= 2015 && yrB <= 2040;
+
+      if (isYrBValid) {
+        return `${yrB}-${pad(p1)}-${pad(p2)}`;
+      } else {
+        return `${yrA}-${pad(p1)}-${pad(p0)}`;
+      }
+    }
+  }
+
+  return str;
+};
+
 export default function RREntryPage() {
+  const { user } = useAuthStore();
   const [records, setRecords] = useState<RREntryRecord[]>([]);
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,6 +199,93 @@ export default function RREntryPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  /* ── Excel import listener ── */
+  useEffect(() => {
+    const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = async (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'RR Entry') return;
+
+      setLoading(true);
+      const token = localStorage.getItem('tms_token');
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const row of detail.import.rows) {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+        const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
+        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+        const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
+        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
+        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
+        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
+        const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
+        const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
+
+        if (!doNo || !rrNo || !grnQtyStr) {
+          errorCount++;
+          continue;
+        }
+
+        if (!siding) {
+          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+          siding = matchedDO ? matchedDO.siding : '';
+        }
+
+        const grnQty = parseFloat(grnQtyStr) || 0;
+        const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
+
+        const recordData = {
+          doNo,
+          siding,
+          rrNo,
+          rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
+          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
+          receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
+          rrActQty: parseFloat(rrActQtyStr) || 0,
+          rrChQty: parseFloat(rrChQtyStr) || 0,
+          vllQty: parseFloat(vllQtyStr) || 0,
+          grnQty,
+          normalisedQty
+        };
+
+        try {
+          const response = await fetch('/api/coal-rcr/rr-entry', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordData)
+          });
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error("Error importing RR row:", error);
+          errorCount++;
+        }
+      }
+
+      alert(`Excel Import completed: ${successCount} RR records successfully imported, ${errorCount} failed/skipped.`);
+      fetchData();
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [records, doRecords]);
 
   // Auto-fill siding when DO is selected
   const handleDOChange = (doNo: string) => {
@@ -279,6 +460,8 @@ export default function RREntryPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="RR Entry" />}
+          <SectionExcelExport sectionName="RR Entry" />
           <button
             onClick={handleOpenAdd}
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm shrink-0"

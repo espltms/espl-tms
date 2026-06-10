@@ -13,6 +13,9 @@ import {
   Layers
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
+import SectionExcelImport from '@/components/SectionExcelImport';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { DOMasterRecord } from '../do-master/page';
 import { RREntryRecord } from '../rr-entry/page';
 
@@ -35,7 +38,16 @@ export interface QualityTrackingRecord {
   qualityPenalty: number;
 }
 
+type ImportedSheet = {
+  id: string;
+  fileName: string;
+  importedAt: string;
+  headers: string[];
+  rows: string[][];
+};
+
 export default function QualityTrackingPage() {
+  const { user } = useAuthStore();
   const [records, setRecords] = useState<QualityTrackingRecord[]>([]);
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [rrRecords, setRrRecords] = useState<RREntryRecord[]>([]);
@@ -112,6 +124,83 @@ export default function QualityTrackingPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  /* ── Excel import listener ── */
+  useEffect(() => {
+    const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const getCellValue = (headers: string[], row: string[], aliases: string[]) => {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      const index = headers.findIndex(header => normalizedAliases.includes(normalizeHeader(header)));
+      const value = index >= 0 ? row[index] : '';
+      return value && String(value).trim() ? String(value).trim() : '';
+    };
+
+    const handleExcelImport = async (event: Event) => {
+      const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
+      if (!detail || detail.sectionName !== 'Quality Tracking') return;
+
+      setLoading(true);
+      const token = localStorage.getItem('tms_token');
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const row of detail.import.rows) {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        const tmStr = getCellValue(detail.import.headers, row, ['tm', 'total moisture', 'tm %']);
+        const imStr = getCellValue(detail.import.headers, row, ['im', 'inherent moisture', 'im %']);
+        const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash %']);
+        const vmStr = getCellValue(detail.import.headers, row, ['vm', 'volatile matter', 'vm %']);
+        const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fixed carbon', 'fc %']);
+        const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
+        const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
+        const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
+
+        if (!doNo || !rrNo) {
+          errorCount++;
+          continue;
+        }
+
+        const recordData = {
+          doNo,
+          rrNo,
+          tm: parseFloat(tmStr) || 0,
+          im: parseFloat(imStr) || 0,
+          ash: parseFloat(ashStr) || 0,
+          vm: parseFloat(vmStr) || 0,
+          fc: parseFloat(fcStr) || 0,
+          gcvAdb: parseFloat(gcvAdbStr) || 0,
+          gcvArb: parseFloat(gcvArbStr) || 0,
+          qualityPenalty: parseFloat(qualityPenaltyStr) || 0
+        };
+
+        try {
+          const response = await fetch('/api/coal-rcr/quality-tracking', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordData)
+          });
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error("Error importing Quality row:", error);
+          errorCount++;
+        }
+      }
+
+      alert(`Excel Import completed: ${successCount} Quality records successfully imported, ${errorCount} failed/skipped.`);
+      fetchData();
+    };
+
+    window.addEventListener('tms:excel-imported', handleExcelImport);
+    return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
+  }, [records]);
 
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
@@ -296,6 +385,8 @@ export default function QualityTrackingPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Quality Tracking" />}
+          <SectionExcelExport sectionName="Quality Tracking" />
           <button
             onClick={handleOpenAdd}
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm shrink-0"

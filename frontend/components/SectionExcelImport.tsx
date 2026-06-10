@@ -98,6 +98,65 @@ const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
     'quantity', 'qty', 'litres', 'liters', 'volume',
     'rate', 'price per unit', 'rate per unit',
     'value', 'total value', 'cost', 'total cost', 'amount'
+  ],
+  'DO Master': [
+    'do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number',
+    'po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number',
+    'siding', 'siding name',
+    'mines', 'mine name', 'mine',
+    'coal company', 'coal_company', 'company',
+    'do qty', 'do quantity', 'quantity', 'qty', 'do_qty',
+    'coal type', 'coal_type',
+    'start date', 'start_date', 'validity start',
+    'end date', 'end_date', 'validity end',
+    'status'
+  ],
+  'RR Entry': [
+    'do no', 'do number', 'do_no',
+    'siding', 'siding name',
+    'rr no', 'rr number', 'rr_no', 'railway receipt',
+    'rr date', 'rr_date',
+    'loading date', 'loading_date',
+    'receipt date', 'receipt_date',
+    'rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty',
+    'rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty',
+    'vll qty', 'vll quantity', 'vll', 'vll_qty',
+    'grn qty', 'grn quantity', 'grn', 'grn_qty',
+    'normalised qty', 'normalized qty', 'normalised_qty'
+  ],
+  'Quality Tracking': [
+    'do no', 'do number', 'do_no',
+    'rr no', 'rr number', 'rr_no',
+    'tm', 'total moisture', 'tm %',
+    'im', 'inherent moisture', 'im %',
+    'ash', 'ash %',
+    'vm', 'volatile matter', 'vm %',
+    'fc', 'fixed carbon', 'fc %',
+    'gcv adb', 'gcv_adb', 'gcv adb Basis',
+    'gcv arb', 'gcv_arb',
+    'quality penalty', 'penalty', 'quality_penalty'
+  ],
+  'Deduction & Penalty': [
+    'do no', 'do number', 'do_no',
+    'rr no', 'rr number', 'rr_no',
+    'dead freight', 'dead_freight',
+    'punitive', 'punitive charges',
+    'dc', 'demurrage', 'demurrage charges',
+    'shortage', 'shortage deduction', 'weight shortage',
+    'quality slippage', 'quality_slippage',
+    'railway leakage', 'railway_leakage',
+    'final deduction', 'final_deduction', 'total deduction'
+  ],
+  'Billing & Payment': [
+    'do no', 'do number', 'do_no',
+    'bill no', 'bill number', 'bill_no', 'invoice number', 'invoice no',
+    'bill date', 'bill_date', 'invoice date',
+    'bill qty', 'bill quantity', 'billed qty',
+    'bill amount', 'bill_amount', 'invoice amount',
+    'tds', 'tds deduction',
+    'advance paid', 'advance_paid', 'advance',
+    'final payable', 'final_payable', 'net payable',
+    'remarks', 'comment', 'comments'
   ]
 };
 

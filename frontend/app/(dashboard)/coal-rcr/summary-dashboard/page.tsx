@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { readLocalValue } from '@/lib/syncedStorage';
+import SectionExcelExport from '@/components/SectionExcelExport';
 import { DOMasterRecord } from '../do-master/page';
 import { RREntryRecord } from '../rr-entry/page';
 import { QualityTrackingRecord } from '../quality-tracking/page';
@@ -303,6 +304,7 @@ export default function SummaryDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <SectionExcelExport sectionName="Summary Dashboard" />
           <button
             onClick={fetchData}
             disabled={loading}
