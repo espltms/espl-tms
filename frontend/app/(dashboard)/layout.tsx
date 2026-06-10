@@ -48,12 +48,12 @@ const navigationDivisions = [
   {
     title: "Coal RCR Transportation",
     items: [
-      { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'RR Entry', path: '/coal-rcr/rr-entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'Quality Tracking', path: '/coal-rcr/quality-tracking', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'Deduction / Penalty', path: '/coal-rcr/deduction-penalty', icon: Scale, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'Billing/ Payment', path: '/coal-rcr/billing-payment', icon: BadgeCent, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
-      { label: 'Summary Dashboard', path: '/coal-rcr/summary-dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'COMPLIANCE_OFFICER'] },
+      { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN'] },
+      { label: 'RR Entry', path: '/coal-rcr/rr-entry', icon: ClipboardList, roles: ['SUPER_ADMIN'] },
+      { label: 'Quality Tracking', path: '/coal-rcr/quality-tracking', icon: Activity, roles: ['SUPER_ADMIN'] },
+      { label: 'Deduction / Penalty', path: '/coal-rcr/deduction-penalty', icon: Scale, roles: ['SUPER_ADMIN'] },
+      { label: 'Billing/ Payment', path: '/coal-rcr/billing-payment', icon: BadgeCent, roles: ['SUPER_ADMIN'] },
+      { label: 'Summary Dashboard', path: '/coal-rcr/summary-dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN'] },
     ]
   },
   {
