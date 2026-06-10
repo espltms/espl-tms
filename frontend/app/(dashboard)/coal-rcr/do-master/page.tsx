@@ -130,7 +130,7 @@ export default function DOMasterPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DOMasterRecord | null>(null);
   
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; title?: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id?: string; ids?: string[] } | null>(null);
 
   useEffect(() => {
@@ -278,7 +278,8 @@ export default function DOMasterPage() {
 
       setToast({
         message: `Excel Import completed: ${successCount} DO records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success'
+        type: errorCount > 0 ? 'info' : 'success',
+        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
       });
       fetchData();
     };
@@ -1005,7 +1006,7 @@ export default function DOMasterPage() {
           )}
           <div className="flex-1 min-w-0">
             <h4 className="text-[11px] font-bold uppercase tracking-wider">
-              {toast.type === 'success' ? 'Import Succeeded' : toast.type === 'error' ? 'Import Failed' : 'Import Status'}
+              {toast.title || (toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status')}
             </h4>
             <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
           </div>

@@ -67,7 +67,7 @@ const TYRE_WORKSHOP_KEY = 'tms_tyre_workshop_entries';
 export default function MaintenancePage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'REPAIR_MAINTENANCE' | 'TYRE_WORKSHOP'>('REPAIR_MAINTENANCE');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; title?: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'REPAIR' | 'TYRE' } | null>(null);
 
   useEffect(() => {
@@ -1233,7 +1233,7 @@ export default function MaintenancePage() {
           )}
           <div className="flex-1 min-w-0">
             <h4 className="text-[11px] font-bold uppercase tracking-wider">
-              {toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status'}
+              {toast.title || (toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status')}
             </h4>
             <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
           </div>
