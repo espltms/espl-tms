@@ -75,8 +75,10 @@ export default function QualityTrackingPage() {
   });
 
   // Fetch data
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       const token = localStorage.getItem('tms_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -122,7 +124,20 @@ export default function QualityTrackingPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
+    const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+    const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+    const hasCache = localQualities && localQualities.length > 0;
+    if (hasCache) {
+      setRecords(localQualities);
+    }
+    if (localRRs && localRRs.length > 0) {
+      setRrRecords(localRRs);
+    }
+    if (localDOs && localDOs.length > 0) {
+      setDoRecords(localDOs);
+    }
+    fetchData(!hasCache);
   }, []);
 
   /* ── Excel import listener ── */
@@ -499,7 +514,7 @@ export default function QualityTrackingPage() {
             <Plus className="h-4 w-4" /> Add Quality Analysis
           </button>
           <button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             disabled={loading}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm disabled:opacity-60 shrink-0"
           >
