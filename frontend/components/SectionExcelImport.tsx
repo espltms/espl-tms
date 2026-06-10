@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileSpreadsheet, Trash2, Upload, X, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, Upload, X, CheckCircle2 } from 'lucide-react';
 
 type ImportedSheet = {
   id: string;
@@ -160,37 +160,30 @@ const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
   ]
 };
 
-const storageKeyFor = (sectionName: string) => {
-  const slug = sectionName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
-  return `tms_imported_excel_${slug}`;
-};
-
 export default function SectionExcelImport({ sectionName }: { sectionName: string }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imports, setImports] = useState<ImportedSheet[]>([]);
   const [mounted, setMounted] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<ImportedSheet | null>(null);
 
-  const storageKey = useMemo(() => storageKeyFor(sectionName), [sectionName]);
-  const latestImport = imports[0];
-
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
-      setImports(saved ? JSON.parse(saved) : []);
-    } catch {
-      localStorage.removeItem(storageKey);
-      setImports([]);
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('tms_imported_excel_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    } catch (e) {
+      console.error(e);
     }
-  }, [storageKey]);
+  }, []);
 
   useEffect(() => {
     if (toast) {
@@ -199,16 +192,8 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
     }
   }, [toast]);
 
-  const persistImports = (nextImports: ImportedSheet[]) => {
-    localStorage.setItem(storageKey, JSON.stringify(nextImports));
-    setImports(nextImports);
-  };
-
   const confirmImport = () => {
     if (!pendingImport) return;
-
-    const nextImports = [pendingImport, ...imports];
-    persistImports(nextImports);
 
     window.dispatchEvent(new CustomEvent('tms:excel-imported', {
       detail: {
@@ -464,10 +449,6 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
     }
   };
 
-  const clearImport = (id: string) => {
-    persistImports(imports.filter(item => item.id !== id));
-  };
-
   const toastContent = toast && (
     <div className="fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-50/95 backdrop-blur-md px-4 py-3 shadow-2xl animate-slide-in max-w-sm">
       <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 animate-bounce" />
@@ -490,7 +471,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6 shrink-0">
           <div>
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">
-              {pendingImport ? 'Preview Excel Import' : 'Imported Excel Data'}
+              Preview Excel Import
             </h3>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{sectionName}</p>
           </div>
@@ -498,6 +479,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
             onClick={() => {
               setOpen(false);
               setPendingImport(null);
+              setError('');
             }} 
             className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
           >
@@ -512,7 +494,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
             </div>
           )}
 
-          {pendingImport ? (
+          {pendingImport && (
             <>
               <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -533,7 +515,10 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
                     Import This
                   </button>
                   <button
-                    onClick={() => setPendingImport(null)}
+                    onClick={() => {
+                      setPendingImport(null);
+                      setOpen(false);
+                    }}
                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all"
                   >
                     Discard
@@ -572,59 +557,6 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
                 </p>
               )}
             </>
-          ) : !latestImport ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-xs font-semibold text-slate-500">
-              No Excel file has been imported for this section yet.
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-extrabold text-slate-800">{latestImport.fileName}</div>
-                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    {latestImport.rows.length} rows imported on {new Date(latestImport.importedAt).toLocaleString('en-IN')}
-                  </div>
-                </div>
-                <button
-                  onClick={() => clearImport(latestImport.id)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 font-bold text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Remove
-                </button>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full border-collapse text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
-                      {latestImport.headers.map((header, idx) => (
-                        <th key={`${header}-${idx}`} className="px-4 py-3 font-bold uppercase tracking-wider">
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-600">
-                    {latestImport.rows.slice(0, 50).map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-slate-50">
-                        {latestImport.headers.map((_, idx) => (
-                          <td key={idx} className="px-4 py-3">
-                            {row[idx]}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {latestImport.rows.length > 50 && (
-                <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Showing first 50 imported rows
-                </p>
-              )}
-            </>
           )}
         </div>
       </div>
@@ -650,17 +582,6 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">{loading ? 'Importing...' : 'Import Excel'}</span>
       </button>
-
-      {imports.length > 0 && (
-        <button
-          onClick={() => setOpen(true)}
-          className="hidden min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 lg:flex"
-          title="View imported Excel data"
-        >
-          <FileSpreadsheet className="h-4 w-4" />
-          <span>{imports.length}</span>
-        </button>
-      )}
 
       {mounted && typeof document !== 'undefined' && createPortal(
         <>
