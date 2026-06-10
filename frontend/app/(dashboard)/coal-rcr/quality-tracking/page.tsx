@@ -627,14 +627,14 @@ export default function QualityTrackingPage() {
                     <td className="px-5 py-4 font-mono font-bold text-slate-700">
                       {r.doNo}
                     </td>
-                    <td className="px-5 py-4 font-mono text-right">{r.tm ? r.tm.toFixed(2) : '0.00'}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.im ? r.im.toFixed(2) : '0.00'}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.ash ? r.ash.toFixed(2) : '0.00'}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.vm ? r.vm.toFixed(2) : '0.00'}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.fc ? r.fc.toFixed(2) : '0.00'}%</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{r.gcvAdb ? Math.round(r.gcvAdb) : '0'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{r.gcvArb ? Math.round(r.gcvArb) : '0'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600">₹{r.qualityPenalty ? r.qualityPenalty.toLocaleString('en-IN') : '0.00'}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.tm || 0).toFixed(2)}%</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.im || 0).toFixed(2)}%</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.ash || 0).toFixed(2)}%</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.vm || 0).toFixed(2)}%</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.fc || 0).toFixed(2)}%</td>
+                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvAdb || 0))}</td>
+                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvArb || 0))}</td>
+                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600">₹{Number(r.qualityPenalty || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button

@@ -693,11 +693,11 @@ export default function RREntryPage() {
                     </td>
                     <td className="px-5 py-4 font-semibold text-slate-700">{r.siding}</td>
                     <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.rrDate || '—'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{r.rrActQty ? r.rrActQty.toFixed(2) : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{r.rrChQty ? r.rrChQty.toFixed(2) : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{r.vllQty ? r.vllQty.toFixed(2) : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-blue-600">{r.grnQty ? r.grnQty.toFixed(2) : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-emerald-600">{r.normalisedQty ? r.normalisedQty.toFixed(2) : '0.00'}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrActQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrChQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.vllQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-blue-600">{Number(r.grnQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-emerald-600">{Number(r.normalisedQty || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button

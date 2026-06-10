@@ -695,13 +695,13 @@ export default function DeductionPenaltyPage() {
                     <td className="px-5 py-4 font-mono font-bold text-slate-700">
                       {r.doNo}
                     </td>
-                    <td className="px-5 py-4 font-mono text-right">{r.deadFreight ? r.deadFreight.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.punitive ? r.punitive.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.dc ? r.dc.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-blue-600">{r.shortage ? r.shortage.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-purple-600">{r.qualitySlippage ? r.qualitySlippage.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right">{r.railwayLeakage ? r.railwayLeakage.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600 bg-red-50/10">₹{r.finalDeduction ? r.finalDeduction.toLocaleString('en-IN') : '0.00'}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.deadFreight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.punitive || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.dc || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right font-semibold text-blue-600">{Number(r.shortage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right font-semibold text-purple-600">{Number(r.qualitySlippage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.railwayLeakage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600 bg-red-50/10">₹{Number(r.finalDeduction || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button

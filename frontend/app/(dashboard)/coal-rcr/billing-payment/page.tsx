@@ -683,11 +683,11 @@ export default function BillingPaymentPage() {
                       {r.doNo}
                     </td>
                     <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.billDate || '—'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{r.billQty ? r.billQty.toFixed(2) : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-semibold text-slate-700">{r.billAmount ? r.billAmount.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right text-red-600">{r.tds ? r.tds.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right text-purple-600">{r.advancePaid ? r.advancePaid.toLocaleString('en-IN') : '0.00'}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-emerald-600 bg-emerald-50/10">₹{r.finalPayable ? r.finalPayable.toLocaleString('en-IN') : '0.00'}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.billQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-semibold text-slate-700">{Number(r.billAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right text-red-600">{Number(r.tds || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right text-purple-600">{Number(r.advancePaid || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right font-bold text-emerald-600 bg-emerald-50/10">₹{Number(r.finalPayable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-slate-500 italic max-w-xs truncate">{r.remarks || '—'}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
