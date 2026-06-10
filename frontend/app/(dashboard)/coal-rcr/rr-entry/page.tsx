@@ -67,17 +67,36 @@ export default function RREntryPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tms_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [rrRes, doRes] = await Promise.all([
+        fetch('/api/coal-rcr/rr-entry', { headers }),
+        fetch('/api/coal-rcr/do-master', { headers })
+      ]);
+
+      if (rrRes.ok && doRes.ok) {
+        const rrData = await rrRes.json();
+        const doData = await doRes.json();
+
+        if (rrData.success && doData.success) {
+          setRecords(rrData.data);
+          setDoRecords(doData.data);
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+        }
+      } else {
+        const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        setRecords(localRRs);
+        setDoRecords(localDOs);
+      }
+    } catch (e) {
+      console.error("Error fetching RR records:", e);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
       setRecords(localRRs);
       setDoRecords(localDOs);
-      
-      const syncedRRs = await fetchSyncedValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-      const syncedDOs = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      if (syncedRRs) setRecords(syncedRRs);
-      if (syncedDOs) setDoRecords(syncedDOs);
-    } catch (e) {
-      console.error("Error fetching RR records:", e);
     } finally {
       setLoading(false);
     }
@@ -86,11 +105,6 @@ export default function RREntryPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const persistRecords = (next: RREntryRecord[]) => {
-    setRecords(next);
-    saveSyncedValue(RR_ENTRY_KEY, next);
-  };
 
   // Auto-fill siding when DO is selected
   const handleDOChange = (doNo: string) => {
@@ -170,9 +184,9 @@ export default function RREntryPage() {
       doNo: record.doNo,
       siding: record.siding,
       rrNo: record.rrNo,
-      rrDate: record.rrDate,
-      loadingDate: record.loadingDate,
-      receiptDate: record.receiptDate,
+      rrDate: record.rrDate || '',
+      loadingDate: record.loadingDate || '',
+      receiptDate: record.receiptDate || '',
       rrActQty: String(record.rrActQty),
       rrChQty: String(record.rrChQty),
       vllQty: String(record.vllQty),
@@ -183,15 +197,15 @@ export default function RREntryPage() {
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.rrNo || !form.grnQty) {
       alert("Please fill in all required fields (DO No, RR No, GRN Qty)");
       return;
     }
 
-    const recordData: RREntryRecord = {
-      id: editingRecord ? editingRecord.id : `rr-${Date.now()}`,
+    const recordData = {
+      id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo,
       siding: form.siding.trim(),
       rrNo: form.rrNo.toUpperCase().trim(),
@@ -202,30 +216,56 @@ export default function RREntryPage() {
       rrChQty: parseFloat(form.rrChQty) || 0,
       vllQty: parseFloat(form.vllQty) || 0,
       grnQty: parseFloat(form.grnQty) || 0,
-      normalisedQty: parseFloat(form.normalisedQty || form.grnQty) || 0
+      normalisedQty: parseFloat(form.normalisedQty !== undefined && form.normalisedQty !== '' ? form.normalisedQty : form.grnQty) || 0
     };
 
-    let nextRecords = [...records];
-    if (editingRecord) {
-      nextRecords = nextRecords.map(r => r.id === editingRecord.id ? recordData : r);
-    } else {
-      // Check duplicate RR No
-      if (records.some(r => r.rrNo === recordData.rrNo)) {
-        alert(`RR Number "${recordData.rrNo}" already exists!`);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/rr-entry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(recordData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to save RR record.");
         return;
       }
-      nextRecords.unshift(recordData);
-    }
 
-    persistRecords(nextRecords);
-    setIsModalOpen(false);
+      const res = await response.json();
+      if (res.success) {
+        setIsModalOpen(false);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error saving RR record:", error);
+      alert("An error occurred while saving the RR record.");
+    }
   };
 
   // Delete Handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this RR Entry?")) return;
-    const nextRecords = records.filter(r => r.id !== id);
-    persistRecords(nextRecords);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch(`/api/coal-rcr/rr-entry?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to delete RR record.");
+        return;
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting RR record:", error);
+      alert("An error occurred while deleting the RR record.");
+    }
   };
 
   return (

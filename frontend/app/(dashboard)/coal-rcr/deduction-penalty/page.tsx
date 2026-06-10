@@ -67,6 +67,44 @@ export default function DeductionPenaltyPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tms_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [dpRes, qRes, rrRes, doRes] = await Promise.all([
+        fetch('/api/coal-rcr/deduction-penalty', { headers }),
+        fetch('/api/coal-rcr/quality-tracking', { headers }),
+        fetch('/api/coal-rcr/rr-entry', { headers }),
+        fetch('/api/coal-rcr/do-master', { headers })
+      ]);
+
+      if (dpRes.ok && qRes.ok && rrRes.ok && doRes.ok) {
+        const dpData = await dpRes.json();
+        const qData = await qRes.json();
+        const rrData = await rrRes.json();
+        const doData = await doRes.json();
+
+        if (dpData.success && qData.success && rrData.success && doData.success) {
+          setRecords(dpData.data);
+          setQualityRecords(qData.data);
+          setRrRecords(rrData.data);
+          setDoRecords(doData.data);
+          localStorage.setItem(DEDUCTION_PENALTY_KEY, JSON.stringify(dpData.data));
+          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data));
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+        }
+      } else {
+        const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
+        const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
+        const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        setRecords(localDeductions);
+        setQualityRecords(localQualities);
+        setRrRecords(localRRs);
+        setDoRecords(localDOs);
+      }
+    } catch (e) {
+      console.error("Error fetching Deduction records:", e);
       const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
       const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
@@ -75,17 +113,6 @@ export default function DeductionPenaltyPage() {
       setQualityRecords(localQualities);
       setRrRecords(localRRs);
       setDoRecords(localDOs);
-      
-      const syncedDeductions = await fetchSyncedValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
-      const syncedQualities = await fetchSyncedValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
-      const syncedRRs = await fetchSyncedValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-      const syncedDOs = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      if (syncedDeductions) setRecords(syncedDeductions);
-      if (syncedQualities) setQualityRecords(syncedQualities);
-      if (syncedRRs) setRrRecords(syncedRRs);
-      if (syncedDOs) setDoRecords(syncedDOs);
-    } catch (e) {
-      console.error("Error fetching Deduction records:", e);
     } finally {
       setLoading(false);
     }
@@ -94,11 +121,6 @@ export default function DeductionPenaltyPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const persistRecords = (next: DeductionPenaltyRecord[]) => {
-    setRecords(next);
-    saveSyncedValue(DEDUCTION_PENALTY_KEY, next);
-  };
 
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
@@ -251,15 +273,15 @@ export default function DeductionPenaltyPage() {
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.rrNo) {
       alert("Please select DO No and RR No!");
       return;
     }
 
-    const recordData: DeductionPenaltyRecord = {
-      id: editingRecord ? editingRecord.id : `deduction-${Date.now()}`,
+    const recordData = {
+      id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo,
       rrNo: form.rrNo,
       deadFreight: parseFloat(form.deadFreight) || 0,
@@ -271,27 +293,53 @@ export default function DeductionPenaltyPage() {
       finalDeduction: parseFloat(form.finalDeduction) || 0
     };
 
-    let nextRecords = [...records];
-    if (editingRecord) {
-      nextRecords = nextRecords.map(r => r.id === editingRecord.id ? recordData : r);
-    } else {
-      // Check duplicate RR Deduction
-      if (records.some(r => r.rrNo === recordData.rrNo)) {
-        alert(`Deduction record for RR Number "${recordData.rrNo}" already exists!`);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/deduction-penalty', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(recordData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to save Deduction record.");
         return;
       }
-      nextRecords.unshift(recordData);
-    }
 
-    persistRecords(nextRecords);
-    setIsModalOpen(false);
+      const res = await response.json();
+      if (res.success) {
+        setIsModalOpen(false);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error saving Deduction record:", error);
+      alert("An error occurred while saving the Deduction record.");
+    }
   };
 
   // Delete Handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this Deduction Record?")) return;
-    const nextRecords = records.filter(r => r.id !== id);
-    persistRecords(nextRecords);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch(`/api/coal-rcr/deduction-penalty?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to delete Deduction record.");
+        return;
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting Deduction record:", error);
+      alert("An error occurred while deleting the Deduction record.");
+    }
   };
 
   return (

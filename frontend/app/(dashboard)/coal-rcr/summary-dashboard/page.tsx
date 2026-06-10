@@ -43,6 +43,46 @@ export default function SummaryDashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tms_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [doRes, rrRes, dpRes, bpRes] = await Promise.all([
+        fetch('/api/coal-rcr/do-master', { headers }),
+        fetch('/api/coal-rcr/rr-entry', { headers }),
+        fetch('/api/coal-rcr/deduction-penalty', { headers }),
+        fetch('/api/coal-rcr/billing-payment', { headers })
+      ]);
+
+      if (doRes.ok && rrRes.ok && dpRes.ok && bpRes.ok) {
+        const doData = await doRes.json();
+        const rrData = await rrRes.json();
+        const dpData = await dpRes.json();
+        const bpData = await bpRes.json();
+
+        if (doData.success && rrData.success && dpData.success && bpData.success) {
+          setDoRecords(doData.data);
+          setRrRecords(rrData.data);
+          setDeductions(dpData.data);
+          setBillings(bpData.data);
+
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
+          localStorage.setItem(DEDUCTION_PENALTY_KEY, JSON.stringify(dpData.data));
+          localStorage.setItem(BILLING_PAYMENT_KEY, JSON.stringify(bpData.data));
+        }
+      } else {
+        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+        const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
+        const localBillings = readLocalValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
+        
+        setDoRecords(localDOs);
+        setRrRecords(localRRs);
+        setDeductions(localDeductions);
+        setBillings(localBillings);
+      }
+    } catch (e) {
+      console.error("Error loading summary dashboard data:", e);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
@@ -52,18 +92,6 @@ export default function SummaryDashboardPage() {
       setRrRecords(localRRs);
       setDeductions(localDeductions);
       setBillings(localBillings);
-
-      const syncedDOs = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      const syncedRRs = await fetchSyncedValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-      const syncedDeductions = await fetchSyncedValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
-      const syncedBillings = await fetchSyncedValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
-      
-      if (syncedDOs) setDoRecords(syncedDOs);
-      if (syncedRRs) setRrRecords(syncedRRs);
-      if (syncedDeductions) setDeductions(syncedDeductions);
-      if (syncedBillings) setBillings(syncedBillings);
-    } catch (e) {
-      console.error("Error loading summary dashboard data:", e);
     } finally {
       setLoading(false);
     }

@@ -66,21 +66,44 @@ export default function QualityTrackingPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tms_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [qRes, rrRes, doRes] = await Promise.all([
+        fetch('/api/coal-rcr/quality-tracking', { headers }),
+        fetch('/api/coal-rcr/rr-entry', { headers }),
+        fetch('/api/coal-rcr/do-master', { headers })
+      ]);
+
+      if (qRes.ok && rrRes.ok && doRes.ok) {
+        const qData = await qRes.json();
+        const rrData = await rrRes.json();
+        const doData = await doRes.json();
+
+        if (qData.success && rrData.success && doData.success) {
+          setRecords(qData.data);
+          setRrRecords(rrData.data);
+          setDoRecords(doData.data);
+          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qData.data));
+          localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+        }
+      } else {
+        const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
+        const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        setRecords(localQualities);
+        setRrRecords(localRRs);
+        setDoRecords(localDOs);
+      }
+    } catch (e) {
+      console.error("Error fetching Quality records:", e);
       const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
       const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
       setRecords(localQualities);
       setRrRecords(localRRs);
       setDoRecords(localDOs);
-      
-      const syncedQualities = await fetchSyncedValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
-      const syncedRRs = await fetchSyncedValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-      const syncedDOs = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      if (syncedQualities) setRecords(syncedQualities);
-      if (syncedRRs) setRrRecords(syncedRRs);
-      if (syncedDOs) setDoRecords(syncedDOs);
-    } catch (e) {
-      console.error("Error fetching Quality records:", e);
     } finally {
       setLoading(false);
     }
@@ -89,11 +112,6 @@ export default function QualityTrackingPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const persistRecords = (next: QualityTrackingRecord[]) => {
-    setRecords(next);
-    saveSyncedValue(QUALITY_TRACKING_KEY, next);
-  };
 
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
@@ -197,15 +215,15 @@ export default function QualityTrackingPage() {
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.rrNo) {
       alert("Please select DO No and RR No!");
       return;
     }
 
-    const recordData: QualityTrackingRecord = {
-      id: editingRecord ? editingRecord.id : `quality-${Date.now()}`,
+    const recordData = {
+      id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo,
       rrNo: form.rrNo,
       tm: parseFloat(form.tm) || 0,
@@ -218,27 +236,53 @@ export default function QualityTrackingPage() {
       qualityPenalty: parseFloat(form.qualityPenalty) || 0
     };
 
-    let nextRecords = [...records];
-    if (editingRecord) {
-      nextRecords = nextRecords.map(r => r.id === editingRecord.id ? recordData : r);
-    } else {
-      // Check duplicate RR Quality
-      if (records.some(r => r.rrNo === recordData.rrNo)) {
-        alert(`Quality record for RR Number "${recordData.rrNo}" already exists!`);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/quality-tracking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(recordData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to save Quality record.");
         return;
       }
-      nextRecords.unshift(recordData);
-    }
 
-    persistRecords(nextRecords);
-    setIsModalOpen(false);
+      const res = await response.json();
+      if (res.success) {
+        setIsModalOpen(false);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error saving Quality record:", error);
+      alert("An error occurred while saving the Quality record.");
+    }
   };
 
   // Delete Handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this Quality Record?")) return;
-    const nextRecords = records.filter(r => r.id !== id);
-    persistRecords(nextRecords);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch(`/api/coal-rcr/quality-tracking?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to delete Quality record.");
+        return;
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting Quality record:", error);
+      alert("An error occurred while deleting the Quality record.");
+    }
   };
 
   return (

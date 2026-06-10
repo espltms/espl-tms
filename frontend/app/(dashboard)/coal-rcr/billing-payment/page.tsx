@@ -62,17 +62,36 @@ export default function BillingPaymentPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tms_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [bpRes, doRes] = await Promise.all([
+        fetch('/api/coal-rcr/billing-payment', { headers }),
+        fetch('/api/coal-rcr/do-master', { headers })
+      ]);
+
+      if (bpRes.ok && doRes.ok) {
+        const bpData = await bpRes.json();
+        const doData = await doRes.json();
+
+        if (bpData.success && doData.success) {
+          setRecords(bpData.data);
+          setDoRecords(doData.data);
+          localStorage.setItem(BILLING_PAYMENT_KEY, JSON.stringify(bpData.data));
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data));
+        }
+      } else {
+        const localBillings = readLocalValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
+        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        setRecords(localBillings);
+        setDoRecords(localDOs);
+      }
+    } catch (e) {
+      console.error("Error fetching Billing records:", e);
       const localBillings = readLocalValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
       const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
       setRecords(localBillings);
       setDoRecords(localDOs);
-      
-      const syncedBillings = await fetchSyncedValue<BillingPaymentRecord[]>(BILLING_PAYMENT_KEY, []);
-      const syncedDOs = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      if (syncedBillings) setRecords(syncedBillings);
-      if (syncedDOs) setDoRecords(syncedDOs);
-    } catch (e) {
-      console.error("Error fetching Billing records:", e);
     } finally {
       setLoading(false);
     }
@@ -81,11 +100,6 @@ export default function BillingPaymentPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const persistRecords = (next: BillingPaymentRecord[]) => {
-    setRecords(next);
-    saveSyncedValue(BILLING_PAYMENT_KEY, next);
-  };
 
   // Handle input changes with auto-calculations for final payable
   const handleInputChange = (field: string, val: string) => {
@@ -109,7 +123,7 @@ export default function BillingPaymentPage() {
       const matchesSearch = 
         r.billNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.remarks.toUpperCase().includes(searchQuery.toUpperCase());
+        (r.remarks && r.remarks.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesDO = doNoFilter === 'All' || r.doNo === doNoFilter;
       
@@ -161,27 +175,27 @@ export default function BillingPaymentPage() {
     setForm({
       doNo: record.doNo,
       billNo: record.billNo,
-      billDate: record.billDate,
+      billDate: record.billDate || '',
       billQty: String(record.billQty),
       billAmount: String(record.billAmount),
       tds: String(record.tds),
       advancePaid: String(record.advancePaid),
       finalPayable: String(record.finalPayable),
-      remarks: record.remarks
+      remarks: record.remarks || ''
     });
     setIsModalOpen(true);
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.billNo || !form.billAmount) {
       alert("Please fill in all required fields (DO No, Bill No, Bill Amount)!");
       return;
     }
 
-    const recordData: BillingPaymentRecord = {
-      id: editingRecord ? editingRecord.id : `bill-${Date.now()}`,
+    const recordData = {
+      id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo,
       billNo: form.billNo.toUpperCase().trim(),
       billDate: form.billDate,
@@ -193,27 +207,53 @@ export default function BillingPaymentPage() {
       remarks: form.remarks.trim()
     };
 
-    let nextRecords = [...records];
-    if (editingRecord) {
-      nextRecords = nextRecords.map(r => r.id === editingRecord.id ? recordData : r);
-    } else {
-      // Check duplicate Bill No
-      if (records.some(r => r.billNo === recordData.billNo)) {
-        alert(`Bill Number "${recordData.billNo}" already exists!`);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/billing-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(recordData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to save Billing record.");
         return;
       }
-      nextRecords.unshift(recordData);
-    }
 
-    persistRecords(nextRecords);
-    setIsModalOpen(false);
+      const res = await response.json();
+      if (res.success) {
+        setIsModalOpen(false);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error saving Billing record:", error);
+      alert("An error occurred while saving the Billing record.");
+    }
   };
 
   // Delete Handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this Billing Record?")) return;
-    const nextRecords = records.filter(r => r.id !== id);
-    persistRecords(nextRecords);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch(`/api/coal-rcr/billing-payment?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to delete Billing record.");
+        return;
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting Billing record:", error);
+      alert("An error occurred while deleting the Billing record.");
+    }
   };
 
   return (

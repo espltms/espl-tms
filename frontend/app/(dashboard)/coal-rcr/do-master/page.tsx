@@ -63,15 +63,26 @@ export default function DOMasterPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(local);
-      
-      const synced = await fetchSyncedValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      if (synced) {
-        setRecords(synced);
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/do-master', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (response.ok) {
+        const res = await response.json();
+        if (res.success) {
+          setRecords(res.data);
+          localStorage.setItem(DO_MASTER_KEY, JSON.stringify(res.data));
+        } else {
+          throw new Error(res.error || 'Fetch failed');
+        }
+      } else {
+        const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+        setRecords(local);
       }
     } catch (e) {
       console.error("Error fetching DO records:", e);
+      const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+      setRecords(local);
     } finally {
       setLoading(false);
     }
@@ -81,11 +92,6 @@ export default function DOMasterPage() {
     fetchData();
   }, []);
 
-  const persistRecords = (next: DOMasterRecord[]) => {
-    setRecords(next);
-    saveSyncedValue(DO_MASTER_KEY, next);
-  };
-
   // Search & Filters
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
@@ -93,8 +99,8 @@ export default function DOMasterPage() {
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.poNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.mines.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase());
+        (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
       
@@ -143,27 +149,27 @@ export default function DOMasterPage() {
       doNo: record.doNo,
       poNo: record.poNo,
       siding: record.siding,
-      mines: record.mines,
-      coalCompany: record.coalCompany,
+      mines: record.mines || '',
+      coalCompany: record.coalCompany || '',
       doQty: String(record.doQty),
       coalType: record.coalType,
-      startDate: record.startDate,
-      endDate: record.endDate,
+      startDate: record.startDate || '',
+      endDate: record.endDate || '',
       status: record.status
     });
     setIsModalOpen(true);
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.doNo || !form.poNo || !form.siding || !form.doQty) {
       alert("Please fill in all required fields (DO No, PO No, Siding, DO Qty)");
       return;
     }
 
-    const recordData: DOMasterRecord = {
-      id: editingRecord ? editingRecord.id : `do-${Date.now()}`,
+    const recordData = {
+      id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo.toUpperCase().trim(),
       poNo: form.poNo.toUpperCase().trim(),
       siding: form.siding.trim(),
@@ -176,27 +182,53 @@ export default function DOMasterPage() {
       status: form.status
     };
 
-    let nextRecords = [...records];
-    if (editingRecord) {
-      nextRecords = nextRecords.map(r => r.id === editingRecord.id ? recordData : r);
-    } else {
-      // Check for duplicate DO No
-      if (records.some(r => r.doNo === recordData.doNo)) {
-        alert(`DO Number "${recordData.doNo}" already exists!`);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/do-master', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(recordData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to save DO record.");
         return;
       }
-      nextRecords.unshift(recordData);
-    }
 
-    persistRecords(nextRecords);
-    setIsModalOpen(false);
+      const res = await response.json();
+      if (res.success) {
+        setIsModalOpen(false);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error saving DO record:", error);
+      alert("An error occurred while saving the DO record.");
+    }
   };
 
   // Delete Handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this DO record?")) return;
-    const nextRecords = records.filter(r => r.id !== id);
-    persistRecords(nextRecords);
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch(`/api/coal-rcr/do-master?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to delete DO record.");
+        return;
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting DO record:", error);
+      alert("An error occurred while deleting the DO record.");
+    }
   };
 
   return (
