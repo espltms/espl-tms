@@ -12,7 +12,10 @@ import {
   Hourglass,
   Calendar,
   Layers,
-  Database
+  Database,
+  CheckCircle2,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
@@ -127,6 +130,15 @@ export default function DOMasterPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DOMasterRecord | null>(null);
   
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Form states
   const [form, setForm] = useState({
     doNo: '',
@@ -193,71 +205,80 @@ export default function DOMasterPage() {
       let successCount = 0;
       let errorCount = 0;
 
-      for (const row of detail.import.rows) {
-        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
-        const poNo = getCellValue(detail.import.headers, row, ['po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number']).toUpperCase().trim();
-        const siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
-        const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine']).trim();
-        const coalCompany = getCellValue(detail.import.headers, row, ['coal company', 'coal_company', 'company']).trim();
-        const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
-        const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
-        const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
-        const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
-        const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
+      const batchSize = 15;
+      const rows = detail.import.rows;
 
-        if (!doNo || !poNo || !siding || !doQtyStr) {
-          errorCount++;
-          continue;
-        }
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
+          const poNo = getCellValue(detail.import.headers, row, ['po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number']).toUpperCase().trim();
+          const siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+          const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine']).trim();
+          const coalCompany = getCellValue(detail.import.headers, row, ['coal company', 'coal_company', 'company']).trim();
+          const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
+          const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
+          const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
+          const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
+          const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
 
-        const doQty = parseFloat(doQtyStr) || 0;
-        const startDate = parseDateToYYYYMMDD(startDateStr);
-        const endDate = parseDateToYYYYMMDD(endDateStr);
+          if (!doNo || !poNo || !siding || !doQtyStr) {
+            errorCount++;
+            return;
+          }
 
-        let coalType = 'ROM';
-        if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
-          coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
-        }
+          const doQty = parseFloat(doQtyStr) || 0;
+          const startDate = parseDateToYYYYMMDD(startDateStr);
+          const endDate = parseDateToYYYYMMDD(endDateStr);
 
-        let status = 'Active';
-        if (['Active', 'Completed', 'Cancelled'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
-          status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
-        }
+          let coalType = 'ROM';
+          if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
+            coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
+          }
 
-        const recordData = {
-          doNo,
-          poNo,
-          siding,
-          mines: mines || null,
-          coalCompany: coalCompany || null,
-          doQty,
-          coalType,
-          startDate: startDate || null,
-          endDate: endDate || null,
-          status
-        };
+          let status = 'Active';
+          if (['Active', 'Completed', 'Cancelled'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
+            status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+          }
 
-        try {
-          const response = await fetch('/api/coal-rcr/do-master', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify(recordData)
-          });
-          if (response.ok) {
-            successCount++;
-          } else {
+          const recordData = {
+            doNo,
+            poNo,
+            siding,
+            mines: mines || null,
+            coalCompany: coalCompany || null,
+            doQty,
+            coalType,
+            startDate: startDate || null,
+            endDate: endDate || null,
+            status
+          };
+
+          try {
+            const response = await fetch('/api/coal-rcr/do-master', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify(recordData)
+            });
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            console.error("Error importing DO row:", error);
             errorCount++;
           }
-        } catch (error) {
-          console.error("Error importing DO row:", error);
-          errorCount++;
-        }
+        }));
       }
 
-      alert(`Excel Import completed: ${successCount} DO records successfully imported, ${errorCount} failed/skipped.`);
+      setToast({
+        message: `Excel Import completed: ${successCount} DO records successfully imported, ${errorCount} failed/skipped.`,
+        type: errorCount > 0 ? 'info' : 'success'
+      });
       fetchData();
     };
 
@@ -914,6 +935,35 @@ export default function DOMasterPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl animate-slide-in max-w-md ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-amber-500/20 bg-amber-50/95 text-amber-950'
+        } backdrop-blur-md`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 font-bold" />
+          ) : toast.type === 'error' ? (
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+          ) : (
+            <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider">
+              {toast.type === 'success' ? 'Import Succeeded' : toast.type === 'error' ? 'Import Failed' : 'Import Status'}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="rounded-lg p-1 hover:bg-black/5 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>

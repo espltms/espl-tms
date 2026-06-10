@@ -10,7 +10,10 @@ import {
   Edit2, 
   Trash2, 
   Hourglass,
-  Layers
+  Layers,
+  CheckCircle2,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
@@ -49,6 +52,15 @@ export default function DeductionPenaltyPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DeductionPenaltyRecord | null>(null);
   
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Form states
   const [form, setForm] = useState({
     doNo: '',
@@ -140,69 +152,78 @@ export default function DeductionPenaltyPage() {
       let successCount = 0;
       let errorCount = 0;
 
-      for (const row of detail.import.rows) {
-        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-        const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
-        const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
-        const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
-        const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
-        const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
-        const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
-        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+      const batchSize = 15;
+      const rows = detail.import.rows;
 
-        if (!doNo || !rrNo) {
-          errorCount++;
-          continue;
-        }
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+          const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
+          const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
+          const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
+          const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
+          const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
+          const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
+          const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
 
-        let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
-        if (!qualitySlippageStr) {
-          const matchedQuality = qualityRecords.find(q => q.rrNo.toUpperCase().trim() === rrNo);
-          qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
-        }
+          if (!doNo || !rrNo) {
+            errorCount++;
+            return;
+          }
 
-        const deadFreight = parseFloat(deadFreightStr) || 0;
-        const punitive = parseFloat(punitiveStr) || 0;
-        const dc = parseFloat(dcStr) || 0;
-        const shortage = parseFloat(shortageStr) || 0;
-        const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
+          let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
+          if (!qualitySlippageStr) {
+            const matchedQuality = qualityRecords.find(q => q.rrNo.toUpperCase().trim() === rrNo);
+            qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
+          }
 
-        const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
+          const deadFreight = parseFloat(deadFreightStr) || 0;
+          const punitive = parseFloat(punitiveStr) || 0;
+          const dc = parseFloat(dcStr) || 0;
+          const shortage = parseFloat(shortageStr) || 0;
+          const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
 
-        const recordData = {
-          doNo,
-          rrNo,
-          deadFreight,
-          punitive,
-          dc,
-          shortage,
-          qualitySlippage,
-          railwayLeakage,
-          finalDeduction
-        };
+          const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
 
-        try {
-          const response = await fetch('/api/coal-rcr/deduction-penalty', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify(recordData)
-          });
-          if (response.ok) {
-            successCount++;
-          } else {
+          const recordData = {
+            doNo,
+            rrNo,
+            deadFreight,
+            punitive,
+            dc,
+            shortage,
+            qualitySlippage,
+            railwayLeakage,
+            finalDeduction
+          };
+
+          try {
+            const response = await fetch('/api/coal-rcr/deduction-penalty', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify(recordData)
+            });
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            console.error("Error importing Deduction row:", error);
             errorCount++;
           }
-        } catch (error) {
-          console.error("Error importing Deduction row:", error);
-          errorCount++;
-        }
+        }));
       }
 
-      alert(`Excel Import completed: ${successCount} Deduction records successfully imported, ${errorCount} failed/skipped.`);
+      setToast({
+        message: `Excel Import completed: ${successCount} Deduction records successfully imported, ${errorCount} failed/skipped.`,
+        type: errorCount > 0 ? 'info' : 'success'
+      });
       fetchData();
     };
 
@@ -908,6 +929,35 @@ export default function DeductionPenaltyPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl animate-slide-in max-w-md ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-amber-500/20 bg-amber-50/95 text-amber-950'
+        } backdrop-blur-md`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 font-bold" />
+          ) : toast.type === 'error' ? (
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+          ) : (
+            <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider">
+              {toast.type === 'success' ? 'Import Succeeded' : toast.type === 'error' ? 'Import Failed' : 'Import Status'}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="rounded-lg p-1 hover:bg-black/5 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>

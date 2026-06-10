@@ -12,7 +12,10 @@ import {
   Hourglass,
   Calendar,
   Layers,
-  FileText
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
@@ -129,6 +132,15 @@ export default function RREntryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<RREntryRecord | null>(null);
   
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Form states
   const [form, setForm] = useState({
     doNo: '',
@@ -206,67 +218,76 @@ export default function RREntryPage() {
       let successCount = 0;
       let errorCount = 0;
 
-      for (const row of detail.import.rows) {
-        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
-        const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
-        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
-        const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
-        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
-        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
-        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
-        const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
-        const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
+      const batchSize = 15;
+      const rows = detail.import.rows;
 
-        if (!doNo || !rrNo || !grnQtyStr) {
-          errorCount++;
-          continue;
-        }
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+          let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+          const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
+          const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+          const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
+          const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
+          const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
+          const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
+          const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
+          const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
 
-        if (!siding) {
-          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
-          siding = matchedDO ? matchedDO.siding : '';
-        }
+          if (!doNo || !rrNo || !grnQtyStr) {
+            errorCount++;
+            return;
+          }
 
-        const grnQty = parseFloat(grnQtyStr) || 0;
-        const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
+          if (!siding) {
+            const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+            siding = matchedDO ? matchedDO.siding : '';
+          }
 
-        const recordData = {
-          doNo,
-          siding,
-          rrNo,
-          rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
-          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
-          receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
-          rrActQty: parseFloat(rrActQtyStr) || 0,
-          rrChQty: parseFloat(rrChQtyStr) || 0,
-          vllQty: parseFloat(vllQtyStr) || 0,
-          grnQty,
-          normalisedQty
-        };
+          const grnQty = parseFloat(grnQtyStr) || 0;
+          const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
 
-        try {
-          const response = await fetch('/api/coal-rcr/rr-entry', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify(recordData)
-          });
-          if (response.ok) {
-            successCount++;
-          } else {
+          const recordData = {
+            doNo,
+            siding,
+            rrNo,
+            rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
+            loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
+            receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
+            rrActQty: parseFloat(rrActQtyStr) || 0,
+            rrChQty: parseFloat(rrChQtyStr) || 0,
+            vllQty: parseFloat(vllQtyStr) || 0,
+            grnQty,
+            normalisedQty
+          };
+
+          try {
+            const response = await fetch('/api/coal-rcr/rr-entry', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify(recordData)
+            });
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            console.error("Error importing RR row:", error);
             errorCount++;
           }
-        } catch (error) {
-          console.error("Error importing RR row:", error);
-          errorCount++;
-        }
+        }));
       }
 
-      alert(`Excel Import completed: ${successCount} RR records successfully imported, ${errorCount} failed/skipped.`);
+      setToast({
+        message: `Excel Import completed: ${successCount} RR records successfully imported, ${errorCount} failed/skipped.`,
+        type: errorCount > 0 ? 'info' : 'success'
+      });
       fetchData();
     };
 
@@ -927,6 +948,35 @@ export default function RREntryPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl animate-slide-in max-w-md ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-amber-500/20 bg-amber-50/95 text-amber-950'
+        } backdrop-blur-md`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 font-bold" />
+          ) : toast.type === 'error' ? (
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+          ) : (
+            <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider">
+              {toast.type === 'success' ? 'Import Succeeded' : toast.type === 'error' ? 'Import Failed' : 'Import Status'}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="rounded-lg p-1 hover:bg-black/5 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>
