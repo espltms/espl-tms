@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can access Coal RCR data.' }, { status: 403 });
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'SYS_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only Super Admins and System Admins can access Coal RCR data.' }, { status: 403 });
     }
 
     const records = await prisma.coalBillingPayment.findMany({
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can manage Coal RCR data.' }, { status: 403 });
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'SYS_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only Super Admins and System Admins can manage Coal RCR data.' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -101,8 +101,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Only Super Admins can manage Coal RCR data.' }, { status: 403 });
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'SYS_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Only Super Admins and System Admins can manage Coal RCR data.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
