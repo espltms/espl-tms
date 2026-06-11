@@ -79,10 +79,6 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Fleet Transportation Control Tower</h2>
           <p className="text-xs text-slate-500 mt-1">Cross-fleet operational analytical dashboard (India Transportation Network)</p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3.5 py-1.5 text-xs text-sky-700 font-bold shadow-sm">
-          <TrendingUp className="h-4 w-4 text-sky-600 animate-pulse" />
-          <span>AIS-140 GPS Telemetry feeds: 100% Active</span>
-        </div>
       </div>
 
       {/* KPI Cards Grid */}
