@@ -147,6 +147,13 @@ export default function CompletedTripsPage() {
         if (trip) {
           return isMatchingDestination(trip.destination, userRegion);
         }
+        const challanUpper = String(record.challanNo || '').toUpperCase();
+        if (challanUpper.startsWith('PA')) {
+          return isMatchingDestination('Paramanandpur Stockyard', userRegion);
+        } else if (challanUpper.startsWith('DH')) {
+          return isMatchingDestination('Dharamgarh Terminal', userRegion);
+        }
+        return true;
       }
       return true;
     });

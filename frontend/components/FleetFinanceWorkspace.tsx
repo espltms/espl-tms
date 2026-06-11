@@ -131,6 +131,12 @@ export default function FleetFinanceWorkspace({
         if (trip) {
           return isMatchingDestination(trip.destination, userRegion);
         }
+        const challanUpper = String(record.challanNo || '').toUpperCase();
+        if (challanUpper.startsWith('PA')) {
+          return isMatchingDestination('Paramanandpur Stockyard', userRegion);
+        } else if (challanUpper.startsWith('DH')) {
+          return isMatchingDestination('Dharamgarh Terminal', userRegion);
+        }
         return true;
       }
       return true;
@@ -220,6 +226,12 @@ export default function FleetFinanceWorkspace({
         const trip = assignedTrips.find(t => t.tripNumber === record.tripNumber || t.id === record.tripId);
         if (trip) {
           return isMatchingDestination(trip.destination, userRegion);
+        }
+        const challanUpper = String(record.challanNo || '').toUpperCase();
+        if (challanUpper.startsWith('PA')) {
+          return isMatchingDestination('Paramanandpur Stockyard', userRegion);
+        } else if (challanUpper.startsWith('DH')) {
+          return isMatchingDestination('Dharamgarh Terminal', userRegion);
         }
       }
       return true;
