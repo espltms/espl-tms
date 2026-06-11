@@ -80,7 +80,7 @@ const navigationDivisions = [
     ]
   },
   {
-    title: "Finance & Law",
+    title: "System",
     items: [
       { label: 'System Configuration', path: '/settings', icon: Settings, roles: ['SYS_ADMIN'] },
     ]
