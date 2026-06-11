@@ -84,15 +84,13 @@ export default function UnloadingVehiclePage() {
 
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
                          user?.role === 'DISPATCHER' || 
-                         user?.role === 'PARAMANANDPUR_ADMIN' || 
-                         user?.role === 'DHARAMGARH_ADMIN' ||
                          user?.role === 'BHAWANIPATNA_ADMIN' ||
                          user?.role === 'PARAMANANDPUR_UNLOADER' ||
                          user?.role === 'DHARAMGARH_UNLOADER';
 
-  const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'PARAMANANDPUR_UNLOADER'
+  const userRegion = user?.role === 'PARAMANANDPUR_UNLOADER'
     ? 'Paramanandpur' 
-    : user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'DHARAMGARH_UNLOADER'
+    : user?.role === 'DHARAMGARH_UNLOADER'
       ? 'Dharamgarh' 
       : user?.role === 'BHAWANIPATNA_ADMIN'
         ? 'Bhawanipatna'
@@ -101,8 +99,6 @@ export default function UnloadingVehiclePage() {
   const isAdmin = user?.role === 'SUPER_ADMIN' || 
                   user?.role === 'SYS_ADMIN' || 
                   user?.role === 'REGION_ADMIN' || 
-                  user?.role === 'PARAMANANDPUR_ADMIN' || 
-                  user?.role === 'DHARAMGARH_ADMIN' || 
                   user?.role === 'BHAWANIPATNA_ADMIN';
 
   const canDelete = isAdmin;
@@ -389,8 +385,6 @@ export default function UnloadingVehiclePage() {
                 const isFieldAdmin = user?.role === 'SUPER_ADMIN' || 
                                      user?.role === 'SYS_ADMIN' || 
                                      user?.role === 'REGION_ADMIN' || 
-                                     user?.role === 'PARAMANANDPUR_ADMIN' || 
-                                     user?.role === 'DHARAMGARH_ADMIN' || 
                                      user?.role === 'BHAWANIPATNA_ADMIN';
                 return (
                   <>

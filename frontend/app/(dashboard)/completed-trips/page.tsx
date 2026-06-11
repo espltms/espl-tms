@@ -64,8 +64,6 @@ export default function CompletedTripsPage() {
   const isAdmin = user?.role === 'SUPER_ADMIN' || 
                   user?.role === 'SYS_ADMIN' || 
                   user?.role === 'REGION_ADMIN' || 
-                  user?.role === 'PARAMANANDPUR_ADMIN' || 
-                  user?.role === 'DHARAMGARH_ADMIN' || 
                   user?.role === 'BHAWANIPATNA_ADMIN';
   const canDelete = isAdmin;
 
@@ -125,15 +123,13 @@ export default function CompletedTripsPage() {
   // 2. Filter for completed trips (truck running status is RECEIVED)
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
                          user?.role === 'DISPATCHER' || 
-                         user?.role === 'PARAMANANDPUR_ADMIN' || 
-                         user?.role === 'DHARAMGARH_ADMIN' ||
                          user?.role === 'BHAWANIPATNA_ADMIN' ||
                          user?.role === 'PARAMANANDPUR_UNLOADER' ||
                          user?.role === 'DHARAMGARH_UNLOADER';
 
-  const userRegion = user?.role === 'PARAMANANDPUR_ADMIN' || user?.role === 'PARAMANANDPUR_UNLOADER'
+  const userRegion = user?.role === 'PARAMANANDPUR_UNLOADER'
     ? 'Paramanandpur' 
-    : user?.role === 'DHARAMGARH_ADMIN' || user?.role === 'DHARAMGARH_UNLOADER'
+    : user?.role === 'DHARAMGARH_UNLOADER'
       ? 'Dharamgarh' 
       : user?.role === 'BHAWANIPATNA_ADMIN'
         ? 'Bhawanipatna'

@@ -132,16 +132,10 @@ export default function MaintenancePage() {
 
   // Regional configurations
   const isRegionalUser = user?.role === 'REGION_ADMIN' || 
-                         user?.role === 'PARAMANANDPUR_ADMIN' || 
-                         user?.role === 'DHARAMGARH_ADMIN' ||
                          user?.role === 'BHAWANIPATNA_ADMIN';
-  const userRegion = user?.role === 'PARAMANANDPUR_ADMIN'
-    ? 'Paramanandpur' 
-    : user?.role === 'DHARAMGARH_ADMIN' 
-      ? 'Dharamgarh' 
-      : user?.role === 'BHAWANIPATNA_ADMIN'
-        ? 'Bhawanipatna'
-        : user?.regionName;
+  const userRegion = user?.role === 'BHAWANIPATNA_ADMIN'
+    ? 'Bhawanipatna'
+    : user?.regionName;
 
   // Filter trucks based on regional scopes
   const dropdownTrucks = useMemo(() => {

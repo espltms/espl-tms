@@ -65,8 +65,6 @@ export default function SubVendorMasterPage() {
   const canEdit = user?.role === 'SUPER_ADMIN' || 
                   user?.role === 'SYS_ADMIN' || 
                   user?.role === 'REGION_ADMIN' || 
-                  user?.role === 'PARAMANANDPUR_ADMIN' || 
-                  user?.role === 'DHARAMGARH_ADMIN' || 
                   user?.role === 'BHAWANIPATNA_ADMIN';
 
   // Load records from synced storage

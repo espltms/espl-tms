@@ -28,11 +28,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Regional admin scoping
-    if (user?.role === 'PARAMANANDPUR_ADMIN') {
-      where.destination = { contains: 'Paramanandpur', mode: 'insensitive' };
-    } else if (user?.role === 'DHARAMGARH_ADMIN') {
-      where.destination = { contains: 'Dharamgarh', mode: 'insensitive' };
-    } else if (user?.role === 'BHAWANIPATNA_ADMIN') {
+    if (user?.role === 'BHAWANIPATNA_ADMIN') {
       where.AND = [
         {
           OR: [

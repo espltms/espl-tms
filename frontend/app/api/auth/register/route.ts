@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
-    const isRegAdmin = operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
+    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
+    const isRegAdmin = operator.role === 'BHAWANIPATNA_ADMIN';
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can manage accounts.' }, { status: 403 });
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
-    const isRegAdmin = operator.role === 'PARAMANANDPUR_ADMIN' || operator.role === 'DHARAMGARH_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
+    const isAuthorized = operator.role === 'SUPER_ADMIN' || operator.role === 'SYS_ADMIN' || operator.role === 'BHAWANIPATNA_ADMIN';
+    const isRegAdmin = operator.role === 'BHAWANIPATNA_ADMIN';
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden. Only Admins can create user accounts.' }, { status: 403 });

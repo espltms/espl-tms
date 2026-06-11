@@ -59,9 +59,9 @@ const navigationDivisions = [
   {
     title: "Registry Division",
     items: [
-      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
-      { label: 'Vendor Master', path: '/vendor-master', icon: Building2, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
-      { label: 'Sub-Vendor Master', path: '/sub-vendor-master', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Fleet Master', path: '/fleet-master', icon: Database, roles: ['SUPER_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Vendor Master', path: '/vendor-master', icon: Building2, roles: ['SUPER_ADMIN', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Sub-Vendor Master', path: '/sub-vendor-master', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'BHAWANIPATNA_ADMIN'] },
     ]
   },
   {
@@ -75,8 +75,8 @@ const navigationDivisions = [
   {
     title: "Fleet Finance",
     items: [
-      { label: 'Workshop & Maintenance', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
-      { label: 'Fuel Finances', path: '/fuel-finance', icon: Fuel, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN', 'PARAMANANDPUR_ADMIN', 'DHARAMGARH_ADMIN'] },
+      { label: 'Workshop & Maintenance', path: '/maintenance', icon: Wrench, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN'] },
+      { label: 'Fuel Finances', path: '/fuel-finance', icon: Fuel, roles: ['SYS_ADMIN', 'DISPATCHER', 'FINANCE_OFFICER', 'BHAWANIPATNA_ADMIN'] },
     ]
   },
   {
@@ -92,8 +92,6 @@ const allNavItems = navigationDivisions.flatMap(div => div.items);
 const ROLE_ACCESS = {
   SUPER_ADMIN: allNavItems.map(item => item.path),
   SYS_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
-  PARAMANANDPUR_ADMIN: allNavItems.map(item => item.path).filter(path => !path.startsWith('/coal-rcr')),
-  DHARAMGARH_ADMIN: allNavItems.map(item => item.path).filter(path => !path.startsWith('/coal-rcr')),
   BHAWANIPATNA_ADMIN: allNavItems.map(item => item.path).filter(path => !path.startsWith('/coal-rcr')),
   LANJIGARH_LOADER: ['/trips'],
   PARAMANANDPUR_UNLOADER: ['/unloading'],
@@ -240,8 +238,6 @@ export default function DashboardLayout({
     switch (role) {
       case 'SUPER_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'SYS_ADMIN': return 'bg-purple-50 text-purple-600 border-purple-200';
-      case 'PARAMANANDPUR_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'DHARAMGARH_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'BHAWANIPATNA_ADMIN': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'LANJIGARH_LOADER': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'PARAMANANDPUR_UNLOADER': return 'bg-blue-50 text-blue-700 border-blue-200';

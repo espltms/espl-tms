@@ -21,8 +21,6 @@ interface UserRecord {
 const STATIC_ROLES = [
   'SUPER_ADMIN',
   'SYS_ADMIN',
-  'PARAMANANDPUR_ADMIN',
-  'DHARAMGARH_ADMIN',
   'BHAWANIPATNA_ADMIN',
   'LANJIGARH_LOADER',
   'PARAMANANDPUR_UNLOADER',
@@ -53,7 +51,7 @@ const ALL_ROUTES = [
 export default function SettingsPage() {
   const { user: currentUser, token } = useAuthStore();
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-  const isRegionAdmin = currentUser?.role === 'PARAMANANDPUR_ADMIN' || currentUser?.role === 'DHARAMGARH_ADMIN' || currentUser?.role === 'BHAWANIPATNA_ADMIN';
+  const isRegionAdmin = currentUser?.role === 'BHAWANIPATNA_ADMIN';
   const canManageUsers = isSuperAdmin || currentUser?.role === 'SYS_ADMIN' || isRegionAdmin;
   const canManageRoles = isSuperAdmin || currentUser?.role === 'SYS_ADMIN';
 
@@ -533,7 +531,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {(role === 'PARAMANANDPUR_ADMIN' || role === 'DHARAMGARH_ADMIN' || role === 'BHAWANIPATNA_ADMIN') && (
+              {(role === 'BHAWANIPATNA_ADMIN') && (
                 <div>
                   <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Assigned Region / Place</label>
                   <input
