@@ -210,84 +210,99 @@ export default function DOMasterPage() {
 
       setLoading(true);
       const token = localStorage.getItem('tms_token');
-      let successCount = 0;
-      let errorCount = 0;
-
-      const batchSize = 15;
       const rows = detail.import.rows;
+      const recordsToImport: any[] = [];
+      let skippedCount = 0;
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
-          const poNo = getCellValue(detail.import.headers, row, ['po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number']).toUpperCase().trim();
-          const siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
-          const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine']).trim();
-          const coalCompany = getCellValue(detail.import.headers, row, ['coal company', 'coal_company', 'company']).trim();
-          const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
-          const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
-          const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
-          const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
-          const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
+      rows.forEach((row) => {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
+        const poNo = getCellValue(detail.import.headers, row, ['po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number']).toUpperCase().trim();
+        const siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+        const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine']).trim();
+        const coalCompany = getCellValue(detail.import.headers, row, ['coal company', 'coal_company', 'company']).trim();
+        const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
+        const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
+        const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
+        const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
+        const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
 
-          if (!doNo || !poNo || !siding || !doQtyStr) {
-            errorCount++;
-            return;
-          }
+        if (!doNo || !poNo || !siding || !doQtyStr) {
+          skippedCount++;
+          return;
+        }
 
-          const doQty = parseFloat(doQtyStr) || 0;
-          const startDate = parseDateToYYYYMMDD(startDateStr);
-          const endDate = parseDateToYYYYMMDD(endDateStr);
+        const doQty = parseFloat(doQtyStr) || 0;
+        const startDate = parseDateToYYYYMMDD(startDateStr);
+        const endDate = parseDateToYYYYMMDD(endDateStr);
 
-          let coalType = 'ROM';
-          if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
-            coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
-          }
+        let coalType = 'ROM';
+        if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
+          coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
+        }
 
-          let status = 'Active';
-          if (['Active', 'Completed', 'Cancelled'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
-            status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
-          }
+        let status = 'Active';
+        if (['Active', 'Completed', 'Cancelled'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
+          status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+        }
 
-          const recordData = {
-            doNo,
-            poNo,
-            siding,
-            mines: mines || null,
-            coalCompany: coalCompany || null,
-            doQty,
-            coalType,
-            startDate: startDate || null,
-            endDate: endDate || null,
-            status
-          };
+        recordsToImport.push({
+          doNo,
+          poNo,
+          siding,
+          mines: mines || null,
+          coalCompany: coalCompany || null,
+          doQty,
+          coalType,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          status
+        });
+      });
 
-          try {
-            const response = await fetch('/api/coal-rcr/do-master', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(recordData)
-            });
-            if (response.ok) {
-              successCount++;
-            } else {
-              errorCount++;
-            }
-          } catch (error) {
-            console.error("Error importing DO row:", error);
-            errorCount++;
-          }
-        }));
+      if (recordsToImport.length === 0) {
+        setToast({
+          message: `Excel Import failed: No valid records found in the sheet.`,
+          type: 'error',
+          title: 'Import Failed'
+        });
+        setLoading(false);
+        return;
       }
 
-      setToast({
-        message: `Excel Import completed: ${successCount} DO records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success',
-        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
-      });
+      try {
+        const response = await fetch('/api/coal-rcr/do-master', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(recordsToImport)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const importedCount = resData.count || 0;
+          const duplicatesCount = recordsToImport.length - importedCount;
+
+          setToast({
+            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+            title: 'Import Result'
+          });
+        } else {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Server returned an error');
+        }
+      } catch (error: any) {
+        console.error("Error importing DO records:", error);
+        setToast({
+          message: `Excel Import failed: ${error.message || 'Network error'}`,
+          type: 'error',
+          title: 'Import Error'
+        });
+      }
+
+      setLoading(false);
       fetchData();
     };
 

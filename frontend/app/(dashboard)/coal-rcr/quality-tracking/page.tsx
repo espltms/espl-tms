@@ -156,70 +156,85 @@ export default function QualityTrackingPage() {
 
       setLoading(true);
       const token = localStorage.getItem('tms_token');
-      let successCount = 0;
-      let errorCount = 0;
-
-      const batchSize = 15;
       const rows = detail.import.rows;
+      const recordsToImport: any[] = [];
+      let skippedCount = 0;
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-          const tmStr = getCellValue(detail.import.headers, row, ['tm', 'total moisture', 'tm %']);
-          const imStr = getCellValue(detail.import.headers, row, ['im', 'inherent moisture', 'im %']);
-          const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash %']);
-          const vmStr = getCellValue(detail.import.headers, row, ['vm', 'volatile matter', 'vm %']);
-          const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fixed carbon', 'fc %']);
-          const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
-          const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
-          const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
+      rows.forEach((row) => {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        const tmStr = getCellValue(detail.import.headers, row, ['tm', 'total moisture', 'tm %']);
+        const imStr = getCellValue(detail.import.headers, row, ['im', 'inherent moisture', 'im %']);
+        const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash %']);
+        const vmStr = getCellValue(detail.import.headers, row, ['vm', 'volatile matter', 'vm %']);
+        const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fixed carbon', 'fc %']);
+        const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
+        const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
+        const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
 
-          if (!doNo || !rrNo) {
-            errorCount++;
-            return;
-          }
+        if (!doNo || !rrNo) {
+          skippedCount++;
+          return;
+        }
 
-          const recordData = {
-            doNo,
-            rrNo,
-            tm: parseFloat(tmStr) || 0,
-            im: parseFloat(imStr) || 0,
-            ash: parseFloat(ashStr) || 0,
-            vm: parseFloat(vmStr) || 0,
-            fc: parseFloat(fcStr) || 0,
-            gcvAdb: parseFloat(gcvAdbStr) || 0,
-            gcvArb: parseFloat(gcvArbStr) || 0,
-            qualityPenalty: parseFloat(qualityPenaltyStr) || 0
-          };
+        recordsToImport.push({
+          doNo,
+          rrNo,
+          tm: parseFloat(tmStr) || 0,
+          im: parseFloat(imStr) || 0,
+          ash: parseFloat(ashStr) || 0,
+          vm: parseFloat(vmStr) || 0,
+          fc: parseFloat(fcStr) || 0,
+          gcvAdb: parseFloat(gcvAdbStr) || 0,
+          gcvArb: parseFloat(gcvArbStr) || 0,
+          qualityPenalty: parseFloat(qualityPenaltyStr) || 0
+        });
+      });
 
-          try {
-            const response = await fetch('/api/coal-rcr/quality-tracking', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(recordData)
-            });
-            if (response.ok) {
-              successCount++;
-            } else {
-              errorCount++;
-            }
-          } catch (error) {
-            console.error("Error importing Quality row:", error);
-            errorCount++;
-          }
-        }));
+      if (recordsToImport.length === 0) {
+        setToast({
+          message: `Excel Import failed: No valid records found in the sheet.`,
+          type: 'error',
+          title: 'Import Failed'
+        });
+        setLoading(false);
+        return;
       }
 
-      setToast({
-        message: `Excel Import completed: ${successCount} Quality records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success',
-        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
-      });
+      try {
+        const response = await fetch('/api/coal-rcr/quality-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(recordsToImport)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const importedCount = resData.count || 0;
+          const duplicatesCount = recordsToImport.length - importedCount;
+
+          setToast({
+            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+            title: 'Import Result'
+          });
+        } else {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Server returned an error');
+        }
+      } catch (error: any) {
+        console.error("Error importing Quality records:", error);
+        setToast({
+          message: `Excel Import failed: ${error.message || 'Network error'}`,
+          type: 'error',
+          title: 'Import Error'
+        });
+      }
+
+      setLoading(false);
       fetchData();
     };
 

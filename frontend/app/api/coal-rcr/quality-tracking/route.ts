@@ -38,6 +38,41 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // Support bulk inserts
+    if (Array.isArray(body)) {
+      const recordsToCreate = [];
+      for (const item of body) {
+        const { doNo, rrNo, tm, im, ash, vm, fc, gcvAdb, gcvArb, qualityPenalty } = item;
+        if (!doNo || !rrNo || qualityPenalty === undefined) {
+          continue; // Skip invalid records in batch
+        }
+        recordsToCreate.push({
+          doNo,
+          rrNo: rrNo.toUpperCase().trim(),
+          tm: parseFloat(tm) || 0,
+          im: parseFloat(im) || 0,
+          ash: parseFloat(ash) || 0,
+          vm: parseFloat(vm) || 0,
+          fc: parseFloat(fc) || 0,
+          gcvAdb: parseFloat(gcvAdb) || 0,
+          gcvArb: parseFloat(gcvArb) || 0,
+          qualityPenalty: parseFloat(qualityPenalty) || 0,
+        });
+      }
+
+      if (recordsToCreate.length === 0) {
+        return NextResponse.json({ error: 'No valid records found in the import payload' }, { status: 400 });
+      }
+
+      const result = await prisma.coalQualityTracking.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
     const { id, doNo, rrNo, tm, im, ash, vm, fc, gcvAdb, gcvArb, qualityPenalty } = body;
 
     if (!doNo || !rrNo || qualityPenalty === undefined) {

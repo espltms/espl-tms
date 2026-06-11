@@ -221,76 +221,90 @@ export default function BillingPaymentPage() {
     const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
       if (!detail || detail.sectionName !== 'Billing & Payment') return;
-
       setLoading(true);
       const token = localStorage.getItem('tms_token');
-      let successCount = 0;
-      let errorCount = 0;
-
-      const batchSize = 15;
       const rows = detail.import.rows;
+      const recordsToImport: any[] = [];
+      let skippedCount = 0;
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-          const billNo = getCellValue(detail.import.headers, row, ['bill no', 'bill number', 'bill_no', 'invoice number', 'invoice no']).toUpperCase().trim();
-          const billDateStr = getCellValue(detail.import.headers, row, ['bill date', 'bill_date', 'invoice date']);
-          const billQtyStr = getCellValue(detail.import.headers, row, ['bill qty', 'bill quantity', 'billed qty']);
-          const billAmountStr = getCellValue(detail.import.headers, row, ['bill amount', 'bill_amount', 'invoice amount']);
-          const tdsStr = getCellValue(detail.import.headers, row, ['tds', 'tds deduction']);
-          const advancePaidStr = getCellValue(detail.import.headers, row, ['advance paid', 'advance_paid', 'advance']);
-          const finalPayableStr = getCellValue(detail.import.headers, row, ['final payable', 'final_payable', 'net payable']);
-          const remarks = getCellValue(detail.import.headers, row, ['remarks', 'comment', 'comments']).trim();
+      rows.forEach((row) => {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const billNo = getCellValue(detail.import.headers, row, ['bill no', 'bill number', 'bill_no', 'invoice number', 'invoice no']).toUpperCase().trim();
+        const billDateStr = getCellValue(detail.import.headers, row, ['bill date', 'bill_date', 'invoice date']);
+        const billQtyStr = getCellValue(detail.import.headers, row, ['bill qty', 'bill quantity', 'billed qty']);
+        const billAmountStr = getCellValue(detail.import.headers, row, ['bill amount', 'bill_amount', 'invoice amount']);
+        const tdsStr = getCellValue(detail.import.headers, row, ['tds', 'tds deduction']);
+        const advancePaidStr = getCellValue(detail.import.headers, row, ['advance paid', 'advance_paid', 'advance']);
+        const finalPayableStr = getCellValue(detail.import.headers, row, ['final payable', 'final_payable', 'net payable']);
+        const remarks = getCellValue(detail.import.headers, row, ['remarks', 'comment', 'comments']).trim();
 
-          if (!doNo || !billNo || !billAmountStr) {
-            errorCount++;
-            return;
-          }
+        if (!doNo || !billNo || !billAmountStr) {
+          skippedCount++;
+          return;
+        }
 
-          const billAmount = parseFloat(billAmountStr) || 0;
-          const tds = parseFloat(tdsStr) || 0;
-          const advancePaid = parseFloat(advancePaidStr) || 0;
-          const finalPayable = finalPayableStr ? parseFloat(finalPayableStr) : (billAmount - tds - advancePaid);
+        const billAmount = parseFloat(billAmountStr) || 0;
+        const tds = parseFloat(tdsStr) || 0;
+        const advancePaid = parseFloat(advancePaidStr) || 0;
+        const finalPayable = finalPayableStr ? parseFloat(finalPayableStr) : (billAmount - tds - advancePaid);
 
-          const recordData = {
-            doNo,
-            billNo,
-            billDate: parseDateToYYYYMMDD(billDateStr) || null,
-            billQty: parseFloat(billQtyStr) || 0,
-            billAmount,
-            tds,
-            advancePaid,
-            finalPayable,
-            remarks
-          };
+        recordsToImport.push({
+          doNo,
+          billNo,
+          billDate: parseDateToYYYYMMDD(billDateStr) || null,
+          billQty: parseFloat(billQtyStr) || 0,
+          billAmount,
+          tds,
+          advancePaid,
+          finalPayable,
+          remarks
+        });
+      });
 
-          try {
-            const response = await fetch('/api/coal-rcr/billing-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(recordData)
-            });
-            if (response.ok) {
-              successCount++;
-            } else {
-              errorCount++;
-            }
-          } catch (error) {
-            console.error("Error importing Billing row:", error);
-            errorCount++;
-          }
-        }));
+      if (recordsToImport.length === 0) {
+        setToast({
+          message: `Excel Import failed: No valid records found in the sheet.`,
+          type: 'error',
+          title: 'Import Failed'
+        });
+        setLoading(false);
+        return;
       }
 
-      setToast({
-        message: `Excel Import completed: ${successCount} Billing records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success',
-        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
-      });
+      try {
+        const response = await fetch('/api/coal-rcr/billing-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(recordsToImport)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const importedCount = resData.count || 0;
+          const duplicatesCount = recordsToImport.length - importedCount;
+
+          setToast({
+            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+            title: 'Import Result'
+          });
+        } else {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Server returned an error');
+        }
+      } catch (error: any) {
+        console.error("Error importing Billing records:", error);
+        setToast({
+          message: `Excel Import failed: ${error.message || 'Network error'}`,
+          type: 'error',
+          title: 'Import Error'
+        });
+      }
+
+      setLoading(false);
       fetchData();
     };
 

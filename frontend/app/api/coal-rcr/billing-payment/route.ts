@@ -38,6 +38,40 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // Support bulk inserts
+    if (Array.isArray(body)) {
+      const recordsToCreate = [];
+      for (const item of body) {
+        const { doNo, billNo, billDate, billQty, billAmount, tds, advancePaid, finalPayable, remarks } = item;
+        if (!doNo || !billNo || finalPayable === undefined) {
+          continue; // Skip invalid records in batch
+        }
+        recordsToCreate.push({
+          doNo,
+          billNo: billNo.toUpperCase().trim(),
+          billDate: billDate || null,
+          billQty: parseFloat(billQty) || 0,
+          billAmount: parseFloat(billAmount) || 0,
+          tds: parseFloat(tds) || 0,
+          advancePaid: parseFloat(advancePaid) || 0,
+          finalPayable: parseFloat(finalPayable) || 0,
+          remarks: remarks ? remarks.trim() : null,
+        });
+      }
+
+      if (recordsToCreate.length === 0) {
+        return NextResponse.json({ error: 'No valid records found in the import payload' }, { status: 400 });
+      }
+
+      const result = await prisma.coalBillingPayment.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
     const { id, doNo, billNo, billDate, billQty, billAmount, tds, advancePaid, finalPayable, remarks } = body;
 
     if (!doNo || !billNo || finalPayable === undefined) {

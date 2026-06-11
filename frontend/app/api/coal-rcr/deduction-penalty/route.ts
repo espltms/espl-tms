@@ -38,6 +38,40 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // Support bulk inserts
+    if (Array.isArray(body)) {
+      const recordsToCreate = [];
+      for (const item of body) {
+        const { doNo, rrNo, deadFreight, punitive, dc, shortage, qualitySlippage, railwayLeakage, finalDeduction } = item;
+        if (!doNo || !rrNo || finalDeduction === undefined) {
+          continue; // Skip invalid records in batch
+        }
+        recordsToCreate.push({
+          doNo,
+          rrNo: rrNo.toUpperCase().trim(),
+          deadFreight: parseFloat(deadFreight) || 0,
+          punitive: parseFloat(punitive) || 0,
+          dc: parseFloat(dc) || 0,
+          shortage: parseFloat(shortage) || 0,
+          qualitySlippage: parseFloat(qualitySlippage) || 0,
+          railwayLeakage: parseFloat(railwayLeakage) || 0,
+          finalDeduction: parseFloat(finalDeduction) || 0,
+        });
+      }
+
+      if (recordsToCreate.length === 0) {
+        return NextResponse.json({ error: 'No valid records found in the import payload' }, { status: 400 });
+      }
+
+      const result = await prisma.coalDeductionPenalty.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
     const { id, doNo, rrNo, deadFreight, punitive, dc, shortage, qualitySlippage, railwayLeakage, finalDeduction } = body;
 
     if (!doNo || !rrNo || finalDeduction === undefined) {

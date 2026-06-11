@@ -166,85 +166,99 @@ export default function DeductionPenaltyPage() {
     const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
       if (!detail || detail.sectionName !== 'Deduction & Penalty') return;
-
       setLoading(true);
       const token = localStorage.getItem('tms_token');
-      let successCount = 0;
-      let errorCount = 0;
-
-      const batchSize = 15;
       const rows = detail.import.rows;
+      const recordsToImport: any[] = [];
+      let skippedCount = 0;
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-          const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
-          const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
-          const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
-          const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
-          const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
-          const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
-          const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+      rows.forEach((row) => {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
+        const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
+        const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
+        const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
+        const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
+        const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
+        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
 
-          if (!doNo || !rrNo) {
-            errorCount++;
-            return;
-          }
+        if (!doNo || !rrNo) {
+          skippedCount++;
+          return;
+        }
 
-          let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
-          if (!qualitySlippageStr) {
-            const matchedQuality = qualityRecords.find(q => q.rrNo.toUpperCase().trim() === rrNo);
-            qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
-          }
+        let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
+        if (!qualitySlippageStr) {
+          const matchedQuality = qualityRecords.find(q => q.rrNo.toUpperCase().trim() === rrNo);
+          qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
+        }
 
-          const deadFreight = parseFloat(deadFreightStr) || 0;
-          const punitive = parseFloat(punitiveStr) || 0;
-          const dc = parseFloat(dcStr) || 0;
-          const shortage = parseFloat(shortageStr) || 0;
-          const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
+        const deadFreight = parseFloat(deadFreightStr) || 0;
+        const punitive = parseFloat(punitiveStr) || 0;
+        const dc = parseFloat(dcStr) || 0;
+        const shortage = parseFloat(shortageStr) || 0;
+        const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
 
-          const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
+        const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
 
-          const recordData = {
-            doNo,
-            rrNo,
-            deadFreight,
-            punitive,
-            dc,
-            shortage,
-            qualitySlippage,
-            railwayLeakage,
-            finalDeduction
-          };
+        recordsToImport.push({
+          doNo,
+          rrNo,
+          deadFreight,
+          punitive,
+          dc,
+          shortage,
+          qualitySlippage,
+          railwayLeakage,
+          finalDeduction
+        });
+      });
 
-          try {
-            const response = await fetch('/api/coal-rcr/deduction-penalty', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(recordData)
-            });
-            if (response.ok) {
-              successCount++;
-            } else {
-              errorCount++;
-            }
-          } catch (error) {
-            console.error("Error importing Deduction row:", error);
-            errorCount++;
-          }
-        }));
+      if (recordsToImport.length === 0) {
+        setToast({
+          message: `Excel Import failed: No valid records found in the sheet.`,
+          type: 'error',
+          title: 'Import Failed'
+        });
+        setLoading(false);
+        return;
       }
 
-      setToast({
-        message: `Excel Import completed: ${successCount} Deduction records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success',
-        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
-      });
+      try {
+        const response = await fetch('/api/coal-rcr/deduction-penalty', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(recordsToImport)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const importedCount = resData.count || 0;
+          const duplicatesCount = recordsToImport.length - importedCount;
+
+          setToast({
+            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+            title: 'Import Result'
+          });
+        } else {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Server returned an error');
+        }
+      } catch (error: any) {
+        console.error("Error importing Deduction records:", error);
+        setToast({
+          message: `Excel Import failed: ${error.message || 'Network error'}`,
+          type: 'error',
+          title: 'Import Error'
+        });
+      }
+
+      setLoading(false);
       fetchData();
     };
 

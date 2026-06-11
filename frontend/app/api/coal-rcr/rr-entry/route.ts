@@ -38,6 +38,42 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // Support bulk inserts
+    if (Array.isArray(body)) {
+      const recordsToCreate = [];
+      for (const item of body) {
+        const { doNo, siding, rrNo, rrDate, loadingDate, receiptDate, rrActQty, rrChQty, vllQty, grnQty, normalisedQty } = item;
+        if (!doNo || !rrNo || grnQty === undefined) {
+          continue; // Skip invalid records in batch
+        }
+        recordsToCreate.push({
+          doNo,
+          siding: siding ? siding.trim() : '',
+          rrNo: rrNo.toUpperCase().trim(),
+          rrDate: rrDate || null,
+          loadingDate: loadingDate || null,
+          receiptDate: receiptDate || null,
+          rrActQty: parseFloat(rrActQty) || 0,
+          rrChQty: parseFloat(rrChQty) || 0,
+          vllQty: parseFloat(vllQty) || 0,
+          grnQty: parseFloat(grnQty) || 0,
+          normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
+        });
+      }
+
+      if (recordsToCreate.length === 0) {
+        return NextResponse.json({ error: 'No valid records found in the import payload' }, { status: 400 });
+      }
+
+      const result = await prisma.coalRREntry.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
     const { id, doNo, siding, rrNo, rrDate, loadingDate, receiptDate, rrActQty, rrChQty, vllQty, grnQty, normalisedQty } = body;
 
     if (!doNo || !rrNo || grnQty === undefined) {

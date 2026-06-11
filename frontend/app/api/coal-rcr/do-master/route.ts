@@ -38,6 +38,41 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // Support bulk inserts
+    if (Array.isArray(body)) {
+      const recordsToCreate = [];
+      for (const item of body) {
+        const { doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = item;
+        if (!doNo || !poNo || !siding || doQty === undefined) {
+          continue; // Skip invalid records in batch
+        }
+        recordsToCreate.push({
+          doNo: doNo.toUpperCase().trim(),
+          poNo: poNo.toUpperCase().trim(),
+          siding: siding.trim(),
+          mines: mines ? mines.trim() : null,
+          coalCompany: coalCompany ? coalCompany.trim() : null,
+          doQty: parseFloat(doQty) || 0,
+          coalType: coalType || 'ROM',
+          startDate: startDate || null,
+          endDate: endDate || null,
+          status: status || 'Active',
+        });
+      }
+
+      if (recordsToCreate.length === 0) {
+        return NextResponse.json({ error: 'No valid records found in the import payload' }, { status: 400 });
+      }
+
+      const result = await prisma.coalDOMaster.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
     const { id, doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = body;
 
     if (!doNo || !poNo || !siding || doQty === undefined) {

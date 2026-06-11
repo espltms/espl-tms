@@ -224,83 +224,97 @@ export default function RREntryPage() {
     const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
       if (!detail || detail.sectionName !== 'RR Entry') return;
-
       setLoading(true);
       const token = localStorage.getItem('tms_token');
-      let successCount = 0;
-      let errorCount = 0;
-
-      const batchSize = 15;
       const rows = detail.import.rows;
+      const recordsToImport: any[] = [];
+      let skippedCount = 0;
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-          let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
-          const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
-          const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
-          const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
-          const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
-          const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
-          const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
-          const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
-          const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
+      rows.forEach((row) => {
+        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+        const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
+        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+        const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
+        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
+        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
+        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
+        const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
+        const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
 
-          if (!doNo || !rrNo || !grnQtyStr) {
-            errorCount++;
-            return;
-          }
+        if (!doNo || !rrNo || !grnQtyStr) {
+          skippedCount++;
+          return;
+        }
 
-          if (!siding) {
-            const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
-            siding = matchedDO ? matchedDO.siding : '';
-          }
+        if (!siding) {
+          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+          siding = matchedDO ? matchedDO.siding : '';
+        }
 
-          const grnQty = parseFloat(grnQtyStr) || 0;
-          const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
+        const grnQty = parseFloat(grnQtyStr) || 0;
+        const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
 
-          const recordData = {
-            doNo,
-            siding,
-            rrNo,
-            rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
-            loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
-            receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
-            rrActQty: parseFloat(rrActQtyStr) || 0,
-            rrChQty: parseFloat(rrChQtyStr) || 0,
-            vllQty: parseFloat(vllQtyStr) || 0,
-            grnQty,
-            normalisedQty
-          };
+        recordsToImport.push({
+          doNo,
+          siding,
+          rrNo,
+          rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
+          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
+          receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
+          rrActQty: parseFloat(rrActQtyStr) || 0,
+          rrChQty: parseFloat(rrChQtyStr) || 0,
+          vllQty: parseFloat(vllQtyStr) || 0,
+          grnQty,
+          normalisedQty
+        });
+      });
 
-          try {
-            const response = await fetch('/api/coal-rcr/rr-entry', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(recordData)
-            });
-            if (response.ok) {
-              successCount++;
-            } else {
-              errorCount++;
-            }
-          } catch (error) {
-            console.error("Error importing RR row:", error);
-            errorCount++;
-          }
-        }));
+      if (recordsToImport.length === 0) {
+        setToast({
+          message: `Excel Import failed: No valid records found in the sheet.`,
+          type: 'error',
+          title: 'Import Failed'
+        });
+        setLoading(false);
+        return;
       }
 
-      setToast({
-        message: `Excel Import completed: ${successCount} RR records successfully imported, ${errorCount} failed/skipped.`,
-        type: errorCount > 0 ? 'info' : 'success',
-        title: errorCount > 0 ? 'Import Status' : 'Import Succeeded'
-      });
+      try {
+        const response = await fetch('/api/coal-rcr/rr-entry', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(recordsToImport)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const importedCount = resData.count || 0;
+          const duplicatesCount = recordsToImport.length - importedCount;
+
+          setToast({
+            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+            title: 'Import Result'
+          });
+        } else {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Server returned an error');
+        }
+      } catch (error: any) {
+        console.error("Error importing RR records:", error);
+        setToast({
+          message: `Excel Import failed: ${error.message || 'Network error'}`,
+          type: 'error',
+          title: 'Import Error'
+        });
+      }
+
+      setLoading(false);
       fetchData();
     };
 
