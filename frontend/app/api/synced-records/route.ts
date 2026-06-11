@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
+import { normalizeVendorName } from '@/lib/operationalStatus';
 
 const LOCAL_STORAGE_RECORD_TYPE = 'local_storage';
 
@@ -347,6 +348,8 @@ export async function POST(req: NextRequest) {
 
           // 3. Resolve Truck
           let dbTruckId = '';
+          let dbTruckVendor = '';
+          let dbTruckType = '';
           if (item.truck && item.truck.plateNumber) {
             const plate = item.truck.plateNumber.toUpperCase().trim();
             const truck = await tx.truck.findUnique({
@@ -354,6 +357,8 @@ export async function POST(req: NextRequest) {
             });
             if (truck) {
               dbTruckId = truck.id;
+              dbTruckVendor = truck.vendor || '';
+              dbTruckType = truck.type || '';
             } else {
               const newTruck = await tx.truck.create({
                 data: {
@@ -365,12 +370,19 @@ export async function POST(req: NextRequest) {
                 },
               });
               dbTruckId = newTruck.id;
+              dbTruckVendor = newTruck.vendor || '';
+              dbTruckType = newTruck.type || '';
             }
           }
 
           if (!dbPoId || !dbDriverId || !dbTruckId) {
             continue;
           }
+
+          const resolvedVendorName = dbTruckVendor 
+            ? normalizeVendorName(dbTruckVendor) 
+            : (item.vendorName ? normalizeVendorName(item.vendorName) : null);
+          const resolvedVehicleType = dbTruckType || item.vehicleType || null;
 
           // 4. Upsert Trip
           await tx.trip.upsert({
@@ -389,8 +401,8 @@ export async function POST(req: NextRequest) {
               scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
               actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
               actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
-              vendorName: item.vendorName || null,
-              vehicleType: item.vehicleType || null,
+              vendorName: resolvedVendorName,
+              vehicleType: resolvedVehicleType,
             },
             create: {
               tripNumber: tripNo,
@@ -407,8 +419,8 @@ export async function POST(req: NextRequest) {
               scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
               actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
               actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
-              vendorName: item.vendorName || null,
-              vehicleType: item.vehicleType || null,
+              vendorName: resolvedVendorName,
+              vehicleType: resolvedVehicleType,
             },
           });
         }

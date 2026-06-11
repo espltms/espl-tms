@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 import { getPagination, getSearchParam } from '@/lib/apiQuery';
-import { normalizeOperationalStatus } from '@/lib/operationalStatus';
+import { normalizeOperationalStatus, normalizeVendorName } from '@/lib/operationalStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,6 +158,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not match PO, driver, or truck in master database' }, { status: 400 });
     }
 
+    const resolvedVendorName = truck.vendor 
+      ? normalizeVendorName(truck.vendor) 
+      : (body.vendorName ? normalizeVendorName(body.vendorName) : null);
+    const resolvedVehicleType = truck.type ? truck.type : (body.vehicleType || null);
+
     const trip = await prisma.trip.create({
       data: {
         tripNumber: body.tripNumber || `TRIP-${Date.now()}`,
@@ -168,8 +173,8 @@ export async function POST(req: NextRequest) {
         destination: body.destination,
         distanceKm: body.distanceKm || 0,
         estimatedQuantityTons: body.estimatedQuantityTons || 0,
-        vendorName: body.vendorName || null,
-        vehicleType: body.vehicleType || null,
+        vendorName: resolvedVendorName,
+        vehicleType: resolvedVehicleType,
         status: normalizeOperationalStatus(body.status) as any,
         scheduledStartDate: new Date(body.scheduledStartDate),
       },

@@ -492,10 +492,14 @@ export default function TripsPage() {
         const finalSource = sourceVal !== '-' ? sourceVal : route.source;
         const finalDestination = locationVal !== '-' ? locationVal : route.destination;
 
-        // Resolve truck details fallbacks
+        // Resolve truck details fallbacks, prioritizing Fleet Master registry values
         const matchedMasterTruck = trucks.find(t => t.plateNumber.toUpperCase().replace(/[^A-Z0-9]/ig, '') === truckPlate.toUpperCase().replace(/[^A-Z0-9]/ig, ''));
-        const vendor = normalizeVendorName(vendorVal !== '-' ? vendorVal : (matchedMasterTruck?.vendor || 'Eastern Stevedores'));
-        const type = typeVal !== '-' ? typeVal : (matchedMasterTruck?.type || 'Tipper');
+        const vendor = matchedMasterTruck?.vendor && matchedMasterTruck.vendor !== '—'
+          ? normalizeVendorName(matchedMasterTruck.vendor)
+          : normalizeVendorName(vendorVal !== '-' ? vendorVal : 'Eastern Stevedores');
+        const type = matchedMasterTruck?.type && matchedMasterTruck.type !== '—'
+          ? matchedMasterTruck.type
+          : (typeVal !== '-' ? typeVal : 'Tipper');
         const driverName = driverVal !== '-' ? driverVal : (matchedMasterTruck?.assignedDriverName || 'Driver Partner');
         const driverPhone = phoneVal !== '-' ? phoneVal : (matchedMasterTruck?.assignedDriverPhone || '-');
 
@@ -774,6 +778,13 @@ export default function TripsPage() {
       return;
     }
 
+    const finalVendorName = selectedTruck.vendor && selectedTruck.vendor !== '—'
+      ? normalizeVendorName(selectedTruck.vendor)
+      : normalizeVendorName(vendorName);
+    const finalVehicleType = selectedTruck.type && selectedTruck.type !== '—'
+      ? selectedTruck.type
+      : vehicleType;
+
     const tripNumber = `TRIP-${10000 + trips.length + 1}`;
     const newTripId = `trip-local-${Date.now()}`;
     const newTrip: Trip = {
@@ -783,8 +794,8 @@ export default function TripsPage() {
       driverId: selectedDriver.id,
       source,
       destination,
-      vendorName: normalizeVendorName(vendorName),
-      vehicleType,
+      vendorName: finalVendorName,
+      vehicleType: finalVehicleType,
       distanceKm: Number(distance),
       estimatedQuantityTons: requestedQty,
       status: 'IN_TRANSIT',
@@ -849,8 +860,8 @@ export default function TripsPage() {
       truckPlate: selectedTruck.plateNumber,
       source,
       destination,
-      vendorName,
-      vehicleType,
+      vendorName: finalVendorName,
+      vehicleType: finalVehicleType,
       commodity,
       status: 'IN_TRANSIT',
       distanceKm: Number(distance),
@@ -1065,7 +1076,6 @@ export default function TripsPage() {
                 <th className="px-6 py-4">Ticket no</th>
                 <th className="px-6 py-4">Challan no</th>
                 <th className="px-6 py-4">Running Status</th>
-                <th className="px-6 py-4 text-center">Gatepass</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e2e8f0] text-slate-600">
@@ -1141,21 +1151,12 @@ export default function TripsPage() {
                         {getOperationalStatusLabel(trip.status as OperationalStatus)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => getGatepassToken(trip)}
-                        className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 p-1.5 text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
-                        title="Show Gatepass QR"
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </button>
-                    </td>
                   </tr>
                 );
               })}
               {paginatedTrips.length === 0 && (
                 <tr>
-                  <td colSpan={isDeleteMode ? 20 : 19} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
+                  <td colSpan={isDeleteMode ? 19 : 18} className="px-6 py-8 text-center text-slate-500">No trips found.</td>
                 </tr>
               )}
             </tbody>

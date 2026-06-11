@@ -206,7 +206,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-xl bg-gradient-to-r from-brand-primary to-blue-600 py-3 text-sm font-semibold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-sans font-extrabold"
             >
-              {loading ? 'Decrypting Authentication Key...' : 'Authorize Secure Gateway'}
+              {loading ? 'Logging in...' : 'Login'}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>

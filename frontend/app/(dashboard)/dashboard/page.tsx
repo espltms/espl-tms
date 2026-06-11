@@ -9,12 +9,10 @@ import {
   Truck, 
   Users, 
   CheckCircle2, 
-  Activity, 
   Layers
 } from 'lucide-react';
 
 import { useApiData } from '@/lib/useApiData';
-import { getOperationalStatusClasses, getOperationalStatusLabel } from '@/lib/operationalStatus';
 import WorkflowAlerts from '@/components/WorkflowAlerts';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
@@ -28,10 +26,7 @@ const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
 });
 
 export default function DashboardPage() {
-  const { data: dashboardData, loading: dashboardLoading } = useApiData('/api/dashboard', null);
-  const { data: tripsData, loading: tripsLoading } = useApiData('/api/trips?limit=5&status=IN_TRANSIT', { data: [] });
-
-  const loading = dashboardLoading || tripsLoading;
+  const { data: dashboardData, loading } = useApiData('/api/dashboard', null);
   
   // Safe defaults if API is loading
   const stats = dashboardData || {
@@ -53,15 +48,7 @@ export default function DashboardPage() {
   const poUsageData = dashboardData?.poUsage || [];
   const revenueHistory = dashboardData?.revenueHistory || [];
 
-  const activeTrips = useMemo(() => (tripsData?.data || []).map((t: any) => ({
-    id: t.id,
-    tripNumber: t.tripNumber,
-    origin: t.source?.replace(' Plant (Mines Loading)', '').replace(' Hub (Mines Loading)', ''),
-    destination: t.destination?.replace(' Stockyard (Unloading)', '').replace(' Terminal (Unloading)', ''),
-    driver: t.driver?.fullName || 'Unassigned',
-    quantity: `${Number(t.estimatedQuantityTons || 0).toFixed(1)} Tons`,
-    status: t.status
-  })), [tripsData]);
+
 
   const formatCurrency = useCallback((val: number) => {
     return new Intl.NumberFormat('en-IN', { 
@@ -182,61 +169,17 @@ export default function DashboardPage() {
         formatCurrency={formatCurrency} 
       />
 
-      {/* Live Tower Status feed & alert notifications */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Active Dispatch Feed */}
-        <div className="glass-panel rounded-2xl p-6 border border-brand-slate bg-white shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Activity className="h-4.5 w-4.5 text-brand-primary" />
-              <span>Control Room Real-time Dispatch Feed</span>
-            </h3>
-            <span className="rounded-full bg-sky-50 border border-sky-100 px-2 py-0.5 text-[8px] text-sky-700 font-extrabold tracking-widest animate-pulse">
-              LIVE STREAM
-            </span>
-          </div>
-          
-          <div className="space-y-4">
-            {activeTrips.length === 0 ? (
-              <div className="text-center py-8 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                No vehicles currently en-route
-              </div>
-            ) : (
-              activeTrips.map(trip => (
-                <div key={trip.id} className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 p-4 hover:border-slate-200 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 border border-sky-100 text-sky-700">
-                      <Truck className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold text-slate-800">{trip.tripNumber}</div>
-                      <div className="text-[10px] text-slate-400 font-medium mt-0.5">{trip.origin} → {trip.destination}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[8px] font-bold tracking-wide ${getOperationalStatusClasses(trip.status)}`}>
-                      {getOperationalStatusLabel(trip.status)}
-                    </span>
-                    <div className="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-wider">{trip.quantity}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+      {/* Security Alerts and Audit logs */}
+      <div className="glass-panel rounded-2xl p-6 border border-brand-slate bg-white shadow-sm mt-6">
+        <div className="mb-4">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <Layers className="h-4.5 w-4.5 text-rose-600 animate-pulse" />
+            <span>Safety & Compliance Exception Audits</span>
+          </h3>
+          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Automated logs showing operator/terminal checkpoints status</p>
         </div>
 
-        {/* Security Alerts and Audit logs */}
-        <div className="glass-panel rounded-2xl p-6 border border-brand-slate bg-white shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Layers className="h-4.5 w-4.5 text-rose-600 animate-pulse" />
-              <span>Safety & Compliance Exception Audits</span>
-            </h3>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Automated logs showing operator/terminal checkpoints status</p>
-          </div>
-
-          <WorkflowAlerts />
-        </div>
+        <WorkflowAlerts />
       </div>
     </div>
   );
