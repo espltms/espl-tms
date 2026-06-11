@@ -37,6 +37,8 @@ function canUserWriteRecord(role: string, recordKey: string): boolean {
   switch (recordKey) {
     case 'tms_assigned_trips':
     case 'tms_loading_records':
+      return isUserDispatcher(role) || isUserLoader(role) || isUserUnloader(role);
+
     case 'tms_local_trucks':
     case 'tms_local_drivers':
       return isUserDispatcher(role);
