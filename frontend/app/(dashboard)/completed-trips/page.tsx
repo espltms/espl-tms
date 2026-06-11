@@ -400,7 +400,7 @@ export default function CompletedTripsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredRecords.map((record, idx) => {
+                 filteredRecords.map((record, idx) => {
                   const matchedTrip = assignedTrips.find(
                     t => t.tripNumber === record.tripNumber || t.id === record.tripId
                   );
@@ -409,6 +409,27 @@ export default function CompletedTripsPage() {
                     t => t.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === record.truckPlate.toUpperCase().replace(/[^A-Z0-9]/g, '')
                   );
                   const subVendor = matchedTruck?.subVendor || '—';
+
+                  let poNumber = matchedTrip?.purchaseOrder?.poNumber || '—';
+                  let vendorName = matchedTrip?.vendorName || matchedTruck?.vendor || '—';
+
+                  if (poNumber === '—') {
+                    const challanUpper = String(record.challanNo || '').toUpperCase();
+                    let targetDest = '';
+                    if (challanUpper.startsWith('PA')) {
+                      targetDest = 'Paramanandpur';
+                    } else if (challanUpper.startsWith('DH')) {
+                      targetDest = 'Dharamgarh';
+                    }
+                    if (targetDest) {
+                      const similarTrip = assignedTrips.find(t => 
+                        t.destination && t.destination.toLowerCase().includes(targetDest.toLowerCase()) && t.purchaseOrder?.poNumber
+                      );
+                      if (similarTrip) {
+                        poNumber = similarTrip.purchaseOrder.poNumber;
+                      }
+                    }
+                  }
 
                   return (
                     <tr key={record.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(record.id) ? 'bg-blue-50/20' : ''}`}>
@@ -433,7 +454,7 @@ export default function CompletedTripsPage() {
                         {record.truckPlate}
                       </td>
                       <td className="px-5 py-4 font-mono font-bold text-slate-700">
-                        {matchedTrip?.purchaseOrder?.poNumber || '—'}
+                        {poNumber}
                       </td>
                       <td className="px-5 py-4 font-mono font-bold text-slate-700">
                         {record.challanNo}
@@ -443,7 +464,7 @@ export default function CompletedTripsPage() {
                       </td>
                       <td className="px-5 py-4">
                         {record.unloadingDateTime ? (
-                          <div className="font-semibold text-slate-700">
+                           <div className="font-semibold text-slate-700">
                             {new Date(record.unloadingDateTime).toLocaleString('en-IN', { 
                               timeZone: 'Asia/Kolkata', 
                               hour12: true, 
@@ -461,7 +482,7 @@ export default function CompletedTripsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-700">
-                        {matchedTrip?.vendorName || '—'}
+                        {vendorName}
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-700">
                         {subVendor}

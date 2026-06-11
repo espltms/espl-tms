@@ -389,6 +389,8 @@ export async function POST(req: NextRequest) {
               scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
               actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
               actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+              vendorName: item.vendorName || null,
+              vehicleType: item.vehicleType || null,
             },
             create: {
               tripNumber: tripNo,
@@ -405,6 +407,8 @@ export async function POST(req: NextRequest) {
               scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
               actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
               actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+              vendorName: item.vendorName || null,
+              vehicleType: item.vehicleType || null,
             },
           });
         }
