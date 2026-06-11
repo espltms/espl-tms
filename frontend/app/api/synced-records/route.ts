@@ -141,6 +141,8 @@ export async function GET(req: NextRequest) {
         scheduledStartDate: t.scheduledStartDate.toISOString(),
         actualStartDate: t.actualStartDate?.toISOString() || null,
         actualEndDate: t.actualEndDate?.toISOString() || null,
+        vendorName: t.vendorName,
+        vehicleType: t.vehicleType,
         driver: {
           id: t.driverId,
           fullName: t.driver.fullName,
