@@ -10,7 +10,7 @@ import { Shield, Key, Mail, AlertTriangle, ArrowRight, Building2, Crown, Truck, 
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, user } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,10 +38,17 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      const targetPath = user.role?.startsWith('VENDOR') 
+        ? '/vehicle-summary' 
+        : user.role === 'LANJIGARH_LOADER' 
+          ? '/trips' 
+          : user.role === 'PARAMANANDPUR_UNLOADER' || user.role === 'DHARAMGARH_UNLOADER'
+            ? '/unloading'
+            : '/dashboard';
+      router.push(targetPath);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

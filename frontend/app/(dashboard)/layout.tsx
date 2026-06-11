@@ -215,7 +215,14 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!mounted || !isAuthenticated) return;
     if (!hasRouteAccess(user?.role, pathname, customRoles)) {
-      const fallback = ROLE_ACCESS[user?.role as keyof typeof ROLE_ACCESS]?.[0] || customRoles[user?.role || '']?.[0] || '/dashboard';
+      const defaultRoleFallback = user?.role?.startsWith('VENDOR') 
+        ? '/vehicle-summary' 
+        : user?.role === 'LANJIGARH_LOADER' 
+          ? '/trips' 
+          : user?.role === 'PARAMANANDPUR_UNLOADER' || user?.role === 'DHARAMGARH_UNLOADER'
+            ? '/unloading'
+            : '/dashboard';
+      const fallback = ROLE_ACCESS[user?.role as keyof typeof ROLE_ACCESS]?.[0] || customRoles[user?.role || '']?.[0] || defaultRoleFallback;
       router.push(fallback);
     }
   }, [isAuthenticated, mounted, pathname, router, user?.role, customRoles]);
