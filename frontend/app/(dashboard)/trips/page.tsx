@@ -78,7 +78,7 @@ interface LoadingRecord {
 
 const VEHICLE_TYPES = ['Tipper', 'Dalla', 'Tanker', 'Flatbed', 'Container Carrier', 'Bulker'];
 const COMMODITIES = ['Fly Ash', 'Coal', 'FMCG', 'Other'];
-const VENDOR_OPTIONS = ['Eastern Stevedores', 'Mahaveer', 'Vendor 3'];
+const VENDOR_OPTIONS = ['Eastern Stevedores', 'Mahaveer'];
 const ASSIGNED_TRIPS_KEY = 'tms_assigned_trips';
 const LOADING_RECORDS_KEY = 'tms_loading_records';
 

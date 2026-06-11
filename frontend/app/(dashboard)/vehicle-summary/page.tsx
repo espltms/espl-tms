@@ -72,7 +72,7 @@ interface VehicleActivityRecord {
 }
 
 const LOADING_RECORDS_KEY = 'tms_loading_records';
-const VENDOR_NAMES = ['Eastern Stevedores', 'Mahaveer', 'Vendor 3'];
+const VENDOR_NAMES = ['Eastern Stevedores', 'Mahaveer'];
 
 const getFallbackVendorForPlate = (plateNumber: string) => {
   const total = plateNumber.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -141,22 +141,27 @@ export default function VehicleSummaryPage() {
         .filter((value): value is string => Boolean(value))
     );
 
-    const localActivities = loadingRecords.map((record) => ({
-      id: record.id,
-      tripId: record.tripId,
-      tripNumber: record.tripNumber,
-      truckId: record.truckId,
-      truckPlate: record.truckPlate,
-      loadedQty: record.netWeight || 0,
-      receivedQty: record.receivedQty || 0,
-      grossWeight: record.grossWeight || 0,
-      tareWeight: record.tareWeight || 0,
-      activityDateTime: record.loadingDateTime,
-      referenceNo: record.challanNo || record.ticketNo,
-      uom: record.uom || 'Metric Ton',
-      status: normalizeOperationalStatus(record.truckStatus),
-      turnaroundMinutes: record.turnaroundMinutes,
-    }));
+    const localActivities = loadingRecords.map((record) => {
+      const truck = trucks.find(item => item.id === record.truckId || item.plateNumber === record.truckPlate);
+      const trip = trips.find(t => t.id === record.tripId || t.tripNumber === record.tripNumber);
+      return {
+        id: record.id,
+        tripId: record.tripId,
+        tripNumber: record.tripNumber,
+        truckId: record.truckId,
+        truckPlate: record.truckPlate,
+        vendor: normalizeVendorName(truck?.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate)),
+        loadedQty: record.netWeight || 0,
+        receivedQty: record.receivedQty || 0,
+        grossWeight: record.grossWeight || 0,
+        tareWeight: record.tareWeight || 0,
+        activityDateTime: record.loadingDateTime,
+        referenceNo: record.challanNo || record.ticketNo,
+        uom: record.uom || 'Metric Ton',
+        status: normalizeOperationalStatus(record.truckStatus),
+        turnaroundMinutes: record.turnaroundMinutes,
+      };
+    });
 
     const datasetActivities = trips
       .filter(trip => !loadedTripKeys.has(trip.id) && !loadedTripKeys.has(trip.tripNumber))
