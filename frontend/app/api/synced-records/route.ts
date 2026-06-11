@@ -413,18 +413,7 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // 5. Delete omitted trips (unless they have invoices or weigh tickets linked)
-        try {
-          await tx.trip.deleteMany({
-            where: {
-              tripNumber: { notIn: tripNumbersInPayload },
-              weighTickets: { none: {} },
-              invoices: { none: {} },
-            },
-          });
-        } catch (e) {
-          console.warn('Omitted trips deletion skipped for referenced records:', e);
-        }
+
       });
 
       return NextResponse.json({ record: { recordKey, payload } });

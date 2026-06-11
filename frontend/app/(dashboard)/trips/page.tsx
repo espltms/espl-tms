@@ -181,7 +181,7 @@ export default function TripsPage() {
 
   const ITEMS_PER_PAGE = 15;
 
-  const deleteTrips = (tripIds: string[]) => {
+  const deleteTrips = async (tripIds: string[]) => {
     const nextTrips = trips.filter(t => !tripIds.includes(t.id));
     setTrips(nextTrips);
     
@@ -195,6 +195,21 @@ export default function TripsPage() {
       const nextLoading = existingLoading.filter(r => !tripIds.includes(r.tripId || ''));
       saveSyncedValue(LOADING_RECORDS_KEY, nextLoading);
       setLoadingRecords(nextLoading);
+
+      // Explicitly delete from database
+      const token = localStorage.getItem('tms_token');
+      for (const id of tripIds) {
+        if (id && !id.startsWith('trip-local-')) {
+          try {
+            await fetch(`/api/trips/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch (e) {
+            console.error('Delete trip error:', e);
+          }
+        }
+      }
     }
     
     setSelectedIds(prev => prev.filter(id => !tripIds.includes(id)));
