@@ -116,7 +116,7 @@ export default function VehicleSummaryPage() {
   }, []);
 
   useEffect(() => {
-    if (user?.role !== 'VENDOR') return;
+    if (!user?.role?.startsWith('VENDOR')) return;
     const token = typeof window !== 'undefined' ? window.localStorage.getItem('tms_token') : null;
     if (!token) return;
 
@@ -363,7 +363,7 @@ export default function VehicleSummaryPage() {
               className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-brand-primary"
             />
           </label>
-          {user?.role !== 'VENDOR' ? (
+          {!user?.role?.startsWith('VENDOR') ? (
             <label className="block">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Vendor</span>
               <select
