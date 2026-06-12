@@ -438,6 +438,7 @@ export default function VehicleSummaryPage() {
                 <th className="px-6 py-4">SL.</th>
                 <th className="px-6 py-4">Vehicle</th>
                 <th className="px-6 py-4">Vendor</th>
+                <th className="px-6 py-4">Sub Vendor</th>
                 <th className="px-6 py-4">Trips</th>
                 <th className="px-6 py-4">Quantity</th>
                 <th className="px-6 py-4">Gross / Tare</th>
@@ -451,7 +452,7 @@ export default function VehicleSummaryPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {summaries.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={12} className="px-6 py-10 text-center text-slate-500">
                     No vehicle activity found for this month session.
                   </td>
                 </tr>
@@ -469,7 +470,9 @@ export default function VehicleSummaryPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-700">{summary.vendor}</div>
-                    <div className="mt-0.5 text-[10px] text-slate-400">{summary.subVendor}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-slate-700">{summary.subVendor}</div>
                   </td>
                   <td className="px-6 py-4 font-mono font-extrabold text-slate-800">{summary.tripCount}</td>
                   <td className="px-6 py-4 font-mono">
