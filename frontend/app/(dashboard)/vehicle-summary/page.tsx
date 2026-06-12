@@ -104,15 +104,18 @@ export default function VehicleSummaryPage() {
   const weighTickets = useMemo(() => getWeighTickets(), []);
   const [loadingRecords, setLoadingRecords] = useState<LoadingRecord[]>(() => readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
   const [fuelEntries, setFuelEntries] = useState<FuelFinanceEntry[]>([]);
+  const [fleetMaster, setFleetMaster] = useState<any[]>([]);
 
   useEffect(() => {
     // 1. Instant local load
     setLoadingRecords(readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []));
     setFuelEntries(readLocalValue<FuelFinanceEntry[]>('tms_fuel_finance_entries', []));
+    setFleetMaster(readLocalValue<any[]>('tms_fleet_master', []));
 
     // 2. Background Database sync
     fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(setLoadingRecords);
     fetchSyncedValue<FuelFinanceEntry[]>('tms_fuel_finance_entries', []).then(setFuelEntries);
+    fetchSyncedValue<any[]>('tms_fleet_master', []).then(setFleetMaster);
   }, []);
 
   useEffect(() => {
@@ -142,15 +145,27 @@ export default function VehicleSummaryPage() {
     );
 
     const localActivities = loadingRecords.map((record) => {
+      const matchedTruck = fleetMaster.find(t => 
+        t.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === record.truckPlate.toUpperCase().replace(/[^A-Z0-9]/g, '')
+      );
       const truck = trucks.find(item => item.id === record.truckId || item.plateNumber === record.truckPlate);
       const trip = trips.find(t => t.id === record.tripId || t.tripNumber === record.tripNumber);
+      
+      const vendorName = matchedTruck?.vendor && matchedTruck.vendor !== '-' && matchedTruck.vendor !== '—'
+        ? matchedTruck.vendor
+        : (truck?.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate));
+      const subVendorName = matchedTruck?.subVendor && matchedTruck.subVendor !== '-' && matchedTruck.subVendor !== '—' && matchedTruck.subVendor !== 'Not provided in dataset'
+        ? matchedTruck.subVendor
+        : (truck?.subVendor || '-');
+
       return {
         id: record.id,
         tripId: record.tripId,
         tripNumber: record.tripNumber,
         truckId: record.truckId,
         truckPlate: record.truckPlate,
-        vendor: normalizeVendorName(truck?.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate)),
+        vendor: normalizeVendorName(vendorName),
+        subVendor: subVendorName,
         loadedQty: record.netWeight || 0,
         receivedQty: record.receivedQty || 0,
         grossWeight: record.grossWeight || 0,
@@ -168,11 +183,26 @@ export default function VehicleSummaryPage() {
       .map((trip) => {
         const ticket = weighTickets.find(item => item.tripNo === trip.tripNumber)
           || weighTickets.find(item => item.truckPlate === trip.truck.plateNumber);
+        
+        const matchedTruck = fleetMaster.find(t => 
+          t.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === trip.truck.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '')
+        );
         const truck = trucks.find(item => item.id === trip.truckId || item.plateNumber === trip.truck.plateNumber);
+
         const loadedQty = Number(trip.actualLoadedTons || ticket?.netTons || trip.estimatedQuantityTons || 0);
         const receivedQty = Number(trip.actualDeliveredTons || 0);
         const tareWeight = Number(ticket?.tareTons || 0);
         const grossWeight = Number(ticket?.grossTons || (loadedQty && tareWeight ? loadedQty + tareWeight : 0));
+
+        const vendorName = matchedTruck?.vendor && matchedTruck.vendor !== '-' && matchedTruck.vendor !== '—'
+          ? matchedTruck.vendor
+          : (truck?.vendor || trip.vendorName || getFallbackVendorForPlate(trip.truck.plateNumber));
+        const subVendorName = matchedTruck?.subVendor && matchedTruck.subVendor !== '-' && matchedTruck.subVendor !== '—' && matchedTruck.subVendor !== 'Not provided in dataset'
+          ? matchedTruck.subVendor
+          : (truck?.subVendor || '-');
+        const fCategory = matchedTruck?.fleetCategory 
+          ? (matchedTruck.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet')
+          : (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet');
 
         return {
           id: trip.id,
@@ -180,10 +210,10 @@ export default function VehicleSummaryPage() {
           tripNumber: trip.tripNumber,
           truckId: trip.truckId,
           truckPlate: trip.truck.plateNumber,
-          model: truck?.model || trip.truck.model,
-          vendor: normalizeVendorName(truck?.vendor || trip.vendorName || getFallbackVendorForPlate(trip.truck.plateNumber)),
-          subVendor: truck?.subVendor || 'Not provided in dataset',
-          fleetCategory: truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet',
+          model: matchedTruck?.vehicleType || truck?.model || trip.truck.model,
+          vendor: normalizeVendorName(vendorName),
+          subVendor: subVendorName,
+          fleetCategory: fCategory,
           loadedQty,
           receivedQty,
           grossWeight,
@@ -196,7 +226,7 @@ export default function VehicleSummaryPage() {
       });
 
     return [...localActivities, ...datasetActivities];
-  }, [loadingRecords, trips, trucks, weighTickets]);
+  }, [loadingRecords, trips, trucks, weighTickets, fleetMaster]);
 
   const vendorOptions = useMemo(() => {
     const list = new Set(activityRecords.map(r => r.vendor || getFallbackVendorForPlate(r.truckPlate)).filter(Boolean));
@@ -267,17 +297,31 @@ export default function VehicleSummaryPage() {
     uom: string;
     challans: string[];
   }>>((acc, record) => {
+    const matchedTruck = fleetMaster.find(t => 
+      t.plateNumber?.toUpperCase().replace(/[^A-Z0-9]/g, '') === record.truckPlate.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    );
     const truck = trucks.find(item => item.id === record.truckId || item.plateNumber === record.truckPlate);
     const trip = trips.find(item => item.id === record.tripId || item.tripNumber === record.tripNumber);
     const key = truck?.id || record.truckId || record.truckPlate;
+    
+    const vendorName = matchedTruck?.vendor && matchedTruck.vendor !== '-' && matchedTruck.vendor !== '—'
+      ? matchedTruck.vendor
+      : (truck?.vendor || record.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate));
+    const subVendorName = matchedTruck?.subVendor && matchedTruck.subVendor !== '-' && matchedTruck.subVendor !== '—' && matchedTruck.subVendor !== 'Not provided in dataset'
+      ? matchedTruck.subVendor
+      : (truck?.subVendor || record.subVendor || '-');
+    const fCategory = matchedTruck?.fleetCategory 
+      ? (matchedTruck.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet')
+      : (record.fleetCategory || (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet'));
+
     if (!acc[key]) {
       acc[key] = {
         truckId: key,
         plateNumber: record.truckPlate,
-        model: truck?.model || record.model || trip?.truck.model || '-',
-        vendor: normalizeVendorName(truck?.vendor || record.vendor || trip?.vendorName || getFallbackVendorForPlate(record.truckPlate)),
-        subVendor: truck?.subVendor || record.subVendor || '-',
-        fleetCategory: record.fleetCategory || (truck?.fleetCategory === 'ATTACHED_FLEET' ? 'Attached Fleet' : 'Owned Fleet'),
+        model: matchedTruck?.vehicleType || truck?.model || record.model || trip?.truck.model || '-',
+        vendor: normalizeVendorName(vendorName),
+        subVendor: subVendorName,
+        fleetCategory: fCategory,
         trips: new Set<string>(),
         totalLoadedQty: 0,
         totalReceivedQty: 0,
