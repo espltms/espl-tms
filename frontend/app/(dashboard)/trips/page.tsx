@@ -1413,7 +1413,7 @@ export default function TripsPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Tare Weight (Tons) *</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Tare Weight (Metric Tons) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1425,7 +1425,7 @@ export default function TripsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Gross Weight (Tons) *</label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Gross Weight (Metric Tons) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1437,11 +1437,11 @@ export default function TripsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Net Weight (Tons) <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-computed)</span></label>
+                  <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Net Weight (Metric Tons) <span className="text-[9px] text-brand-primary font-normal font-sans">(Auto-computed)</span></label>
                   <input
                     type="text"
                     disabled
-                    value={netWeight ? `${netWeight} Tons` : '—'}
+                    value={netWeight ? `${netWeight} Metric Tons` : '—'}
                     className="w-full bg-slate-50 border border-[#e2e8f0] rounded-xl py-2.5 px-3 text-slate-500 font-bold font-mono cursor-not-allowed"
                   />
                 </div>
