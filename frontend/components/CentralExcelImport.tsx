@@ -230,7 +230,16 @@ export default function CentralExcelImport({ onImportSuccess }: { onImportSucces
 
         // Find siding and RR list from detail sheet for this OCP mine
         let siding = 'MVAA';
-        const detailSheetName = sheetNames.find(s => s.toUpperCase().startsWith(mines.toUpperCase().substring(0, 4)));
+        const detailSheetName = sheetNames.find(s => {
+          if (s.toUpperCase() === 'SUMMARY') return false;
+          const sNorm = s.toUpperCase().replace(/[^A-Z]/g, '');
+          const mNorm = mines.toUpperCase().replace(/[^A-Z]/g, '');
+          
+          if (sNorm.includes(mNorm) || mNorm.includes(sNorm)) return true;
+          if (mNorm === 'JAGANNATH' && (sNorm.includes('JNATH') || sNorm.includes('JAG'))) return true;
+          if (mNorm === 'BHARATPUR' && (sNorm.includes('BPUR') || sNorm.includes('BHA') || sNorm.includes('BP'))) return true;
+          return false;
+        });
         if (detailSheetName) {
           const dSheet = workbook.Sheets[detailSheetName];
           const dMatrix = XLSX.utils.sheet_to_json<unknown[]>(dSheet, { header: 1, defval: '' });
@@ -258,11 +267,11 @@ export default function CentralExcelImport({ onImportSuccess }: { onImportSucces
               vllQty: getDetailColIdx(['vll inm qty', 'vll qty', 'vll quantity', 'vll in-motion qty']),
               grnQty: getDetailColIdx(['grn qty', 'grn quantity', 'grn_qty']),
               normalisedQty: getDetailColIdx(['normalise qty', 'normalised qty', 'normalized qty']),
-              tm: getDetailColIdx(['tm', 'tm%', 'total moisture']),
-              im: getDetailColIdx(['im', 'im%', 'inherent moisture']),
-              vm: getDetailColIdx(['vm', 'vm%', 'volatile matter']),
-              ash: getDetailColIdx(['ash', 'ash%', 'ash content']),
-              fc: getDetailColIdx(['fc', 'fc%', 'fixed carbon']),
+              tm: getDetailColIdx(['tm', 'tm%', 'total moisture', 'tm(arb)', 'tm% (arb)', 'tm%(arb)', 'tm arb', 'total moisture (arb)']),
+              im: getDetailColIdx(['im', 'im%', 'inherent moisture', 'im(adb)', 'im% (adb)', 'im%(adb)', 'im adb', 'inherent moisture (adb)', 'im % (adb)']),
+              vm: getDetailColIdx(['vm', 'vm%', 'volatile matter', 'vm(adb)', 'vm% (adb)', 'vm%(adb)', 'vm adb', 'volatile matter (adb)', 'vm % (adb)']),
+              ash: getDetailColIdx(['ash', 'ash%', 'ash content', 'ash(adb)', 'ash% (adb)', 'ash%(adb)', 'ash adb', 'ash content (adb)', 'ash % (adb)']),
+              fc: getDetailColIdx(['fc', 'fc%', 'fixed carbon', 'fc(adb)', 'fc% (adb)', 'fc%(adb)', 'fc adb', 'fixed carbon (adb)', 'fc % (adb)']),
               gcvAdb: getDetailColIdx(['gcv adb', 'gcv kcl/kg (adb)']),
               gcvArb: getDetailColIdx(['gcv arb', 'gcv kcl/kg (arb)']),
               pol1: getDetailColIdx(['pol1/a', 'pol1']),
