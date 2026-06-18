@@ -123,6 +123,7 @@ export default function DOMasterPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [ocpFilter, setOcpFilter] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -335,6 +336,18 @@ export default function DOMasterPage() {
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
   }, [records]);
 
+  // Unique list of OCPs/Mines for filtering
+  const uniqueOCPs = useMemo(() => {
+    const list = new Set<string>();
+    const safeRecords = records || [];
+    safeRecords.forEach(r => {
+      if (r && r.mines) {
+        list.add(r.mines.trim());
+      }
+    });
+    return Array.from(list).sort();
+  }, [records]);
+
   // Search & Filters
   const filteredRecords = useMemo(() => {
     const safeRecords = records || [];
@@ -346,14 +359,14 @@ export default function DOMasterPage() {
         (r.month && r.month.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
         r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
+      const matchesOCP = ocpFilter === 'All' || (r.mines && r.mines.trim().toLowerCase() === ocpFilter.trim().toLowerCase());
       
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesOCP;
     });
-  }, [records, searchQuery, statusFilter]);
+  }, [records, searchQuery, statusFilter, ocpFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRecords.length / ITEMS_PER_PAGE);
@@ -656,18 +669,33 @@ export default function DOMasterPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 self-end md:self-auto">
-          <span className="text-xs text-slate-400 font-semibold font-sans">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+        <div className="flex items-center gap-4 self-end md:self-auto flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold font-sans">Filter by OCP:</span>
+            <select
+              value={ocpFilter}
+              onChange={(e) => { setOcpFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+            >
+              <option value="All">All OCPs</option>
+              {uniqueOCPs.map(ocp => (
+                <option key={ocp} value={ocp}>{ocp}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold font-sans">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
       </div>
 
