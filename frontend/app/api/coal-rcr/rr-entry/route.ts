@@ -149,6 +149,9 @@ export async function POST(req: NextRequest) {
             });
           }
         }
+      }, {
+        maxWait: 15000,
+        timeout: 60000
       });
 
       return NextResponse.json({ success: true, count: importedCount });
