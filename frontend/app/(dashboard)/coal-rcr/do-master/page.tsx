@@ -21,7 +21,7 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
-import { DOMasterRecord } from '../types';
+import { DOMasterRecord, RREntryRecord } from '../types';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const ITEMS_PER_PAGE = 15;
@@ -119,6 +119,7 @@ const parseDateToYYYYMMDD = (val: unknown): string => {
 export default function DOMasterPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<DOMasterRecord[]>([]);
+  const [rrEntries, setRrEntries] = useState<RREntryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -144,6 +145,7 @@ export default function DOMasterPage() {
   const [form, setForm] = useState({
     doNo: '',
     poNo: '',
+    month: '',
     siding: '',
     mines: '',
     coalCompany: '',
@@ -151,7 +153,8 @@ export default function DOMasterPage() {
     coalType: 'ROM',
     startDate: '',
     endDate: '',
-    status: 'Active' as DOMasterRecord['status']
+    tolerance: '0',
+    status: 'Open' as DOMasterRecord['status']
   });
 
   // Fetch data
@@ -175,6 +178,17 @@ export default function DOMasterPage() {
       } else {
         const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
         setRecords(local || []);
+      }
+
+      // Fetch RR entries to calculate Lifted Qty
+      const rrResponse = await fetch('/api/coal-rcr/rr-entry', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (rrResponse.ok) {
+        const rrRes = await rrResponse.json();
+        if (rrRes.success) {
+          setRrEntries(rrRes.data || []);
+        }
       }
     } catch (e) {
       console.error("Error fetching DO records:", e);
@@ -315,9 +329,11 @@ export default function DOMasterPage() {
     const safeRecords = records || [];
     return safeRecords.filter(r => {
       if (!r) return false;
-      const matchesSearch = 
+      const matchesSearch =
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.poNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
+        (r.poNo && r.poNo.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (r.month && r.month.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
         r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
         (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase()));
@@ -338,9 +354,9 @@ export default function DOMasterPage() {
   const stats = useMemo(() => {
     const safeRecords = records || [];
     const totalCount = safeRecords.length;
-    const activeCount = safeRecords.filter(r => r && r.status === 'Active').length;
+    const activeCount = safeRecords.filter(r => r && (r.status === 'Active' || r.status === 'Open')).length;
     const totalQty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
-    const activeQty = safeRecords.filter(r => r && r.status === 'Active').reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
+    const activeQty = safeRecords.filter(r => r && (r.status === 'Active' || r.status === 'Open')).reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
     
     return { totalCount, activeCount, totalQty, activeQty };
   }, [records]);
@@ -351,6 +367,7 @@ export default function DOMasterPage() {
     setForm({
       doNo: '',
       poNo: '',
+      month: '',
       siding: '',
       mines: '',
       coalCompany: '',
@@ -358,7 +375,8 @@ export default function DOMasterPage() {
       coalType: 'ROM',
       startDate: '',
       endDate: '',
-      status: 'Active'
+      tolerance: '0',
+      status: 'Open'
     });
     setIsModalOpen(true);
   };
@@ -368,7 +386,8 @@ export default function DOMasterPage() {
     setEditingRecord(record);
     setForm({
       doNo: record.doNo,
-      poNo: record.poNo,
+      poNo: record.poNo || '',
+      month: record.month || '',
       siding: record.siding,
       mines: record.mines || '',
       coalCompany: record.coalCompany || '',
@@ -376,6 +395,7 @@ export default function DOMasterPage() {
       coalType: record.coalType,
       startDate: record.startDate || '',
       endDate: record.endDate || '',
+      tolerance: String(record.tolerance || 0),
       status: record.status
     });
     setIsModalOpen(true);
@@ -392,14 +412,16 @@ export default function DOMasterPage() {
     const recordData = {
       id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo.toUpperCase().trim(),
-      poNo: form.poNo.toUpperCase().trim(),
+      poNo: form.poNo ? form.poNo.toUpperCase().trim() : '',
+      month: form.month ? form.month.trim() : null,
       siding: form.siding.trim(),
       mines: form.mines.trim(),
       coalCompany: form.coalCompany.trim(),
       doQty: parseFloat(form.doQty) || 0,
       coalType: form.coalType,
-      startDate: form.startDate,
-      endDate: form.endDate,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
+      tolerance: parseFloat(form.tolerance) || 0,
       status: form.status
     };
 
@@ -688,15 +710,10 @@ export default function DOMasterPage() {
                   <th className="w-10 px-5 py-4 text-center">
                     <input
                       type="checkbox"
-                      checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedIds.includes(r.id))}
+                      checked={selectedIds.length === paginatedRecords.length && paginatedRecords.length > 0}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          const newSelections = [...selectedIds];
-                          paginatedRecords.forEach(r => {
-                            if (!newSelections.includes(r.id)) {
-                              newSelections.push(r.id);
-                            }
-                          });
+                          const newSelections = Array.from(new Set([...selectedIds, ...paginatedRecords.map(r => r.id)]));
                           setSelectedIds(newSelections);
                         } else {
                           setSelectedIds(selectedIds.filter(id => !paginatedRecords.some(r => r.id === id)));
@@ -707,14 +724,16 @@ export default function DOMasterPage() {
                   </th>
                 )}
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
+                <th className="px-5 py-4">Month</th>
                 <th className="px-5 py-4">DO No</th>
-                <th className="px-5 py-4">PO No</th>
-                <th className="px-5 py-4">Siding</th>
-                <th className="px-5 py-4">Mines</th>
-                <th className="px-5 py-4">Coal Company</th>
+                <th className="px-5 py-4">OCP / Mine</th>
                 <th className="px-5 py-4 text-right">DO Qty (MT)</th>
-                <th className="px-5 py-4">Coal Type</th>
-                <th className="px-5 py-4">Validity</th>
+                <th className="px-5 py-4 text-right">Lifted Qty (MT)</th>
+                <th className="px-5 py-4 text-right">Balance Qty (MT)</th>
+                <th className="px-5 py-4">Valid Till</th>
+                <th className="px-5 py-4 text-right">Tolerance %</th>
+                <th className="px-5 py-4 text-right">Tolerance Qty</th>
+                <th className="px-5 py-4 text-right">Bal (Excl. Tol)</th>
                 <th className="px-5 py-4 text-center">Status</th>
                 <th className="px-5 py-4 text-center w-24">Actions</th>
               </tr>
@@ -722,91 +741,108 @@ export default function DOMasterPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
-                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching delivery orders...
+                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching DO orders...
                     </span>
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No DO records found.
                   </td>
                 </tr>
               ) : (
-                paginatedRecords.map((r, idx) => (
-                  <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
-                    {isDeleteMode && (
-                      <td className="w-10 px-5 py-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(r.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedIds([...selectedIds, r.id]);
-                            } else {
-                              setSelectedIds(selectedIds.filter(id => id !== r.id));
-                            }
-                          }}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
-                        />
+                paginatedRecords.map((r, idx) => {
+                  const linkedRRs = rrEntries.filter(rr => rr.doNo.toUpperCase().trim() === r.doNo.toUpperCase().trim());
+                  const liftedQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.rrActQty) || 0), 0);
+                  const balanceQty = Number(r.doQty) - liftedQty;
+                  const tolerance = Number(r.tolerance) || 0;
+                  const toleranceQty = Number(r.doQty) * (tolerance / 100);
+                  const balanceExcludingTolerance = balanceQty - toleranceQty;
+
+                  return (
+                    <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
+                      {isDeleteMode && (
+                        <td className="w-10 px-5 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(r.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, r.id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== r.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                          />
+                        </td>
+                      )}
+                      <td className="px-5 py-4 font-bold text-slate-400 text-center">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
                       </td>
-                    )}
-                    <td className="px-5 py-4 font-bold text-slate-400 text-center">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                    </td>
-                    <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
-                      {r.doNo}
-                    </td>
-                    <td className="px-5 py-4 font-mono font-bold text-slate-700">
-                      {r.poNo}
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.siding}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.mines}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.coalCompany}</td>
-                    <td className="px-5 py-4 font-mono font-bold text-slate-800 text-right">
-                      {r.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-5 py-4 font-semibold">{r.coalType}</td>
-                    <td className="px-5 py-4 text-slate-500 whitespace-nowrap">
-                      {r.startDate && r.endDate ? (
-                        <div className="flex items-center gap-1.5 font-mono text-[10px]">
-                          <span>{r.startDate}</span>
-                          <span className="text-slate-300">to</span>
-                          <span>{r.endDate}</span>
+                      <td className="px-5 py-4 font-semibold text-slate-700 whitespace-nowrap">
+                        {r.month || '—'}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
+                        {r.doNo}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {r.mines || '—'}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-bold text-slate-800 text-right">
+                        {Number(r.doQty).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-bold text-emerald-600 text-right">
+                        {liftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-bold text-slate-800 text-right">
+                        {balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap font-mono text-[10px]">
+                        {r.endDate || '—'}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-semibold text-slate-700 text-right">
+                        {tolerance}%
+                      </td>
+                      <td className="px-5 py-4 font-mono font-semibold text-slate-700 text-right">
+                        {toleranceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className={`px-5 py-4 font-mono font-bold text-right ${balanceExcludingTolerance < 0 ? 'text-red-500' : 'text-slate-800'}`}>
+                        {balanceExcludingTolerance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
+                          r.status === 'Open' || r.status === 'Active'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : r.status === 'Completed'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOpenEdit(r)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(r.id)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
-                      ) : '—'}
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
-                        r.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : r.status === 'Completed'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-slate-100 text-slate-600 border-slate-300'
-                      }`}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(r)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(r.id)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -856,7 +892,7 @@ export default function DOMasterPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {/* DO No */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
@@ -879,6 +915,18 @@ export default function DOMasterPage() {
                     onChange={(e) => setForm({ ...form, poNo: e.target.value })}
                     placeholder="e.g. PO-VAL-2026-01"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
+                  />
+                </div>
+
+                {/* Month */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Month</label>
+                  <input
+                    type="text"
+                    value={form.month}
+                    onChange={(e) => setForm({ ...form, month: e.target.value })}
+                    placeholder="e.g. June 2026"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -937,6 +985,19 @@ export default function DOMasterPage() {
                   />
                 </div>
 
+                {/* Tolerance % */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Tolerance %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.tolerance}
+                    onChange={(e) => setForm({ ...form, tolerance: e.target.value })}
+                    placeholder="e.g. 10.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+
                 {/* Coal Type */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Type</label>
@@ -951,23 +1012,9 @@ export default function DOMasterPage() {
                     <option value="Washed">Washed</option>
                   </select>
                 </div>
-
-                {/* Status */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {/* Start Date */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Start Date</label>
@@ -988,6 +1035,20 @@ export default function DOMasterPage() {
                     onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
                   />
+                </div>
+
+                {/* Status */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Status</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="Open">Open</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Expired">Expired</option>
+                  </select>
                 </div>
               </div>
 

@@ -43,13 +43,14 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body)) {
       const recordsToCreate = [];
       for (const item of body) {
-        const { doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = item;
+        const { doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status } = item;
         if (!doNo || !siding || doQty === undefined) {
           continue; // Skip invalid records in batch
         }
         recordsToCreate.push({
           doNo: doNo.toUpperCase().trim(),
           poNo: poNo ? poNo.toUpperCase().trim() : '',
+          month: month ? month.trim() : null,
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
@@ -57,7 +58,8 @@ export async function POST(req: NextRequest) {
           coalType: coalType || 'ROM',
           startDate: startDate || null,
           endDate: endDate || null,
-          status: status || 'Active',
+          tolerance: parseFloat(tolerance) || 0,
+          status: status || 'Open',
         });
       }
 
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: result.count });
     }
 
-    const { id, doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = body;
+    const { id, doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status } = body;
 
     if (!doNo || !siding || doQty === undefined) {
       return NextResponse.json({ error: 'DO No, Siding, and DO Qty are required fields' }, { status: 400 });
@@ -97,6 +99,7 @@ export async function POST(req: NextRequest) {
         data: {
           doNo: upperDoNo,
           poNo: poNo ? poNo.toUpperCase().trim() : '',
+          month: month ? month.trim() : null,
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
@@ -104,6 +107,7 @@ export async function POST(req: NextRequest) {
           coalType,
           startDate,
           endDate,
+          tolerance: parseFloat(tolerance) || 0,
           status,
         },
       });
@@ -112,6 +116,7 @@ export async function POST(req: NextRequest) {
         data: {
           doNo: upperDoNo,
           poNo: poNo ? poNo.toUpperCase().trim() : '',
+          month: month ? month.trim() : null,
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
@@ -119,6 +124,7 @@ export async function POST(req: NextRequest) {
           coalType,
           startDate,
           endDate,
+          tolerance: parseFloat(tolerance) || 0,
           status,
         },
       });

@@ -23,6 +23,8 @@ enum UserRole {
   LANJIGARH_LOADER
   PARAMANANDPUR_UNLOADER
   DHARAMGARH_UNLOADER
+  PARAMANANDPUR_ADMIN
+  DHARAMGARH_ADMIN
 }
 
 enum DriverStatus {
@@ -279,15 +281,17 @@ model Invoice {
 model CoalDOMaster {
   id           String    @id @default(uuid())
   doNo         String    @unique
-  poNo         String
+  poNo         String?
+  month        String?   // e.g. "June 2026"
   siding       String
-  mines        String?
+  mines        String?   // OCP / Mine Name
   coalCompany  String?
   doQty        Decimal   @db.Decimal(12, 2)
   coalType     String
   startDate    String?
-  endDate      String?
-  status       String    @default("Active")
+  endDate      String?   // Valid Till
+  tolerance    Decimal   @db.Decimal(5, 2) @default(0.00) // Tolerance %
+  status       String    @default("Open") // Open / Completed / Expired
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -298,13 +302,19 @@ model CoalRREntry {
   siding        String
   rrNo          String    @unique
   rrDate        String?
-  loadingDate   String?
+  invoiceDate   String?
   receiptDate   String?
+  loadingDate   String?
+  from          String?
+  to            String?
+  ocp           String?
   rrActQty      Decimal   @db.Decimal(12, 2)
   rrChQty       Decimal   @db.Decimal(12, 2)
   vllQty        Decimal   @db.Decimal(12, 2)
   grnQty        Decimal   @db.Decimal(12, 2)
   normalisedQty Decimal   @db.Decimal(12, 2)
+  noOfWagons    Int?
+  udRemark      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -329,13 +339,20 @@ model CoalDeductionPenalty {
   id              String    @id @default(uuid())
   doNo            String
   rrNo            String    @unique
-  deadFreight     Decimal   @db.Decimal(12, 2)
-  punitive        Decimal   @db.Decimal(12, 2)
-  dc              Decimal   @db.Decimal(12, 2)
-  shortage        Decimal   @db.Decimal(12, 2)
-  qualitySlippage Decimal   @db.Decimal(12, 2)
-  railwayLeakage  Decimal   @db.Decimal(12, 2)
-  finalDeduction  Decimal   @db.Decimal(12, 2)
+  pol1            Decimal   @db.Decimal(12, 2) @default(0.00)
+  pol2            Decimal   @db.Decimal(12, 2) @default(0.00)
+  enhc            Decimal   @db.Decimal(12, 2) @default(0.00)
+  dcla            Decimal   @db.Decimal(12, 2) @default(0.00)
+  fauc            Decimal   @db.Decimal(12, 2) @default(0.00)
+  deadFreight     Decimal   @db.Decimal(12, 2) @default(0.00)
+  punitive        Decimal   @db.Decimal(12, 2) @default(0.00)
+  dc              Decimal   @db.Decimal(12, 2) @default(0.00)
+  shortage        Decimal   @db.Decimal(12, 2) @default(0.00)
+  qualitySlippage Decimal   @db.Decimal(12, 2) @default(0.00)
+  railwayLeakage  Decimal   @db.Decimal(12, 2) @default(0.00)
+  mrExclGst       Decimal   @db.Decimal(12, 2) @default(0.00)
+  finalDeduction  Decimal   @db.Decimal(12, 2) @default(0.00)
+  remarks         String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }

@@ -1,15 +1,17 @@
 export interface DOMasterRecord {
   id: string;
   doNo: string;
-  poNo: string;
+  poNo?: string | null;
+  month?: string | null;
   siding: string;
   mines: string;
   coalCompany: string;
   doQty: number;
   coalType: string;
-  startDate: string;
-  endDate: string;
-  status: 'Active' | 'Completed' | 'Cancelled';
+  startDate?: string | null;
+  endDate?: string | null;
+  tolerance?: number;
+  status: 'Open' | 'Completed' | 'Expired' | 'Active' | 'Cancelled';
 }
 
 export interface RREntryRecord {
@@ -17,14 +19,20 @@ export interface RREntryRecord {
   doNo: string;
   siding: string;
   rrNo: string;
-  rrDate: string;
-  loadingDate: string;
-  receiptDate: string;
+  rrDate?: string | null;
+  invoiceDate?: string | null;
+  receiptDate?: string | null;
+  loadingDate?: string | null;
+  from?: string | null;
+  to?: string | null;
+  ocp?: string | null;
   rrActQty: number;
   rrChQty: number;
   vllQty: number;
   grnQty: number;
   normalisedQty: number;
+  noOfWagons?: number | null;
+  udRemark?: string | null;
 }
 
 export interface QualityTrackingRecord {
@@ -45,13 +53,20 @@ export interface DeductionPenaltyRecord {
   id: string;
   doNo: string;
   rrNo: string;
+  pol1?: number;
+  pol2?: number;
+  enhc?: number;
+  dcla?: number;
+  fauc?: number;
   deadFreight: number;
   punitive: number;
   dc: number;
   shortage: number;
   qualitySlippage: number;
   railwayLeakage: number;
+  mrExclGst?: number;
   finalDeduction: number;
+  remarks?: string | null;
 }
 
 export interface BillingPaymentRecord {
@@ -61,6 +76,7 @@ export interface BillingPaymentRecord {
   billDate: string;
   billQty: number;
   billAmount: number;
+  linkedRRs?: string[]; // for reference
   tds: number;
   advancePaid: number;
   finalPayable: number;

@@ -514,7 +514,7 @@ export default function QualityTrackingPage() {
       {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quality Tracking</h2>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quality Analysis</h2>
           <p className="text-xs text-slate-500 mt-1">
             Track chemical proximate parameters (ash, moisture, GCV) and quality slippages per Railway Receipt
           </p>
@@ -680,6 +680,7 @@ export default function QualityTrackingPage() {
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">RR No</th>
                 <th className="px-5 py-4">DO No</th>
+                <th className="px-5 py-4 text-right">Normalised Qty (MT)</th>
                 <th className="px-5 py-4 text-right">TM (%)</th>
                 <th className="px-5 py-4 text-right">IM (%)</th>
                 <th className="px-5 py-4 text-right">Ash (%)</th>
@@ -694,7 +695,7 @@ export default function QualityTrackingPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 13 : 12} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching quality logs...
                     </span>
@@ -702,46 +703,50 @@ export default function QualityTrackingPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 13 : 12} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No Quality records found.
                   </td>
                 </tr>
               ) : (
-                paginatedRecords.map((r, idx) => (
-                  <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
-                    {isDeleteMode && (
-                      <td className="w-10 px-5 py-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(r.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedIds([...selectedIds, r.id]);
-                            } else {
-                              setSelectedIds(selectedIds.filter(id => id !== r.id));
-                            }
-                          }}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
-                        />
+                paginatedRecords.map((r, idx) => {
+                  const matchedRR = rrRecords.find(rr => rr.rrNo === r.rrNo);
+                  const normalisedQty = matchedRR ? Number(matchedRR.normalisedQty) : 0;
+                  return (
+                    <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
+                      {isDeleteMode && (
+                        <td className="w-10 px-5 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(r.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, r.id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== r.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                          />
+                        </td>
+                      )}
+                      <td className="px-5 py-4 font-bold text-slate-400 text-center">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
                       </td>
-                    )}
-                    <td className="px-5 py-4 font-bold text-slate-400 text-center">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                    </td>
-                    <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
-                      {r.rrNo}
-                    </td>
-                    <td className="px-5 py-4 font-mono font-bold text-slate-700">
-                      {r.doNo}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-right">{Number(r.tm || 0).toFixed(2)}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{Number(r.im || 0).toFixed(2)}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{Number(r.ash || 0).toFixed(2)}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{Number(r.vm || 0).toFixed(2)}%</td>
-                    <td className="px-5 py-4 font-mono text-right">{Number(r.fc || 0).toFixed(2)}%</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvAdb || 0))}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvArb || 0))}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600">₹{Number(r.qualityPenalty || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
+                        {r.rrNo}
+                      </td>
+                      <td className="px-5 py-4 font-mono font-bold text-slate-700">
+                        {r.doNo}
+                      </td>
+                      <td className="px-5 py-4 font-mono text-right font-bold text-emerald-700">{normalisedQty.toFixed(2)}</td>
+                      <td className="px-5 py-4 font-mono text-right">{Number(r.tm || 0).toFixed(2)}%</td>
+                      <td className="px-5 py-4 font-mono text-right">{Number(r.im || 0).toFixed(2)}%</td>
+                      <td className="px-5 py-4 font-mono text-right">{Number(r.ash || 0).toFixed(2)}%</td>
+                      <td className="px-5 py-4 font-mono text-right">{Number(r.vm || 0).toFixed(2)}%</td>
+                      <td className="px-5 py-4 font-mono text-right">{Number(r.fc || 0).toFixed(2)}%</td>
+                      <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvAdb || 0))}</td>
+                      <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvArb || 0))}</td>
+                      <td className="px-5 py-4 font-mono text-right font-bold text-red-600">₹{Number(r.qualityPenalty || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -759,7 +764,8 @@ export default function QualityTrackingPage() {
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
               )}
             </tbody>
           </table>

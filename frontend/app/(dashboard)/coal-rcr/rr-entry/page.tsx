@@ -142,19 +142,57 @@ export default function RREntryPage() {
     }
   }, [toast]);
 
+  const [activeTab, setActiveTab] = useState<'rr-details' | 'quality' | 'deductions'>('rr-details');
+
   // Form states
   const [form, setForm] = useState({
     doNo: '',
     siding: '',
     rrNo: '',
     rrDate: '',
-    loadingDate: '',
+    invoiceDate: '',
     receiptDate: '',
+    loadingDate: '',
+    from: '',
+    to: '',
+    ocp: '',
     rrActQty: '',
     rrChQty: '',
     vllQty: '',
     grnQty: '',
-    normalisedQty: ''
+    normalisedQty: '',
+    noOfWagons: '',
+    udRemark: '',
+
+    // Quality Tab
+    quality: {
+      tm: '',
+      im: '',
+      ash: '',
+      vm: '',
+      fc: '',
+      gcvAdb: '',
+      gcvArb: '',
+      qualityPenalty: '',
+    },
+
+    // Deductions Tab
+    deductions: {
+      pol1: '',
+      pol2: '',
+      enhc: '',
+      dcla: '',
+      fauc: '',
+      deadFreight: '',
+      punitive: '',
+      dc: '',
+      shortage: '',
+      qualitySlippage: '',
+      railwayLeakage: '',
+      mrExclGst: '',
+      finalDeduction: '',
+      remarks: '',
+    }
   });
 
   // Fetch data
@@ -235,13 +273,19 @@ export default function RREntryPage() {
         const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
         let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
         const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
-        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+        const invoiceDateStr = getCellValue(detail.import.headers, row, ['invoice date', 'invoice_date']);
         const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
+        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+        const fromVal = getCellValue(detail.import.headers, row, ['from', 'loading point', 'from_station']);
+        const toVal = getCellValue(detail.import.headers, row, ['to', 'destination', 'to_station']);
+        const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name']);
         const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
-        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr challan qty', 'challan qty', 'rr_ch_qty']);
-        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty']);
+        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty']);
+        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty', 'vll in-motion qty']);
         const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
         const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
+        const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count']);
+        const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
 
         if (!doNo || !rrNo || !grnQtyStr) {
           skippedCount++;
@@ -261,13 +305,19 @@ export default function RREntryPage() {
           siding,
           rrNo,
           rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
-          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
+          invoiceDate: parseDateToYYYYMMDD(invoiceDateStr) || null,
           receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
+          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
+          from: fromVal || null,
+          to: toVal || null,
+          ocp: ocpVal || null,
           rrActQty: parseFloat(rrActQtyStr) || 0,
           rrChQty: parseFloat(rrChQtyStr) || 0,
           vllQty: parseFloat(vllQtyStr) || 0,
           grnQty,
-          normalisedQty
+          normalisedQty,
+          noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
+          udRemark: udRemarkVal || null,
         });
       });
 
@@ -328,7 +378,8 @@ export default function RREntryPage() {
     setForm(prev => ({
       ...prev,
       doNo,
-      siding: matchedDO ? matchedDO.siding : ''
+      siding: matchedDO ? matchedDO.siding : '',
+      ocp: matchedDO?.mines || prev.ocp // Prefill mine from DO Master as OCP
     }));
   };
 
@@ -341,6 +392,41 @@ export default function RREntryPage() {
     }));
   };
 
+  // Deduction auto-sum logic
+  const autoSumDeductions = (d: typeof form.deductions) => {
+    return (
+      (parseFloat(d.pol1) || 0) +
+      (parseFloat(d.pol2) || 0) +
+      (parseFloat(d.enhc) || 0) +
+      (parseFloat(d.dcla) || 0) +
+      (parseFloat(d.fauc) || 0) +
+      (parseFloat(d.deadFreight) || 0) +
+      (parseFloat(d.punitive) || 0) +
+      (parseFloat(d.dc) || 0) +
+      (parseFloat(d.shortage) || 0) +
+      (parseFloat(d.qualitySlippage) || 0) +
+      (parseFloat(d.railwayLeakage) || 0) +
+      (parseFloat(d.mrExclGst) || 0)
+    );
+  };
+
+  const handleDeductionChange = (field: keyof typeof form.deductions, val: string) => {
+    setForm(prev => {
+      const updatedDeductions = {
+        ...prev.deductions,
+        [field]: val
+      };
+      const newSum = autoSumDeductions(updatedDeductions);
+      return {
+        ...prev,
+        deductions: {
+          ...updatedDeductions,
+          finalDeduction: field === 'finalDeduction' ? val : String(newSum)
+        }
+      };
+    });
+  };
+
   // Search & Filters
   const filteredRecords = useMemo(() => {
     const safeRecords = records || [];
@@ -349,7 +435,8 @@ export default function RREntryPage() {
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.siding.toUpperCase().includes(searchQuery.toUpperCase());
+        r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
+        (r.ocp && r.ocp.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesDO = doNoFilter === 'All' || r.doNo === doNoFilter;
       
@@ -385,33 +472,99 @@ export default function RREntryPage() {
       siding: doRecords[0]?.siding || '',
       rrNo: '',
       rrDate: '',
-      loadingDate: '',
+      invoiceDate: '',
       receiptDate: '',
+      loadingDate: '',
+      from: '',
+      to: '',
+      ocp: doRecords[0]?.mines || '',
       rrActQty: '',
       rrChQty: '',
       vllQty: '',
       grnQty: '',
-      normalisedQty: ''
+      normalisedQty: '',
+      noOfWagons: '',
+      udRemark: '',
+      quality: {
+        tm: '',
+        im: '',
+        ash: '',
+        vm: '',
+        fc: '',
+        gcvAdb: '',
+        gcvArb: '',
+        qualityPenalty: '',
+      },
+      deductions: {
+        pol1: '',
+        pol2: '',
+        enhc: '',
+        dcla: '',
+        fauc: '',
+        deadFreight: '',
+        punitive: '',
+        dc: '',
+        shortage: '',
+        qualitySlippage: '',
+        railwayLeakage: '',
+        mrExclGst: '',
+        finalDeduction: '',
+        remarks: '',
+      }
     });
+    setActiveTab('rr-details');
     setIsModalOpen(true);
   };
 
   // Open Modal for Edit
-  const handleOpenEdit = (record: RREntryRecord) => {
+  const handleOpenEdit = (record: any) => {
     setEditingRecord(record);
     setForm({
       doNo: record.doNo,
       siding: record.siding,
       rrNo: record.rrNo,
       rrDate: record.rrDate || '',
-      loadingDate: record.loadingDate || '',
+      invoiceDate: record.invoiceDate || '',
       receiptDate: record.receiptDate || '',
-      rrActQty: String(record.rrActQty),
-      rrChQty: String(record.rrChQty),
-      vllQty: String(record.vllQty),
-      grnQty: String(record.grnQty),
-      normalisedQty: String(record.normalisedQty)
+      loadingDate: record.loadingDate || '',
+      from: record.from || '',
+      to: record.to || '',
+      ocp: record.ocp || '',
+      rrActQty: record.rrActQty !== undefined ? String(record.rrActQty) : '',
+      rrChQty: record.rrChQty !== undefined ? String(record.rrChQty) : '',
+      vllQty: record.vllQty !== undefined ? String(record.vllQty) : '',
+      grnQty: record.grnQty !== undefined ? String(record.grnQty) : '',
+      normalisedQty: record.normalisedQty !== undefined ? String(record.normalisedQty) : '',
+      noOfWagons: record.noOfWagons !== undefined && record.noOfWagons !== null ? String(record.noOfWagons) : '',
+      udRemark: record.udRemark || '',
+      quality: {
+        tm: record.quality?.tm !== undefined ? String(record.quality.tm) : '',
+        im: record.quality?.im !== undefined ? String(record.quality.im) : '',
+        ash: record.quality?.ash !== undefined ? String(record.quality.ash) : '',
+        vm: record.quality?.vm !== undefined ? String(record.quality.vm) : '',
+        fc: record.quality?.fc !== undefined ? String(record.quality.fc) : '',
+        gcvAdb: record.quality?.gcvAdb !== undefined ? String(record.quality.gcvAdb) : '',
+        gcvArb: record.quality?.gcvArb !== undefined ? String(record.quality.gcvArb) : '',
+        qualityPenalty: record.quality?.qualityPenalty !== undefined ? String(record.quality.qualityPenalty) : '',
+      },
+      deductions: {
+        pol1: record.deductions?.pol1 !== undefined ? String(record.deductions.pol1) : '',
+        pol2: record.deductions?.pol2 !== undefined ? String(record.deductions.pol2) : '',
+        enhc: record.deductions?.enhc !== undefined ? String(record.deductions.enhc) : '',
+        dcla: record.deductions?.dcla !== undefined ? String(record.deductions.dcla) : '',
+        fauc: record.deductions?.fauc !== undefined ? String(record.deductions.fauc) : '',
+        deadFreight: record.deductions?.deadFreight !== undefined ? String(record.deductions.deadFreight) : '',
+        punitive: record.deductions?.punitive !== undefined ? String(record.deductions.punitive) : '',
+        dc: record.deductions?.dc !== undefined ? String(record.deductions.dc) : '',
+        shortage: record.deductions?.shortage !== undefined ? String(record.deductions.shortage) : '',
+        qualitySlippage: record.deductions?.qualitySlippage !== undefined ? String(record.deductions.qualitySlippage) : '',
+        railwayLeakage: record.deductions?.railwayLeakage !== undefined ? String(record.deductions.railwayLeakage) : '',
+        mrExclGst: record.deductions?.mrExclGst !== undefined ? String(record.deductions.mrExclGst) : '',
+        finalDeduction: record.deductions?.finalDeduction !== undefined ? String(record.deductions.finalDeduction) : '',
+        remarks: record.deductions?.remarks || '',
+      }
     });
+    setActiveTab('rr-details');
     setIsModalOpen(true);
   };
 
@@ -428,14 +581,46 @@ export default function RREntryPage() {
       doNo: form.doNo,
       siding: form.siding.trim(),
       rrNo: form.rrNo.toUpperCase().trim(),
-      rrDate: form.rrDate,
-      loadingDate: form.loadingDate,
-      receiptDate: form.receiptDate,
+      rrDate: form.rrDate || null,
+      invoiceDate: form.invoiceDate || null,
+      receiptDate: form.receiptDate || null,
+      loadingDate: form.loadingDate || null,
+      from: form.from || null,
+      to: form.to || null,
+      ocp: form.ocp || null,
       rrActQty: parseFloat(form.rrActQty) || 0,
       rrChQty: parseFloat(form.rrChQty) || 0,
       vllQty: parseFloat(form.vllQty) || 0,
       grnQty: parseFloat(form.grnQty) || 0,
-      normalisedQty: parseFloat(form.normalisedQty !== undefined && form.normalisedQty !== '' ? form.normalisedQty : form.grnQty) || 0
+      normalisedQty: parseFloat(form.normalisedQty !== undefined && form.normalisedQty !== '' ? form.normalisedQty : form.grnQty) || 0,
+      noOfWagons: form.noOfWagons ? parseInt(form.noOfWagons) || null : null,
+      udRemark: form.udRemark || null,
+      quality: {
+        tm: parseFloat(form.quality.tm) || 0,
+        im: parseFloat(form.quality.im) || 0,
+        ash: parseFloat(form.quality.ash) || 0,
+        vm: parseFloat(form.quality.vm) || 0,
+        fc: parseFloat(form.quality.fc) || 0,
+        gcvAdb: parseFloat(form.quality.gcvAdb) || 0,
+        gcvArb: parseFloat(form.quality.gcvArb) || 0,
+        qualityPenalty: parseFloat(form.quality.qualityPenalty) || 0,
+      },
+      deductions: {
+        pol1: parseFloat(form.deductions.pol1) || 0,
+        pol2: parseFloat(form.deductions.pol2) || 0,
+        enhc: parseFloat(form.deductions.enhc) || 0,
+        dcla: parseFloat(form.deductions.dcla) || 0,
+        fauc: parseFloat(form.deductions.fauc) || 0,
+        deadFreight: parseFloat(form.deductions.deadFreight) || 0,
+        punitive: parseFloat(form.deductions.punitive) || 0,
+        dc: parseFloat(form.deductions.dc) || 0,
+        shortage: parseFloat(form.deductions.shortage) || 0,
+        qualitySlippage: parseFloat(form.deductions.qualitySlippage) || 0,
+        railwayLeakage: parseFloat(form.deductions.railwayLeakage) || 0,
+        mrExclGst: parseFloat(form.deductions.mrExclGst) || 0,
+        finalDeduction: parseFloat(form.deductions.finalDeduction) || 0,
+        remarks: form.deductions.remarks || null,
+      }
     };
 
     try {
@@ -712,7 +897,7 @@ export default function RREntryPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1500px]">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
                 {isDeleteMode && (
@@ -739,21 +924,27 @@ export default function RREntryPage() {
                 )}
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">RR No</th>
-                <th className="px-5 py-4">DO No</th>
-                <th className="px-5 py-4">Siding</th>
                 <th className="px-5 py-4">RR Date</th>
-                <th className="px-5 py-4 text-right">RR Act Qty</th>
-                <th className="px-5 py-4 text-right">RR CH Qty</th>
-                <th className="px-5 py-4 text-right">VLL Qty</th>
+                <th className="px-5 py-4">Invoice Date</th>
+                <th className="px-5 py-4">Receipt Date</th>
+                <th className="px-5 py-4">From</th>
+                <th className="px-5 py-4">To</th>
+                <th className="px-5 py-4">OCP</th>
+                <th className="px-5 py-4">DO No</th>
+                <th className="px-5 py-4 text-right">RR Chargeable Weight</th>
+                <th className="px-5 py-4 text-right">RR Actual Qty</th>
+                <th className="px-5 py-4 text-right">VLL In-Motion Qty</th>
                 <th className="px-5 py-4 text-right">GRN Qty</th>
                 <th className="px-5 py-4 text-right">Normalised Qty</th>
+                <th className="px-5 py-4 text-center">No. of Wagons</th>
+                <th className="px-5 py-4">U/D Remark</th>
                 <th className="px-5 py-4 text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching railway receipts...
                     </span>
@@ -761,7 +952,7 @@ export default function RREntryPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No RR entries found.
                   </td>
                 </tr>
@@ -790,16 +981,22 @@ export default function RREntryPage() {
                     <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
                       {r.rrNo}
                     </td>
+                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.rrDate || '—'}</td>
+                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.invoiceDate || '—'}</td>
+                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.receiptDate || '—'}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-700">{r.from || '—'}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-700">{r.to || '—'}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-700">{r.ocp || '—'}</td>
                     <td className="px-5 py-4 font-mono font-bold text-slate-700">
                       {r.doNo}
                     </td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.siding}</td>
-                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.rrDate || '—'}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrActQty || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrChQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrActQty || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.vllQty || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-blue-600">{Number(r.grnQty || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-emerald-600">{Number(r.normalisedQty || 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 text-center font-semibold text-slate-700">{r.noOfWagons || '—'}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-600 max-w-[150px] truncate" title={r.udRemark || ''}>{r.udRemark || '—'}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -848,15 +1045,14 @@ export default function RREntryPage() {
           </div>
         )}
       </div>
-
-      {/* Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-scale-up">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-xl overflow-hidden animate-scale-up flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50 shrink-0">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                 <ClipboardList className="h-4.5 w-4.5 text-blue-600" />
-                {editingRecord ? 'Edit RR Receipt Record' : 'Add RR Receipt Record'}
+                {editingRecord ? 'Edit RR Entry' : 'Add RR Entry'}
               </h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
@@ -866,172 +1062,593 @@ export default function RREntryPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-3 gap-4">
-                {/* DO No Dropdown */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
-                  <select
-                    required
-                    value={form.doNo}
-                    onChange={(e) => handleDOChange(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+            {/* Tabs Navigation */}
+            <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab('rr-details')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                  activeTab === 'rr-details'
+                    ? 'border-blue-600 text-blue-600 bg-white'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                1. RR Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('quality')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                  activeTab === 'quality'
+                    ? 'border-blue-600 text-blue-600 bg-white'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                2. Quality Analysis
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('deductions')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                  activeTab === 'deductions'
+                    ? 'border-blue-600 text-blue-600 bg-white'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                3. Charges & Deductions
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+              
+              {/* Tab 1: RR Details */}
+              {activeTab === 'rr-details' && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Basic RR Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
+                      <select
+                        required
+                        value={form.doNo}
+                        onChange={(e) => handleDOChange(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                      >
+                        {doRecords.map(d => (
+                          <option key={d.id} value={d.doNo}>{d.doNo}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Siding</label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={form.siding}
+                        placeholder="Siding name"
+                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-500 focus:outline-none font-semibold cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">RR Number <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        required
+                        value={form.rrNo}
+                        onChange={(e) => setForm({ ...form, rrNo: e.target.value })}
+                        placeholder="e.g. RR-9831"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">OCP / Mine Name</label>
+                      <input
+                        type="text"
+                        value={form.ocp}
+                        onChange={(e) => setForm({ ...form, ocp: e.target.value })}
+                        placeholder="e.g. Ananta"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> RR Date</label>
+                      <input
+                        type="date"
+                        value={form.rrDate}
+                        onChange={(e) => setForm({ ...form, rrDate: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Invoice Date</label>
+                      <input
+                        type="date"
+                        value={form.invoiceDate}
+                        onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Receipt Date</label>
+                      <input
+                        type="date"
+                        value={form.receiptDate}
+                        onChange={(e) => setForm({ ...form, receiptDate: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Loading Date</label>
+                      <input
+                        type="date"
+                        value={form.loadingDate}
+                        onChange={(e) => setForm({ ...form, loadingDate: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">From Station</label>
+                      <input
+                        type="text"
+                        value={form.from}
+                        onChange={(e) => setForm({ ...form, from: e.target.value })}
+                        placeholder="From Loading Point"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">To Station</label>
+                      <input
+                        type="text"
+                        value={form.to}
+                        onChange={(e) => setForm({ ...form, to: e.target.value })}
+                        placeholder="Destination Siding"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">No. of Wagons</label>
+                      <input
+                        type="number"
+                        value={form.noOfWagons}
+                        onChange={(e) => setForm({ ...form, noOfWagons: e.target.value })}
+                        placeholder="e.g. 58"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 pt-2">Quantities & Weights (MT)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">RR Chargeable Wt</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.rrChQty}
+                        onChange={(e) => setForm({ ...form, rrChQty: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">RR Actual Qty</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.rrActQty}
+                        onChange={(e) => setForm({ ...form, rrActQty: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">VLL In-Motion Qty</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.vllQty}
+                        onChange={(e) => setForm({ ...form, vllQty: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">GRN Qty <span className="text-red-500">*</span></label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={form.grnQty}
+                        onChange={(e) => handleGRNChange(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Normalised Qty</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.normalisedQty}
+                        onChange={(e) => setForm({ ...form, normalisedQty: e.target.value })}
+                        placeholder="Defaults to GRN"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-bold text-emerald-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500 uppercase tracking-wider">U/D Remark</label>
+                    <textarea
+                      value={form.udRemark || ''}
+                      onChange={(e) => setForm({ ...form, udRemark: e.target.value })}
+                      placeholder="Enter unloading remarks if any..."
+                      rows={2}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Quality Analysis */}
+              {activeTab === 'quality' && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Proximate Chemical Parameters & GCV</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Total Moisture (TM %)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.tm}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, tm: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Inherent Moisture (IM %)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.im}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, im: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Ash Content (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.ash}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, ash: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Volatile Matter (VM %)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.vm}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, vm: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Fixed Carbon (FC %)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.fc}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, fc: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">GCV (ADB) (kcal/kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={form.quality.gcvAdb}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, gcvAdb: e.target.value }
+                        })}
+                        placeholder="e.g. 3800"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">GCV (ARB) (kcal/kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={form.quality.gcvArb}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, gcvArb: e.target.value }
+                        })}
+                        placeholder="e.g. 3600"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-red-500 uppercase tracking-wider">Quality Penalty (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.quality.qualityPenalty}
+                        onChange={(e) => setForm({
+                          ...form,
+                          quality: { ...form.quality, qualityPenalty: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="w-full bg-red-50 border border-red-200 text-red-700 font-bold rounded-xl px-3 py-2.5 placeholder-red-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Charges & Deductions */}
+              {activeTab === 'deductions' && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Commercial Surcharges & Penalty Deductions</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">POL 1 / A (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.pol1}
+                        onChange={(e) => handleDeductionChange('pol1', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">POL 2 (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.pol2}
+                        onChange={(e) => handleDeductionChange('pol2', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">ENHC Charge (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.enhc}
+                        onChange={(e) => handleDeductionChange('enhc', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">DCLA Charge (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.dcla}
+                        onChange={(e) => handleDeductionChange('dcla', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">FAUC Charge (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.fauc}
+                        onChange={(e) => handleDeductionChange('fauc', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Dead Freight (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.deadFreight}
+                        onChange={(e) => handleDeductionChange('deadFreight', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Punitive Charges (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.punitive}
+                        onChange={(e) => handleDeductionChange('punitive', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Demurrage Charge (DC) (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.dc}
+                        onChange={(e) => handleDeductionChange('dc', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Shortage Deduction (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.shortage}
+                        onChange={(e) => handleDeductionChange('shortage', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Quality Slippage (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.qualitySlippage}
+                        onChange={(e) => handleDeductionChange('qualitySlippage', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Railway Leakage (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.railwayLeakage}
+                        onChange={(e) => handleDeductionChange('railwayLeakage', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">MR Excl. GST (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.mrExclGst}
+                        onChange={(e) => handleDeductionChange('mrExclGst', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-red-600 uppercase tracking-wider">Final Deduction (₹) <span className="text-[10px] text-slate-400 font-semibold">(Auto-calculated)</span></label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.deductions.finalDeduction}
+                        onChange={(e) => handleDeductionChange('finalDeduction', e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-red-50 border border-red-200 text-red-700 font-extrabold rounded-xl px-3 py-2.5 placeholder-red-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Remarks / Narration</label>
+                      <input
+                        type="text"
+                        value={form.deductions.remarks}
+                        onChange={(e) => setForm({
+                          ...form,
+                          deductions: { ...form.deductions, remarks: e.target.value }
+                        })}
+                        placeholder="Enter commercial remarks..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Form Footer Action Bar */}
+              <div className="border-t border-slate-100 pt-4 flex justify-between items-center shrink-0">
+                <span className="text-[10px] text-slate-400 font-semibold">
+                  * Fields are required to save. Fill other tabs before submitting.
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-600 font-bold hover:bg-slate-50 active:scale-[0.98] transition-all"
                   >
-                    {doRecords.map(d => (
-                      <option key={d.id} value={d.doNo}>{d.doNo}</option>
-                    ))}
-                  </select>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-white font-extrabold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm"
+                  >
+                    Save Record
+                  </button>
                 </div>
-
-                {/* Siding (read-only/auto-filled) */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Siding</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={form.siding}
-                    placeholder="Siding name"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-500 focus:outline-none font-semibold cursor-not-allowed"
-                  />
-                </div>
-
-                {/* RR No */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">RR Number <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    value={form.rrNo}
-                    onChange={(e) => setForm({ ...form, rrNo: e.target.value })}
-                    placeholder="e.g. RR-9831"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                {/* RR Date */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> RR Date</label>
-                  <input
-                    type="date"
-                    value={form.rrDate}
-                    onChange={(e) => setForm({ ...form, rrDate: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-
-                {/* Loading Date */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Loading Date</label>
-                  <input
-                    type="date"
-                    value={form.loadingDate}
-                    onChange={(e) => setForm({ ...form, loadingDate: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-
-                {/* Receipt Date */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Receipt Date</label>
-                  <input
-                    type="date"
-                    value={form.receiptDate}
-                    onChange={(e) => setForm({ ...form, receiptDate: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-5 gap-3">
-                {/* RR Act Qty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">RR Act Qty</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.rrActQty}
-                    onChange={(e) => setForm({ ...form, rrActQty: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
-                  />
-                </div>
-
-                {/* RR CH Qty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">RR CH Qty</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.rrChQty}
-                    onChange={(e) => setForm({ ...form, rrChQty: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
-                  />
-                </div>
-
-                {/* VLL Qty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">VLL Qty</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.vllQty}
-                    onChange={(e) => setForm({ ...form, vllQty: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
-                  />
-                </div>
-
-                {/* GRN Qty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">GRN Qty <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={form.grnQty}
-                    onChange={(e) => handleGRNChange(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
-                  />
-                </div>
-
-                {/* Normalised Qty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Normalised Qty</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.normalisedQty}
-                    onChange={(e) => setForm({ ...form, normalisedQty: e.target.value })}
-                    placeholder="Defaults to GRN"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-bold text-emerald-700"
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 pt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-600 font-bold hover:bg-slate-50 active:scale-[0.98] transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-white font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm"
-                >
-                  Save Record
-                </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
       {/* Floating Toast Notification */}
       {toast && (
         <div className={`fixed top-5 right-5 z-[300] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl animate-slide-in max-w-md ${

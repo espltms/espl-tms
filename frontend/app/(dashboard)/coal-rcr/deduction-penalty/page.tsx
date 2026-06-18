@@ -9,13 +9,11 @@ import {
   RefreshCw, 
   Edit2, 
   Trash2, 
-  Hourglass,
-  Layers,
+  Info,
   CheckCircle2,
-  AlertTriangle,
-  Info
+  AlertTriangle
 } from 'lucide-react';
-import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
+import { readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
@@ -66,13 +64,20 @@ export default function DeductionPenaltyPage() {
   const [form, setForm] = useState({
     doNo: '',
     rrNo: '',
+    pol1: '',
+    pol2: '',
+    enhc: '',
+    dcla: '',
+    fauc: '',
     deadFreight: '',
     punitive: '',
     dc: '',
     shortage: '',
     qualitySlippage: '',
     railwayLeakage: '',
-    finalDeduction: ''
+    mrExclGst: '',
+    finalDeduction: '',
+    remarks: ''
   });
 
   // Fetch data
@@ -108,49 +113,32 @@ export default function DeductionPenaltyPage() {
           localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
         }
       } else {
-        const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
-        const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
-        const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-        const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-        setRecords(localDeductions || []);
-        setQualityRecords(localQualities || []);
-        setRrRecords(localRRs || []);
-        setDoRecords(localDOs || []);
+        setRecords(readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []));
+        setQualityRecords(readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []));
+        setRrRecords(readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []));
+        setDoRecords(readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []));
       }
     } catch (e) {
       console.error("Error fetching Deduction records:", e);
-      const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
-      const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
-      const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-      const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-      setRecords(localDeductions || []);
-      setQualityRecords(localQualities || []);
-      setRrRecords(localRRs || []);
-      setDoRecords(localDOs || []);
+      setRecords(readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []));
+      setQualityRecords(readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []));
+      setRrRecords(readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []));
+      setDoRecords(readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const localDeductions = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
-    const localQualities = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
-    const localRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
-    const localDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
-    const hasCache = localDeductions && localDeductions.length > 0;
-    if (hasCache) {
-      setRecords(localDeductions);
-    }
-    if (localQualities && localQualities.length > 0) {
-      setQualityRecords(localQualities);
-    }
-    if (localRRs && localRRs.length > 0) {
-      setRrRecords(localRRs);
-    }
-    if (localDOs && localDOs.length > 0) {
-      setDoRecords(localDOs);
-    }
-    fetchData(!hasCache);
+    const cachedDP = readLocalValue<DeductionPenaltyRecord[]>(DEDUCTION_PENALTY_KEY, []);
+    const cachedQual = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
+    const cachedRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+    const cachedDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
+    if (cachedDP.length > 0) setRecords(cachedDP);
+    if (cachedQual.length > 0) setQualityRecords(cachedQual);
+    if (cachedRRs.length > 0) setRrRecords(cachedRRs);
+    if (cachedDOs.length > 0) setDoRecords(cachedDOs);
+    fetchData(cachedDP.length === 0);
   }, []);
 
   /* ── Excel import listener ── */
@@ -165,7 +153,7 @@ export default function DeductionPenaltyPage() {
 
     const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
-      if (!detail || detail.sectionName !== 'Deduction & Penalty') return;
+      if (detail.sectionName !== 'Deduction & Penalty') return;
       setLoading(true);
       const token = localStorage.getItem('tms_token');
       const rows = detail.import.rows;
@@ -175,18 +163,37 @@ export default function DeductionPenaltyPage() {
       rows.forEach((row) => {
         const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
         const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+        const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol 1', 'pol 1/a']);
+        const pol2Str = getCellValue(detail.import.headers, row, ['pol2', 'pol 2']);
+        const enhcStr = getCellValue(detail.import.headers, row, ['enhc', 'enhc charge']);
+        const dclaStr = getCellValue(detail.import.headers, row, ['dcla', 'dcla charge']);
+        const faucStr = getCellValue(detail.import.headers, row, ['fauc', 'fauc charge']);
         const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
         const punitiveStr = getCellValue(detail.import.headers, row, ['punitive', 'punitive charges']);
         const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage', 'demurrage charges']);
-        const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction', 'weight shortage']);
+        const shortageStr = getCellValue(detail.import.headers, row, ['shortage', 'shortage deduction']);
         const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
         const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
-        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+        const mrExclGstStr = getCellValue(detail.import.headers, row, ['mr excl gst', 'mr', 'mr_excl_gst']);
+        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'total deduction']);
+        const remarksVal = getCellValue(detail.import.headers, row, ['remarks', 'remark', 'narration']);
 
         if (!doNo || !rrNo) {
           skippedCount++;
           return;
         }
+
+        const pol1 = parseFloat(pol1Str) || 0;
+        const pol2 = parseFloat(pol2Str) || 0;
+        const enhc = parseFloat(enhcStr) || 0;
+        const dcla = parseFloat(dclaStr) || 0;
+        const fauc = parseFloat(faucStr) || 0;
+        const deadFreight = parseFloat(deadFreightStr) || 0;
+        const punitive = parseFloat(punitiveStr) || 0;
+        const dc = parseFloat(dcStr) || 0;
+        const shortage = parseFloat(shortageStr) || 0;
+        const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
+        const mrExclGst = parseFloat(mrExclGstStr) || 0;
 
         let qualitySlippage = parseFloat(qualitySlippageStr) || 0;
         if (!qualitySlippageStr) {
@@ -194,24 +201,27 @@ export default function DeductionPenaltyPage() {
           qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
         }
 
-        const deadFreight = parseFloat(deadFreightStr) || 0;
-        const punitive = parseFloat(punitiveStr) || 0;
-        const dc = parseFloat(dcStr) || 0;
-        const shortage = parseFloat(shortageStr) || 0;
-        const railwayLeakage = parseFloat(railwayLeakageStr) || 0;
-
-        const finalDeduction = finalDeductionStr ? parseFloat(finalDeductionStr) : (deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage);
+        const finalDeduction = finalDeductionStr 
+          ? parseFloat(finalDeductionStr) 
+          : (pol1 + pol2 + enhc + dcla + fauc + deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage + mrExclGst);
 
         recordsToImport.push({
           doNo,
           rrNo,
+          pol1,
+          pol2,
+          enhc,
+          dcla,
+          fauc,
           deadFreight,
           punitive,
           dc,
           shortage,
           qualitySlippage,
           railwayLeakage,
-          finalDeduction
+          mrExclGst,
+          finalDeduction,
+          remarks: remarksVal || null
         });
       });
 
@@ -269,8 +279,7 @@ export default function DeductionPenaltyPage() {
   // Get available RRs for selected DO
   const filteredRRsForSelectedDO = useMemo(() => {
     if (!form.doNo) return [];
-    const safeRRs = rrRecords || [];
-    return safeRRs.filter(rr => rr && rr.doNo === form.doNo);
+    return rrRecords.filter(rr => rr && rr.doNo === form.doNo);
   }, [form.doNo, rrRecords]);
 
   // Pre-fill Quality Slippage and Auto-calculate Final Deduction
@@ -279,13 +288,19 @@ export default function DeductionPenaltyPage() {
     const qualitySlippage = matchedQuality ? matchedQuality.qualityPenalty : 0;
     
     setForm(prev => {
+      const pol1 = parseFloat(prev.pol1) || 0;
+      const pol2 = parseFloat(prev.pol2) || 0;
+      const enhc = parseFloat(prev.enhc) || 0;
+      const dcla = parseFloat(prev.dcla) || 0;
+      const fauc = parseFloat(prev.fauc) || 0;
       const deadFreight = parseFloat(prev.deadFreight) || 0;
       const punitive = parseFloat(prev.punitive) || 0;
       const dc = parseFloat(prev.dc) || 0;
       const shortage = parseFloat(prev.shortage) || 0;
       const railwayLeakage = parseFloat(prev.railwayLeakage) || 0;
+      const mrExclGst = parseFloat(prev.mrExclGst) || 0;
       
-      const finalDeduction = deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage;
+      const finalDeduction = pol1 + pol2 + enhc + dcla + fauc + deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage + mrExclGst;
       
       return {
         ...prev,
@@ -296,29 +311,9 @@ export default function DeductionPenaltyPage() {
     });
   };
 
-  // Handle input changes with auto-calculations
-  const handleInputChange = (field: string, val: string) => {
-    setForm(prev => {
-      const nextForm = { ...prev, [field]: val };
-      
-      const deadFreight = parseFloat(nextForm.deadFreight) || 0;
-      const punitive = parseFloat(nextForm.punitive) || 0;
-      const dc = parseFloat(nextForm.dc) || 0;
-      const shortage = parseFloat(nextForm.shortage) || 0;
-      const qualitySlippage = parseFloat(nextForm.qualitySlippage) || 0;
-      const railwayLeakage = parseFloat(nextForm.railwayLeakage) || 0;
-      
-      const finalDeduction = deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage;
-      nextForm.finalDeduction = String(finalDeduction);
-      
-      return nextForm;
-    });
-  };
-
   // Handle DO change
   const handleDOChange = (doNo: string) => {
-    const safeRRs = rrRecords || [];
-    const rrs = safeRRs.filter(rr => rr && rr.doNo === doNo);
+    const rrs = rrRecords.filter(rr => rr && rr.doNo === doNo);
     const firstRR = rrs[0]?.rrNo || '';
     
     setForm(prev => ({
@@ -340,10 +335,34 @@ export default function DeductionPenaltyPage() {
     }
   };
 
+  // Handle input changes with auto-calculations
+  const handleInputChange = (field: string, val: string) => {
+    setForm(prev => {
+      const nextForm = { ...prev, [field]: val };
+      
+      const pol1 = parseFloat(nextForm.pol1) || 0;
+      const pol2 = parseFloat(nextForm.pol2) || 0;
+      const enhc = parseFloat(nextForm.enhc) || 0;
+      const dcla = parseFloat(nextForm.dcla) || 0;
+      const fauc = parseFloat(nextForm.fauc) || 0;
+      const deadFreight = parseFloat(nextForm.deadFreight) || 0;
+      const punitive = parseFloat(nextForm.punitive) || 0;
+      const dc = parseFloat(nextForm.dc) || 0;
+      const shortage = parseFloat(nextForm.shortage) || 0;
+      const qualitySlippage = parseFloat(nextForm.qualitySlippage) || 0;
+      const railwayLeakage = parseFloat(nextForm.railwayLeakage) || 0;
+      const mrExclGst = parseFloat(nextForm.mrExclGst) || 0;
+      
+      const finalDeduction = pol1 + pol2 + enhc + dcla + fauc + deadFreight + punitive + dc + shortage + qualitySlippage + railwayLeakage + mrExclGst;
+      nextForm.finalDeduction = String(finalDeduction);
+      
+      return nextForm;
+    });
+  };
+
   // Search & Filters
   const filteredRecords = useMemo(() => {
-    const safeRecords = records || [];
-    return safeRecords.filter(r => {
+    return records.filter(r => {
       if (!r) return false;
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
@@ -363,11 +382,10 @@ export default function DeductionPenaltyPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const safeRecords = records || [];
-    const totalCount = safeRecords.length;
-    const totalDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.finalDeduction) : 0), 0);
-    const shortageDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.shortage) : 0), 0);
-    const qualityDeduction = safeRecords.reduce((acc, r) => acc + (r ? Number(r.qualitySlippage) : 0), 0);
+    const totalCount = records.length;
+    const totalDeduction = records.reduce((acc, r) => acc + (r ? Number(r.finalDeduction) : 0), 0);
+    const shortageDeduction = records.reduce((acc, r) => acc + (r ? Number(r.shortage) : 0), 0);
+    const qualityDeduction = records.reduce((acc, r) => acc + (r ? Number(r.qualitySlippage) : 0), 0);
     
     return { totalCount, totalDeduction, shortageDeduction, qualityDeduction };
   }, [records]);
@@ -393,13 +411,20 @@ export default function DeductionPenaltyPage() {
     setForm({
       doNo: firstDo,
       rrNo: firstRR,
+      pol1: '',
+      pol2: '',
+      enhc: '',
+      dcla: '',
+      fauc: '',
       deadFreight: '',
       punitive: '',
       dc: '',
       shortage: '',
       qualitySlippage: String(qualitySlippage),
       railwayLeakage: '',
-      finalDeduction: String(qualitySlippage)
+      mrExclGst: '',
+      finalDeduction: String(qualitySlippage),
+      remarks: ''
     });
     setIsModalOpen(true);
   };
@@ -410,13 +435,20 @@ export default function DeductionPenaltyPage() {
     setForm({
       doNo: record.doNo,
       rrNo: record.rrNo,
+      pol1: record.pol1 !== undefined ? String(record.pol1) : '',
+      pol2: record.pol2 !== undefined ? String(record.pol2) : '',
+      enhc: record.enhc !== undefined ? String(record.enhc) : '',
+      dcla: record.dcla !== undefined ? String(record.dcla) : '',
+      fauc: record.fauc !== undefined ? String(record.fauc) : '',
       deadFreight: String(record.deadFreight),
       punitive: String(record.punitive),
       dc: String(record.dc),
       shortage: String(record.shortage),
       qualitySlippage: String(record.qualitySlippage),
       railwayLeakage: String(record.railwayLeakage),
-      finalDeduction: String(record.finalDeduction)
+      mrExclGst: record.mrExclGst !== undefined ? String(record.mrExclGst) : '',
+      finalDeduction: String(record.finalDeduction),
+      remarks: record.remarks || ''
     });
     setIsModalOpen(true);
   };
@@ -433,13 +465,20 @@ export default function DeductionPenaltyPage() {
       id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo,
       rrNo: form.rrNo,
+      pol1: parseFloat(form.pol1) || 0,
+      pol2: parseFloat(form.pol2) || 0,
+      enhc: parseFloat(form.enhc) || 0,
+      dcla: parseFloat(form.dcla) || 0,
+      fauc: parseFloat(form.fauc) || 0,
       deadFreight: parseFloat(form.deadFreight) || 0,
       punitive: parseFloat(form.punitive) || 0,
       dc: parseFloat(form.dc) || 0,
       shortage: parseFloat(form.shortage) || 0,
       qualitySlippage: parseFloat(form.qualitySlippage) || 0,
       railwayLeakage: parseFloat(form.railwayLeakage) || 0,
-      finalDeduction: parseFloat(form.finalDeduction) || 0
+      mrExclGst: parseFloat(form.mrExclGst) || 0,
+      finalDeduction: parseFloat(form.finalDeduction) || 0,
+      remarks: form.remarks || null
     };
 
     try {
@@ -583,12 +622,13 @@ export default function DeductionPenaltyPage() {
           </div>
         </div>
       )}
+      
       {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Deduction / Penalty</h2>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Charges & Deductions</h2>
           <p className="text-xs text-slate-500 mt-1">
-            Track dead freight charges, punitive charges, demurrage, weight shortage penalties, and leakage deductions
+            Track commercial penal surcharges, dead freights, shortage claims, and MR balances per Railway Receipt.
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
@@ -614,34 +654,34 @@ export default function DeductionPenaltyPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Audited Shipments</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Deduction Logs</span>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-slate-800">{stats.totalCount}</span>
-            <span className="text-[10px] text-slate-400">RRs processed</span>
+            <span className="text-[10px] text-slate-400">RRs logged</span>
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Shortage Penalties</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Shortage Penalties</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-blue-600">₹{stats.shortageDeduction.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-slate-400">shortage cost</span>
+            <span className="text-2xl font-extrabold text-blue-600">₹{stats.shortageDeduction.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            <span className="text-[10px] text-slate-400">deducted</span>
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Quality Slippage</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Quality Slippage Penalties</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-purple-600">₹{stats.qualityDeduction.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-slate-400">GCV slippages</span>
+            <span className="text-2xl font-extrabold text-purple-600">₹{stats.qualityDeduction.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            <span className="text-[10px] text-slate-400">deducted</span>
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Deductions</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Deductions Claimed</span>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-red-600">₹{stats.totalDeduction.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-red-500 font-semibold">total penalties</span>
+            <span className="text-2xl font-extrabold text-red-600">₹{stats.totalDeduction.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            <span className="text-[10px] text-red-500 font-semibold">cumulative</span>
           </div>
         </div>
       </div>
@@ -724,7 +764,7 @@ export default function DeductionPenaltyPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1800px]">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
                 {isDeleteMode && (
@@ -752,20 +792,27 @@ export default function DeductionPenaltyPage() {
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">RR No</th>
                 <th className="px-5 py-4">DO No</th>
+                <th className="px-5 py-4 text-right">POL 1 / A (₹)</th>
+                <th className="px-5 py-4 text-right">POL 2 (₹)</th>
+                <th className="px-5 py-4 text-right">ENHC Charge (₹)</th>
+                <th className="px-5 py-4 text-right">DCLA Charge (₹)</th>
+                <th className="px-5 py-4 text-right">FAUC Charge (₹)</th>
                 <th className="px-5 py-4 text-right">Dead Freight (₹)</th>
                 <th className="px-5 py-4 text-right">Punitive (₹)</th>
                 <th className="px-5 py-4 text-right">DC / Demurrage (₹)</th>
                 <th className="px-5 py-4 text-right">Shortage (₹)</th>
                 <th className="px-5 py-4 text-right">Quality Slippage (₹)</th>
                 <th className="px-5 py-4 text-right">Railway Leakage (₹)</th>
+                <th className="px-5 py-4 text-right">MR Excl. GST (₹)</th>
                 <th className="px-5 py-4 text-right font-bold">Final Deduction (₹)</th>
+                <th className="px-5 py-4">Remarks</th>
                 <th className="px-5 py-4 text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 19 : 18} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching deductions...
                     </span>
@@ -773,7 +820,7 @@ export default function DeductionPenaltyPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 12 : 11} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 19 : 18} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No Deduction logs found.
                   </td>
                 </tr>
@@ -805,13 +852,20 @@ export default function DeductionPenaltyPage() {
                     <td className="px-5 py-4 font-mono font-bold text-slate-700">
                       {r.doNo}
                     </td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.pol1 || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.pol2 || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.enhc || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.dcla || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.fauc || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right">{Number(r.deadFreight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right">{Number(r.punitive || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right">{Number(r.dc || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right font-semibold text-blue-600">{Number(r.shortage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right font-semibold text-purple-600">{Number(r.qualitySlippage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 font-mono text-right">{Number(r.railwayLeakage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-red-600 bg-red-50/10">₹{Number(r.finalDeduction || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right">{Number(r.mrExclGst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-mono text-right font-extrabold text-red-600 bg-red-50/10">₹{Number(r.finalDeduction || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-500 max-w-[150px] truncate" title={r.remarks || ''}>{r.remarks || '—'}</td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -864,7 +918,7 @@ export default function DeductionPenaltyPage() {
       {/* Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-scale-up">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-xl overflow-hidden animate-scale-up">
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                 <Scale className="h-4.5 w-4.5 text-blue-600" />
@@ -902,10 +956,10 @@ export default function DeductionPenaltyPage() {
                     required
                     value={form.rrNo}
                     onChange={(e) => handleRRChange(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer font-mono"
                   >
                     {filteredRRsForSelectedDO.length === 0 ? (
-                      <option value="">No RRs logged for this DO</option>
+                      <option value="">No RRs under this DO</option>
                     ) : (
                       filteredRRsForSelectedDO.map(rr => (
                         <option key={rr.id} value={rr.rrNo}>{rr.rrNo}</option>
@@ -915,13 +969,74 @@ export default function DeductionPenaltyPage() {
                 </div>
               </div>
 
-              {/* Deductions Breakdown */}
-              <div className="grid grid-cols-3 gap-4 border-y border-slate-100 py-4">
-                {/* Dead Freight */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">POL 1 / A (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.pol1}
+                    onChange={(e) => handleInputChange('pol1', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">POL 2 (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.pol2}
+                    onChange={(e) => handleInputChange('pol2', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">ENHC Charge (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.enhc}
+                    onChange={(e) => handleInputChange('enhc', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">DCLA Charge (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.dcla}
+                    onChange={(e) => handleInputChange('dcla', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">FAUC Charge (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.fauc}
+                    onChange={(e) => handleInputChange('fauc', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
+
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Dead Freight (₹)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={form.deadFreight}
                     onChange={(e) => handleInputChange('deadFreight', e.target.value)}
                     placeholder="0.00"
@@ -929,11 +1044,11 @@ export default function DeductionPenaltyPage() {
                   />
                 </div>
 
-                {/* Punitive */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Punitive (₹)</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Punitive Charges (₹)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={form.punitive}
                     onChange={(e) => handleInputChange('punitive', e.target.value)}
                     placeholder="0.00"
@@ -941,23 +1056,25 @@ export default function DeductionPenaltyPage() {
                   />
                 </div>
 
-                {/* DC / Demurrage */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Demurrage Charges (₹)</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Demurrage Charge (DC) (₹)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={form.dc}
                     onChange={(e) => handleInputChange('dc', e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
                   />
                 </div>
+              </div>
 
-                {/* Shortage */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Shortage Deduction (₹)</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Shortage Claims (₹)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={form.shortage}
                     onChange={(e) => handleInputChange('shortage', e.target.value)}
                     placeholder="0.00"
@@ -965,40 +1082,69 @@ export default function DeductionPenaltyPage() {
                   />
                 </div>
 
-                {/* Quality Slippage (read-only/auto-filled) */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Quality Slippage (₹)</label>
                   <input
                     type="number"
-                    readOnly
+                    step="0.01"
                     value={form.qualitySlippage}
+                    onChange={(e) => handleInputChange('qualitySlippage', e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-500 focus:outline-none font-mono font-bold cursor-not-allowed"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
                   />
                 </div>
 
-                {/* Railway Leakage */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Railway Leakage (₹)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={form.railwayLeakage}
                     onChange={(e) => handleInputChange('railwayLeakage', e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
                   />
                 </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">MR Excl. GST (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.mrExclGst}
+                    onChange={(e) => handleInputChange('mrExclGst', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                  />
+                </div>
               </div>
 
-              {/* Final Deduction */}
-              <div className="space-y-1 max-w-xs mx-auto text-center">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-red-500 block">Final Deduction Amount</label>
-                <input
-                  type="text"
-                  readOnly
-                  value={`₹ ${(parseFloat(form.finalDeduction) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
-                  className="w-full bg-red-50 border border-red-200 rounded-2xl py-3.5 text-center text-red-700 font-extrabold text-lg focus:outline-none font-mono cursor-not-allowed shadow-inner"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-red-600 uppercase tracking-wider">Final Deduction (₹) <span className="text-[10px] text-slate-400 font-semibold">(Auto-calculated)</span></label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.finalDeduction}
+                    onChange={(e) => handleInputChange('finalDeduction', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-red-50 border border-red-200 text-red-700 font-extrabold rounded-xl px-3 py-2.5 placeholder-red-400 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Remarks / Narration</label>
+                  <input
+                    type="text"
+                    value={form.remarks}
+                    onChange={(e) => setForm({
+                      ...form,
+                      remarks: e.target.value
+                    })}
+                    placeholder="Enter commercial remarks..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
+                  />
+                </div>
               </div>
 
               <div className="border-t border-slate-100 pt-4 flex justify-end gap-2">

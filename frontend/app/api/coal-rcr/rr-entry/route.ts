@@ -15,11 +15,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden. Only Super Admins and System Admins can access Coal RCR data.' }, { status: 403 });
     }
 
-    const records = await prisma.coalRREntry.findMany({
+    const rrRecords = await prisma.coalRREntry.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ success: true, data: records });
+    const qualityRecords = await prisma.coalQualityTracking.findMany();
+    const deductionRecords = await prisma.coalDeductionPenalty.findMany();
+
+    const data = rrRecords.map(rr => {
+      const quality = qualityRecords.find(q => q.rrNo === rr.rrNo);
+      const deductions = deductionRecords.find(d => d.rrNo === rr.rrNo);
+      return {
+        ...rr,
+        quality: quality || null,
+        deductions: deductions || null,
+      };
+    });
+
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error('Error fetching RR records:', error);
     return NextResponse.json({ error: 'Internal server error: ' + error.message }, { status: 500 });
@@ -43,7 +56,11 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body)) {
       const recordsToCreate = [];
       for (const item of body) {
-        const { doNo, siding, rrNo, rrDate, loadingDate, receiptDate, rrActQty, rrChQty, vllQty, grnQty, normalisedQty } = item;
+        const {
+          doNo, siding, rrNo, rrDate, invoiceDate, receiptDate, loadingDate,
+          from, to, ocp, rrActQty, rrChQty, vllQty, grnQty, normalisedQty,
+          noOfWagons, udRemark
+        } = item;
         if (!doNo || !rrNo || grnQty === undefined) {
           continue; // Skip invalid records in batch
         }
@@ -52,13 +69,19 @@ export async function POST(req: NextRequest) {
           siding: siding ? siding.trim() : '',
           rrNo: rrNo.toUpperCase().trim(),
           rrDate: rrDate || null,
-          loadingDate: loadingDate || null,
+          invoiceDate: invoiceDate || null,
           receiptDate: receiptDate || null,
+          loadingDate: loadingDate || null,
+          from: from || null,
+          to: to || null,
+          ocp: ocp || null,
           rrActQty: parseFloat(rrActQty) || 0,
           rrChQty: parseFloat(rrChQty) || 0,
           vllQty: parseFloat(vllQty) || 0,
           grnQty: parseFloat(grnQty) || 0,
           normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
+          noOfWagons: noOfWagons ? parseInt(noOfWagons) || null : null,
+          udRemark: udRemark || null,
         });
       }
 
@@ -74,7 +97,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: result.count });
     }
 
-    const { id, doNo, siding, rrNo, rrDate, loadingDate, receiptDate, rrActQty, rrChQty, vllQty, grnQty, normalisedQty } = body;
+    const {
+      id, doNo, siding, rrNo, rrDate, invoiceDate, receiptDate, loadingDate,
+      from, to, ocp, rrActQty, rrChQty, vllQty, grnQty, normalisedQty,
+      noOfWagons, udRemark, quality, deductions
+    } = body;
 
     if (!doNo || !rrNo || grnQty === undefined) {
       return NextResponse.json({ error: 'DO No, RR No, and GRN Qty are required fields' }, { status: 400 });
@@ -91,41 +118,85 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `RR Number "${upperRrNo}" already exists` }, { status: 409 });
     }
 
-    let record;
-    if (id && id.startsWith('rr-') === false) { // check if it is a real DB id or temp client-side id
-      record = await prisma.coalRREntry.update({
-        where: { id },
-        data: {
+    let record: any;
+    await prisma.$transaction(async (tx) => {
+      const rrData = {
+        doNo,
+        siding: siding ? siding.trim() : '',
+        rrNo: upperRrNo,
+        rrDate: rrDate || null,
+        invoiceDate: invoiceDate || null,
+        receiptDate: receiptDate || null,
+        loadingDate: loadingDate || null,
+        from: from || null,
+        to: to || null,
+        ocp: ocp || null,
+        rrActQty: parseFloat(rrActQty) || 0,
+        rrChQty: parseFloat(rrChQty) || 0,
+        vllQty: parseFloat(vllQty) || 0,
+        grnQty: parseFloat(grnQty) || 0,
+        normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
+        noOfWagons: noOfWagons ? parseInt(noOfWagons) || null : null,
+        udRemark: udRemark || null,
+      };
+
+      if (id && id.startsWith('rr-') === false) { // check if it is a real DB id or temp client-side id
+        record = await tx.coalRREntry.update({
+          where: { id },
+          data: rrData,
+        });
+      } else {
+        record = await tx.coalRREntry.create({
+          data: rrData,
+        });
+      }
+
+      if (quality) {
+        const qData = {
           doNo,
-          siding: siding.trim(),
           rrNo: upperRrNo,
-          rrDate,
-          loadingDate,
-          receiptDate,
-          rrActQty: parseFloat(rrActQty) || 0,
-          rrChQty: parseFloat(rrChQty) || 0,
-          vllQty: parseFloat(vllQty) || 0,
-          grnQty: parseFloat(grnQty) || 0,
-          normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
-        },
-      });
-    } else {
-      record = await prisma.coalRREntry.create({
-        data: {
+          tm: parseFloat(quality.tm) || 0,
+          im: parseFloat(quality.im) || 0,
+          ash: parseFloat(quality.ash) || 0,
+          vm: parseFloat(quality.vm) || 0,
+          fc: parseFloat(quality.fc) || 0,
+          gcvAdb: parseFloat(quality.gcvAdb) || 0,
+          gcvArb: parseFloat(quality.gcvArb) || 0,
+          qualityPenalty: parseFloat(quality.qualityPenalty) || 0,
+        };
+        await tx.coalQualityTracking.upsert({
+          where: { rrNo: upperRrNo },
+          create: qData,
+          update: qData,
+        });
+      }
+
+      if (deductions) {
+        const dData = {
           doNo,
-          siding: siding.trim(),
           rrNo: upperRrNo,
-          rrDate,
-          loadingDate,
-          receiptDate,
-          rrActQty: parseFloat(rrActQty) || 0,
-          rrChQty: parseFloat(rrChQty) || 0,
-          vllQty: parseFloat(vllQty) || 0,
-          grnQty: parseFloat(grnQty) || 0,
-          normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
-        },
-      });
-    }
+          pol1: parseFloat(deductions.pol1) || 0,
+          pol2: parseFloat(deductions.pol2) || 0,
+          enhc: parseFloat(deductions.enhc) || 0,
+          dcla: parseFloat(deductions.dcla) || 0,
+          fauc: parseFloat(deductions.fauc) || 0,
+          deadFreight: parseFloat(deductions.deadFreight) || 0,
+          punitive: parseFloat(deductions.punitive) || 0,
+          dc: parseFloat(deductions.dc) || 0,
+          shortage: parseFloat(deductions.shortage) || 0,
+          qualitySlippage: parseFloat(deductions.qualitySlippage) || 0,
+          railwayLeakage: parseFloat(deductions.railwayLeakage) || 0,
+          mrExclGst: parseFloat(deductions.mrExclGst) || 0,
+          finalDeduction: parseFloat(deductions.finalDeduction) || 0,
+          remarks: deductions.remarks || null,
+        };
+        await tx.coalDeductionPenalty.upsert({
+          where: { rrNo: upperRrNo },
+          create: dData,
+          update: dData,
+        });
+      }
+    });
 
     return NextResponse.json({ success: true, data: record });
   } catch (error: any) {
