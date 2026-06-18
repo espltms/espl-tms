@@ -19,7 +19,9 @@ import {
   X
 } from 'lucide-react';
 import { readLocalValue } from '@/lib/syncedStorage';
+import { useAuthStore } from '@/store/auth.store';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import CentralExcelImport from '@/components/CentralExcelImport';
 import { DOMasterRecord, RREntryRecord, QualityTrackingRecord, DeductionPenaltyRecord, BillingPaymentRecord } from '../types';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
@@ -41,6 +43,7 @@ interface SidingAggregation {
 }
 
 export default function SummaryDashboardPage() {
+  const { user } = useAuthStore();
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [rrRecords, setRrRecords] = useState<RREntryRecord[]>([]);
   const [qualityRecords, setQualityRecords] = useState<QualityTrackingRecord[]>([]);
@@ -300,6 +303,7 @@ export default function SummaryDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
           <SectionExcelExport sectionName="Summary Dashboard" />
           <button
             onClick={fetchData}
