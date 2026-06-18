@@ -44,12 +44,12 @@ export async function POST(req: NextRequest) {
       const recordsToCreate = [];
       for (const item of body) {
         const { doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = item;
-        if (!doNo || !poNo || !siding || doQty === undefined) {
+        if (!doNo || !siding || doQty === undefined) {
           continue; // Skip invalid records in batch
         }
         recordsToCreate.push({
           doNo: doNo.toUpperCase().trim(),
-          poNo: poNo.toUpperCase().trim(),
+          poNo: poNo ? poNo.toUpperCase().trim() : '',
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
 
     const { id, doNo, poNo, siding, mines, coalCompany, doQty, coalType, startDate, endDate, status } = body;
 
-    if (!doNo || !poNo || !siding || doQty === undefined) {
-      return NextResponse.json({ error: 'DO No, PO No, Siding, and DO Qty are required fields' }, { status: 400 });
+    if (!doNo || !siding || doQty === undefined) {
+      return NextResponse.json({ error: 'DO No, Siding, and DO Qty are required fields' }, { status: 400 });
     }
 
     const upperDoNo = doNo.toUpperCase().trim();
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         where: { id },
         data: {
           doNo: upperDoNo,
-          poNo: poNo.toUpperCase().trim(),
+          poNo: poNo ? poNo.toUpperCase().trim() : '',
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       record = await prisma.coalDOMaster.create({
         data: {
           doNo: upperDoNo,
-          poNo: poNo.toUpperCase().trim(),
+          poNo: poNo ? poNo.toUpperCase().trim() : '',
           siding: siding.trim(),
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,

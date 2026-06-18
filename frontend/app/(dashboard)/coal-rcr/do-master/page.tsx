@@ -226,7 +226,7 @@ export default function DOMasterPage() {
         const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
         const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
 
-        if (!doNo || !poNo || !siding || !doQtyStr) {
+        if (!doNo || !siding || !doQtyStr) {
           skippedCount++;
           return;
         }
@@ -384,8 +384,8 @@ export default function DOMasterPage() {
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.doNo || !form.poNo || !form.siding || !form.doQty) {
-      setToast({ message: "Please fill in all required fields (DO No, PO No, Siding, DO Qty)", type: 'error' });
+    if (!form.doNo || !form.siding || !form.doQty) {
+      setToast({ message: "Please fill in all required fields (DO No, Siding, DO Qty)", type: 'error' });
       return;
     }
 
@@ -872,10 +872,9 @@ export default function DOMasterPage() {
 
                 {/* PO No */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">PO Number <span className="text-red-500">*</span></label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">PO Number</label>
                   <input
                     type="text"
-                    required
                     value={form.poNo}
                     onChange={(e) => setForm({ ...form, poNo: e.target.value })}
                     placeholder="e.g. PO-VAL-2026-01"
