@@ -253,8 +253,14 @@ export default function DOMasterPage() {
         const tolerance = parseFloat(toleranceRaw) || 0;
 
         let coalType = 'ROM';
-        if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
-          coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
+        if (['ROM', 'Slack', 'Steam', 'Washed', 'Non Coking Coal', 'Non Cooking Coals'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
+          if (coalTypeRaw.toUpperCase() === 'ROM') {
+            coalType = 'ROM';
+          } else if (coalTypeRaw.toLowerCase().startsWith('non')) {
+            coalType = 'Non Coking Coal';
+          } else {
+            coalType = coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
+          }
         }
 
         let status = 'Open';
@@ -1015,6 +1021,7 @@ export default function DOMasterPage() {
                     <option value="Slack">Slack</option>
                     <option value="Steam">Steam</option>
                     <option value="Washed">Washed</option>
+                    <option value="Non Coking Coal">Non Coking Coal</option>
                   </select>
                 </div>
               </div>
