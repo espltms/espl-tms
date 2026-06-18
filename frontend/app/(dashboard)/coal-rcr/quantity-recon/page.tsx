@@ -22,6 +22,7 @@ export default function QuantityReconciliationPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoNo, setSelectedDoNo] = useState<string>('All');
+  const [selectedOcp, setSelectedOcp] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = async (showLoadingSpinner = true) => {
@@ -127,18 +128,28 @@ export default function QuantityReconciliationPage() {
     };
   }, [doSummaryList]);
 
+  // Unique list of OCPs for filtering
+  const uniqueOCPs = useMemo(() => {
+    const list = new Set<string>();
+    rrRecords.forEach(r => {
+      if (r.ocp) list.add(r.ocp.trim());
+    });
+    return Array.from(list).sort();
+  }, [rrRecords]);
+
   // Filtered RR detailed weight differences
   const filteredRRs = useMemo(() => {
     return rrRecords.filter(rr => {
       const matchesDO = selectedDoNo === 'All' || rr.doNo === selectedDoNo;
+      const matchesOCP = selectedOcp === 'All' || (rr.ocp && rr.ocp.trim().toLowerCase() === selectedOcp.trim().toLowerCase());
       const matchesSearch = 
         rr.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         rr.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         (rr.ocp && rr.ocp.toUpperCase().includes(searchQuery.toUpperCase())) ||
         rr.siding.toUpperCase().includes(searchQuery.toUpperCase());
-      return matchesDO && matchesSearch;
+      return matchesDO && matchesOCP && matchesSearch;
     });
-  }, [rrRecords, selectedDoNo, searchQuery]);
+  }, [rrRecords, selectedDoNo, selectedOcp, searchQuery]);
 
   // Pagination for RRs
   const totalPages = Math.ceil(filteredRRs.length / ITEMS_PER_PAGE);
@@ -293,6 +304,16 @@ export default function QuantityReconciliationPage() {
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-blue-500/50 transition-colors"
               />
             </div>
+            <select
+              value={selectedOcp}
+              onChange={(e) => { setSelectedOcp(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none cursor-pointer"
+            >
+              <option value="All">All OCPs</option>
+              {uniqueOCPs.map(ocp => (
+                <option key={ocp} value={ocp}>{ocp}</option>
+              ))}
+            </select>
             <select
               value={selectedDoNo}
               onChange={(e) => { setSelectedDoNo(e.target.value); setCurrentPage(1); }}
