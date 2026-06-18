@@ -239,6 +239,8 @@ export default function DOMasterPage() {
         const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
         const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
         const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
+        const month = getCellValue(detail.import.headers, row, ['month']).trim();
+        const toleranceRaw = getCellValue(detail.import.headers, row, ['tolerance', 'tolerance %', 'tolerance_percent']);
 
         if (!doNo || !siding || !doQtyStr) {
           skippedCount++;
@@ -248,20 +250,21 @@ export default function DOMasterPage() {
         const doQty = parseFloat(doQtyStr) || 0;
         const startDate = parseDateToYYYYMMDD(startDateStr);
         const endDate = parseDateToYYYYMMDD(endDateStr);
+        const tolerance = parseFloat(toleranceRaw) || 0;
 
         let coalType = 'ROM';
         if (['ROM', 'Slack', 'Steam', 'Washed'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
           coalType = coalTypeRaw.toUpperCase() === 'ROM' ? 'ROM' : coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
         }
 
-        let status = 'Active';
-        if (['Active', 'Completed', 'Cancelled'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
+        let status = 'Open';
+        if (['Open', 'Completed', 'Expired'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
           status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
         }
 
         recordsToImport.push({
           doNo,
-          poNo,
+          poNo: poNo || null,
           siding,
           mines: mines || null,
           coalCompany: coalCompany || null,
@@ -269,6 +272,8 @@ export default function DOMasterPage() {
           coalType,
           startDate: startDate || null,
           endDate: endDate || null,
+          month: month || null,
+          tolerance,
           status
         });
       });

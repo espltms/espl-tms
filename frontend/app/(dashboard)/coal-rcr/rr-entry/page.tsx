@@ -287,6 +287,30 @@ export default function RREntryPage() {
         const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count']);
         const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
 
+        // Quality fields
+        const tmStr = getCellValue(detail.import.headers, row, ['tm', 'tm%', 'total moisture']);
+        const imStr = getCellValue(detail.import.headers, row, ['im', 'im%', 'inherent moisture']);
+        const vmStr = getCellValue(detail.import.headers, row, ['vm', 'vm%', 'volatile matter']);
+        const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash%', 'ash content']);
+        const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fc%', 'fixed carbon']);
+        const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
+        const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
+        const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
+
+        // Deduction fields
+        const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a']);
+        const pol2Str = getCellValue(detail.import.headers, row, ['pol2']);
+        const enhcStr = getCellValue(detail.import.headers, row, ['enhc']);
+        const dclaStr = getCellValue(detail.import.headers, row, ['dcla']);
+        const faucStr = getCellValue(detail.import.headers, row, ['fauc']);
+        const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
+        const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage']);
+        const shortageStr = getCellValue(detail.import.headers, row, ['shortage']);
+        const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
+        const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
+        const mrExclGstStr = getCellValue(detail.import.headers, row, ['mr excl gst', 'mr_excl_gst']);
+        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+
         if (!doNo || !rrNo || !grnQtyStr) {
           skippedCount++;
           return;
@@ -299,6 +323,19 @@ export default function RREntryPage() {
 
         const grnQty = parseFloat(grnQtyStr) || 0;
         const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
+        const finalDeduction = parseFloat(finalDeductionStr) || (
+          (parseFloat(pol1Str) || 0) +
+          (parseFloat(pol2Str) || 0) +
+          (parseFloat(enhcStr) || 0) +
+          (parseFloat(dclaStr) || 0) +
+          (parseFloat(faucStr) || 0) +
+          (parseFloat(deadFreightStr) || 0) +
+          (parseFloat(dcStr) || 0) +
+          (parseFloat(shortageStr) || 0) +
+          (parseFloat(qualitySlippageStr) || 0) +
+          (parseFloat(railwayLeakageStr) || 0) +
+          (parseFloat(mrExclGstStr) || 0)
+        );
 
         recordsToImport.push({
           doNo,
@@ -318,6 +355,31 @@ export default function RREntryPage() {
           normalisedQty,
           noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
           udRemark: udRemarkVal || null,
+          quality: {
+            tm: parseFloat(tmStr) || 0,
+            im: parseFloat(imStr) || 0,
+            ash: parseFloat(ashStr) || 0,
+            vm: parseFloat(vmStr) || 0,
+            fc: parseFloat(fcStr) || 0,
+            gcvAdb: parseFloat(gcvAdbStr) || 0,
+            gcvArb: parseFloat(gcvArbStr) || 0,
+            qualityPenalty: parseFloat(qualityPenaltyStr) || 0,
+          },
+          deductions: {
+            pol1: parseFloat(pol1Str) || 0,
+            pol2: parseFloat(pol2Str) || 0,
+            enhc: parseFloat(enhcStr) || 0,
+            dcla: parseFloat(dclaStr) || 0,
+            fauc: parseFloat(faucStr) || 0,
+            deadFreight: parseFloat(deadFreightStr) || 0,
+            dc: parseFloat(dcStr) || 0,
+            shortage: parseFloat(shortageStr) || 0,
+            qualitySlippage: parseFloat(qualitySlippageStr) || 0,
+            railwayLeakage: parseFloat(railwayLeakageStr) || 0,
+            mrExclGst: parseFloat(mrExclGstStr) || 0,
+            finalDeduction: finalDeduction || 0,
+            remarks: udRemarkVal || null,
+          }
         });
       });
 

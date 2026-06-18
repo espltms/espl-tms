@@ -241,10 +241,212 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       const row0 = nonEmptyRows[0] || [];
       const isUnified = row0.some(val => normalizeHeader(val) === 'vendorcode');
 
+      const sheetNames = workbook.SheetNames;
+      const isRCRSample = sheetNames.includes('SUMMARY') || sheetNames.some(s => s.toUpperCase().includes('KT'));
+
       let headers: string[] = [];
       let rows: string[][] = [];
 
-      if (isUnified) {
+      if (isRCRSample) {
+        if (sectionName === 'DO Master') {
+          const summarySheetName = sheetNames.find(s => s.toUpperCase() === 'SUMMARY') || sheetNames[0];
+          const summarySheet = workbook.Sheets[summarySheetName];
+          const matrix = XLSX.utils.sheet_to_json<unknown[]>(summarySheet, {
+            header: 1,
+            defval: '',
+            blankrows: false,
+          });
+          const nonEmptyRows = matrix
+             .map(row => row.map(normalize))
+             .filter(row => row.some(Boolean));
+
+          const headerRowIdx = nonEmptyRows.findIndex(row => row.some(val => normalizeHeader(val) === 'dono'));
+          if (headerRowIdx === -1) {
+            throw new Error('Could not find DO NO header in SUMMARY sheet.');
+          }
+          const rawHeaders = nonEmptyRows[headerRowIdx];
+          const getColIdx = (aliases: string[]) => {
+            const normAliases = aliases.map(a => a.toLowerCase().replace(/[^a-z0-9]/g, ''));
+            return rawHeaders.findIndex(h => normAliases.includes(String(h).toLowerCase().replace(/[^a-z0-9]/g, '')));
+          };
+
+          const doNoIdx = getColIdx(['do no', 'do_no', 'do number']);
+          const monthIdx = getColIdx(['month']);
+          const ocpIdx = getColIdx(['ocp', 'mines', 'mine']);
+          const qtyIdx = getColIdx(['qty', 'do qty', 'quantity', 'do qty']);
+          const tolQtyIdx = getColIdx(['tolerance qty', 'tolerance_qty']);
+
+          const dataRows = nonEmptyRows.slice(headerRowIdx + 1).filter(row => {
+            const firstCol = String(row[0] || '').trim();
+            const doNoVal = doNoIdx >= 0 ? String(row[doNoIdx] || '').trim() : '';
+            return doNoVal && doNoVal !== '-' && !firstCol.toUpperCase().includes('TOTAL') && !doNoVal.toUpperCase().includes('TOTAL');
+          });
+
+          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'month', 'tolerance', 'status'];
+          rows = dataRows.map(row => {
+            const doNo = doNoIdx >= 0 ? String(row[doNoIdx] || '').trim() : '';
+            const month = monthIdx >= 0 ? String(row[monthIdx] || '').trim() : '';
+            const mines = ocpIdx >= 0 ? String(row[ocpIdx] || '').trim() : '';
+            const doQtyStr = qtyIdx >= 0 ? String(row[qtyIdx] || '').trim() : '';
+            const tolQtyStr = tolQtyIdx >= 0 ? String(row[tolQtyIdx] || '').trim() : '';
+
+            const doQty = parseFloat(doQtyStr) || 0;
+            const tolQty = parseFloat(tolQtyStr) || 0;
+            const tolerance = doQty > 0 ? ((tolQty / doQty) * 100).toFixed(2) : '0';
+
+            // Find siding from detail sheet
+            let siding = 'MVAA';
+            const detailSheetName = sheetNames.find(s => s.toUpperCase().startsWith(mines.toUpperCase().substring(0, 4)));
+            if (detailSheetName) {
+              const dSheet = workbook.Sheets[detailSheetName];
+              const dMatrix = XLSX.utils.sheet_to_json<unknown[]>(dSheet, { header: 1, defval: '' });
+              const rrHeaderIdx = dMatrix.findIndex(r => Array.isArray(r) && r.some(v => String(v).toLowerCase().replace(/[^a-z0-9]/g, '') === 'rrno'));
+              if (rrHeaderIdx !== -1 && dMatrix[rrHeaderIdx + 1]) {
+                const nextRow = dMatrix[rrHeaderIdx + 1] as string[];
+                if (nextRow && nextRow[6]) siding = String(nextRow[6]).trim(); // "To" column is index 6
+              }
+            }
+
+            return [doNo, '', siding, mines, 'MCL', String(doQty), 'ROM', month, tolerance, 'Open'];
+          });
+        }
+        else if (sectionName === 'RR Entry' || sectionName === 'Quality Tracking' || sectionName === 'Deduction & Penalty') {
+          const allRRs: any[] = [];
+          
+          sheetNames.forEach(sheetName => {
+            if (sheetName.toUpperCase() === 'SUMMARY') return;
+            const sheet = workbook.Sheets[sheetName];
+            const dMatrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: '' });
+            const rrHeaderIdx = dMatrix.findIndex(r => Array.isArray(r) && r.some(v => String(v).toLowerCase().replace(/[^a-z0-9]/g, '') === 'rrno'));
+            if (rrHeaderIdx === -1) return;
+
+            const rrHeaders = (dMatrix[rrHeaderIdx] as string[]).map(h => String(h || '').trim());
+            const getColIdx = (aliases: string[]) => {
+              const normAliases = aliases.map(a => a.toLowerCase().replace(/[^a-z0-9]/g, ''));
+              return rrHeaders.findIndex(h => normAliases.includes(String(h).toLowerCase().replace(/[^a-z0-9]/g, '')));
+            };
+
+            const cIdx = {
+              rrNo: getColIdx(['rr no', 'rr number', 'rr_no', 'railway receipt']),
+              rrDate: getColIdx(['rr date', 'rr_date']),
+              invoiceDate: getColIdx(['invoice date', 'invoice_date']),
+              receiptDate: getColIdx(['receipt date', 'receipt_date']),
+              from: getColIdx(['from']),
+              to: getColIdx(['to']),
+              ocp: getColIdx(['ocp']),
+              doNo: getColIdx(['do no', 'do_no', 'do no.']),
+              rrChQty: getColIdx(['rr chargeable weight', 'rr chargeable wt', 'chargeable weight', 'rr_ch_qty']),
+              rrActQty: getColIdx(['rr actual qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']),
+              vllQty: getColIdx(['vll inm qty', 'vll qty', 'vll quantity']),
+              grnQty: getColIdx(['grn qty', 'grn quantity', 'grn_qty']),
+              normalisedQty: getColIdx(['normalise qty', 'normalised qty', 'normalized qty']),
+              tm: getColIdx(['tm', 'tm%', 'total moisture']),
+              im: getColIdx(['im', 'im%', 'inherent moisture']),
+              vm: getColIdx(['vm', 'vm%', 'volatile matter']),
+              ash: getColIdx(['ash', 'ash%', 'ash content']),
+              fc: getColIdx(['fc', 'fc%', 'fixed carbon']),
+              gcvAdb: getColIdx(['gcv adb', 'gcv kcl/kg (adb)']),
+              gcvArb: getColIdx(['gcv arb', 'gcv kcl/kg (arb)']),
+              pol1: getColIdx(['pol1/a', 'pol1']),
+              pol2: getColIdx(['pol2']),
+              enhc: getColIdx(['enhc']),
+              dcla: getColIdx(['dcla']),
+              fauc: getColIdx(['fauc']),
+              deadFreight: getColIdx(['dead freight', 'dead freight ']),
+              dc: getColIdx(['dc']),
+              mrExclGst: getColIdx(['mr excl gst']),
+              noOfWagons: getColIdx(['no of wagon', 'no of wagons', 'wagons']),
+              udRemark: getColIdx(['u/d', 'ud remark', 'ud remarks', 'remark'])
+            };
+
+            for (let rIdx = rrHeaderIdx + 1; rIdx < dMatrix.length; rIdx++) {
+              const row = dMatrix[rIdx] as string[];
+              if (!row) continue;
+
+              const firstCol = String(row[0] || '').trim();
+              if (firstCol && (firstCol.toUpperCase().includes('TOTAL') || firstCol.toUpperCase().includes('COAL COST'))) {
+                break;
+              }
+
+              const rrNoVal = cIdx.rrNo >= 0 ? String(row[cIdx.rrNo] || '').trim() : '';
+              if (!rrNoVal || rrNoVal === '-') continue;
+
+              const getVal = (idx: number) => idx >= 0 ? String(row[idx] || '').trim() : '';
+
+              const doNoVal = getVal(cIdx.doNo);
+              const sidingVal = getVal(cIdx.to) || 'MVAA';
+
+              allRRs.push([
+                doNoVal,
+                sidingVal,
+                rrNoVal,
+                getVal(cIdx.rrDate),
+                getVal(cIdx.rrDate), // loading date
+                getVal(cIdx.receiptDate),
+                getVal(cIdx.from),
+                getVal(cIdx.to),
+                getVal(cIdx.ocp),
+                getVal(cIdx.rrActQty),
+                getVal(cIdx.rrChQty),
+                getVal(cIdx.vllQty),
+                getVal(cIdx.grnQty),
+                getVal(cIdx.normalisedQty),
+                getVal(cIdx.noOfWagons),
+                getVal(cIdx.udRemark),
+
+                // Quality
+                getVal(cIdx.tm),
+                getVal(cIdx.im),
+                getVal(cIdx.ash),
+                getVal(cIdx.vm),
+                getVal(cIdx.fc),
+                getVal(cIdx.gcvAdb),
+                getVal(cIdx.gcvArb),
+                '0',
+
+                // Deductions
+                getVal(cIdx.pol1),
+                getVal(cIdx.pol2),
+                getVal(cIdx.enhc),
+                getVal(cIdx.dcla),
+                getVal(cIdx.fauc),
+                getVal(cIdx.deadFreight),
+                getVal(cIdx.dc),
+                '0',
+                '0',
+                '0',
+                getVal(cIdx.mrExclGst),
+                '0',
+                ''
+              ]);
+            }
+          });
+
+          if (sectionName === 'RR Entry') {
+            headers = [
+              'do no', 'siding', 'rr no', 'rr date', 'loading date', 'receipt date', 
+              'from', 'to', 'ocp', 'rr act qty', 'rr ch qty', 'vll qty', 'grn qty', 'normalised qty', 
+              'no of wagons', 'ud remark',
+              'tm', 'im', 'ash', 'vm', 'fc', 'gcv adb', 'gcv arb', 'quality penalty',
+              'pol1', 'pol2', 'enhc', 'dcla', 'fauc', 'dead freight', 'dc', 'shortage', 'quality slippage', 'railway leakage', 'mr excl gst', 'final deduction', 'remarks'
+            ];
+            rows = allRRs;
+          }
+          else if (sectionName === 'Quality Tracking') {
+            headers = ['do no', 'rr no', 'tm', 'im', 'ash', 'vm', 'fc', 'gcv adb', 'gcv arb', 'quality penalty'];
+            rows = allRRs.map(r => [r[0], r[2], r[16], r[17], r[18], r[19], r[20], r[21], r[22], r[23]]);
+          }
+          else if (sectionName === 'Deduction & Penalty') {
+            headers = ['do no', 'rr no', 'dead freight', 'punitive', 'dc', 'shortage', 'quality slippage', 'railway leakage', 'final deduction'];
+            rows = allRRs.map(r => {
+              const dfVal = parseFloat(r[29]) || 0; 
+              const dcVal = parseFloat(r[30]) || 0; 
+              const finalDeductionVal = dfVal + dcVal;
+              return [r[0], r[2], r[29], '0', r[30], '0', '0', '0', String(finalDeductionVal)];
+            });
+          }
+        }
+      } else if (isUnified) {
         const getLeftMetadata = (label: string): string => {
           const normLabel = normalizeHeader(label);
           for (const row of nonEmptyRows) {
