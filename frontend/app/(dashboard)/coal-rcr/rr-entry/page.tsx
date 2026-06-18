@@ -124,6 +124,7 @@ export default function RREntryPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [doNoFilter, setDoNoFilter] = useState<string>('All');
+  const [ocpFilter, setOcpFilter] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -489,6 +490,18 @@ export default function RREntryPage() {
     });
   };
 
+  // Unique list of OCPs for filtering
+  const uniqueOCPs = useMemo(() => {
+    const list = new Set<string>();
+    const safeRecords = records || [];
+    safeRecords.forEach(r => {
+      if (r && r.ocp) {
+        list.add(r.ocp.trim());
+      }
+    });
+    return Array.from(list).sort();
+  }, [records]);
+
   // Search & Filters
   const filteredRecords = useMemo(() => {
     const safeRecords = records || [];
@@ -501,10 +514,11 @@ export default function RREntryPage() {
         (r.ocp && r.ocp.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesDO = doNoFilter === 'All' || r.doNo === doNoFilter;
+      const matchesOCP = ocpFilter === 'All' || (r.ocp && r.ocp.trim().toLowerCase() === ocpFilter.trim().toLowerCase());
       
-      return matchesSearch && matchesDO;
+      return matchesSearch && matchesDO && matchesOCP;
     });
-  }, [records, searchQuery, doNoFilter]);
+  }, [records, searchQuery, doNoFilter, ocpFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRecords.length / ITEMS_PER_PAGE);
@@ -901,18 +915,33 @@ export default function RREntryPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 self-end md:self-auto">
-          <span className="text-xs text-slate-400 font-semibold font-sans">Filter by DO:</span>
-          <select
-            value={doNoFilter}
-            onChange={(e) => { setDoNoFilter(e.target.value); setCurrentPage(1); }}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
-          >
-            <option value="All">All DO Numbers</option>
-            {doRecords.map(d => (
-              <option key={d.id} value={d.doNo}>{d.doNo}</option>
-            ))}
-          </select>
+        <div className="flex items-center gap-4 self-end md:self-auto flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold font-sans">Filter by OCP:</span>
+            <select
+              value={ocpFilter}
+              onChange={(e) => { setOcpFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer animate-fade-in"
+            >
+              <option value="All">All OCPs</option>
+              {uniqueOCPs.map(ocp => (
+                <option key={ocp} value={ocp}>{ocp}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold font-sans">Filter by DO:</span>
+            <select
+              value={doNoFilter}
+              onChange={(e) => { setDoNoFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+            >
+              <option value="All">All DO Numbers</option>
+              {doRecords.map(d => (
+                <option key={d.id} value={d.doNo}>{d.doNo}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
