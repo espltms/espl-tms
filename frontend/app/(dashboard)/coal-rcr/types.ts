@@ -12,6 +12,8 @@ export interface DOMasterRecord {
   endDate?: string | null;
   tolerance?: number;
   status: 'Open' | 'Completed' | 'Expired' | 'Active' | 'Cancelled';
+  customer?: string | null;
+  mode: 'RCR' | 'Road';
 }
 
 export interface RREntryRecord {

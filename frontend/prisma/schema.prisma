@@ -292,6 +292,8 @@ model CoalDOMaster {
   endDate      String?   // Valid Till
   tolerance    Decimal   @db.Decimal(5, 2) @default(0.00) // Tolerance %
   status       String    @default("Open") // Open / Completed / Expired
+  customer     String?
+  mode         String    @default("RCR")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }

@@ -109,7 +109,9 @@ const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
     'coal type', 'coal_type',
     'start date', 'start_date', 'validity start',
     'end date', 'end_date', 'validity end',
-    'status'
+    'status',
+    'customer', 'client', 'buyer', 'customer name',
+    'mode', 'transport mode', 'trans mode'
   ],
   'RR Entry': [
     'do no', 'do number', 'do_no',
@@ -282,7 +284,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
             return doNoVal && doNoVal !== '-' && !firstCol.toUpperCase().includes('TOTAL') && !doNoVal.toUpperCase().includes('TOTAL');
           });
 
-          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'month', 'tolerance', 'status'];
+          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'month', 'tolerance', 'status', 'customer', 'mode'];
           rows = dataRows.map(row => {
             const doNo = doNoIdx >= 0 ? String(row[doNoIdx] || '').trim() : '';
             const month = monthIdx >= 0 ? String(row[monthIdx] || '').trim() : '';
@@ -307,7 +309,7 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
               }
             }
 
-            return [doNo, '', siding, mines, 'MCL', String(doQty), 'ROM', month, tolerance, 'Open'];
+            return [doNo, '', siding, mines, 'MCL', String(doQty), 'ROM', month, tolerance, 'Open', '', 'RCR'];
           });
         }
         else if (sectionName === 'RR Entry' || sectionName === 'Quality Tracking' || sectionName === 'Deduction & Penalty') {
@@ -466,8 +468,8 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
         const coalType = getLeftMetadata('coaltype');
 
         if (sectionName === 'DO Master') {
-          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'status'];
-          rows = [[doNo, poNo, siding, mines, coalCompany, doQty, coalType, 'Active']];
+          headers = ['do no', 'po no', 'siding', 'mines', 'coal company', 'do qty', 'coal type', 'status', 'customer', 'mode'];
+          rows = [[doNo, poNo, siding, mines, coalCompany, doQty, coalType, 'Active', '', 'RCR']];
         } 
         else if (sectionName === 'RR Entry' || sectionName === 'Quality Tracking' || sectionName === 'Deduction & Penalty') {
           const rrHeaderIdx = nonEmptyRows.findIndex(row => row[5] && normalizeHeader(row[5]) === 'rrno');

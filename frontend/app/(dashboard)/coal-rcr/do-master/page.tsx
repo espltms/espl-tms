@@ -155,7 +155,9 @@ export default function DOMasterPage() {
     startDate: '',
     endDate: '',
     tolerance: '0',
-    status: 'Open' as DOMasterRecord['status']
+    status: 'Open' as DOMasterRecord['status'],
+    customer: '',
+    mode: 'RCR' as DOMasterRecord['mode']
   });
 
   // Fetch data
@@ -242,6 +244,8 @@ export default function DOMasterPage() {
         const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
         const month = getCellValue(detail.import.headers, row, ['month']).trim();
         const toleranceRaw = getCellValue(detail.import.headers, row, ['tolerance', 'tolerance %', 'tolerance_percent']);
+        const customer = getCellValue(detail.import.headers, row, ['customer', 'client', 'buyer', 'customer name']).trim();
+        const modeRaw = getCellValue(detail.import.headers, row, ['mode', 'transport mode', 'trans mode']).trim().toLowerCase();
 
         if (!doNo || !siding || !doQtyStr) {
           skippedCount++;
@@ -269,6 +273,11 @@ export default function DOMasterPage() {
           status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
         }
 
+        let mode: DOMasterRecord['mode'] = 'RCR';
+        if (modeRaw === 'road') {
+          mode = 'Road';
+        }
+
         recordsToImport.push({
           doNo,
           poNo: poNo || null,
@@ -281,7 +290,9 @@ export default function DOMasterPage() {
           endDate: endDate || null,
           month: month || null,
           tolerance,
-          status
+          status,
+          customer: customer || null,
+          mode
         });
       });
 
@@ -359,7 +370,9 @@ export default function DOMasterPage() {
         (r.month && r.month.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
         r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase()));
+        (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (r.customer && r.customer.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (r.mode && r.mode.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
       const matchesOCP = ocpFilter === 'All' || (r.mines && r.mines.trim().toLowerCase() === ocpFilter.trim().toLowerCase());
@@ -400,7 +413,9 @@ export default function DOMasterPage() {
       startDate: '',
       endDate: '',
       tolerance: '0',
-      status: 'Open'
+      status: 'Open',
+      customer: '',
+      mode: 'RCR'
     });
     setIsModalOpen(true);
   };
@@ -420,7 +435,9 @@ export default function DOMasterPage() {
       startDate: record.startDate || '',
       endDate: record.endDate || '',
       tolerance: String(record.tolerance || 0),
-      status: record.status
+      status: record.status,
+      customer: record.customer || '',
+      mode: record.mode || 'RCR'
     });
     setIsModalOpen(true);
   };
@@ -446,7 +463,9 @@ export default function DOMasterPage() {
       startDate: form.startDate || null,
       endDate: form.endDate || null,
       tolerance: parseFloat(form.tolerance) || 0,
-      status: form.status
+      status: form.status,
+      customer: form.customer ? form.customer.trim() : null,
+      mode: form.mode || 'RCR'
     };
 
     try {
@@ -765,6 +784,8 @@ export default function DOMasterPage() {
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">Month</th>
                 <th className="px-5 py-4">DO No</th>
+                <th className="px-5 py-4">Customer</th>
+                <th className="px-5 py-4">Mode</th>
                 <th className="px-5 py-4">OCP / Mine</th>
                 <th className="px-5 py-4 text-right">DO Qty (MT)</th>
                 <th className="px-5 py-4 text-right">Lifted Qty (MT)</th>
@@ -780,7 +801,7 @@ export default function DOMasterPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 16 : 15} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching DO orders...
                     </span>
@@ -788,7 +809,7 @@ export default function DOMasterPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 16 : 15} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No DO records found.
                   </td>
                 </tr>
@@ -827,6 +848,16 @@ export default function DOMasterPage() {
                       </td>
                       <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
                         {r.doNo}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {r.customer || '—'}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold ${
+                          r.mode === 'Road' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {r.mode || 'RCR'}
+                        </span>
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-700">
                         {r.mines || '—'}
@@ -971,6 +1002,45 @@ export default function DOMasterPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4">
+                {/* Customer */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Customer</label>
+                  <input
+                    type="text"
+                    value={form.customer}
+                    onChange={(e) => setForm({ ...form, customer: e.target.value })}
+                    placeholder="e.g. Vedanta, JPL"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
+
+                {/* Transport Mode */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Transport Mode</label>
+                  <select
+                    value={form.mode}
+                    onChange={(e) => setForm({ ...form, mode: e.target.value as DOMasterRecord['mode'] })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="RCR">RCR</option>
+                    <option value="Road">Road</option>
+                  </select>
+                </div>
+
+                {/* Coal Company */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Company</label>
+                  <input
+                    type="text"
+                    value={form.coalCompany}
+                    onChange={(e) => setForm({ ...form, coalCompany: e.target.value })}
+                    placeholder="e.g. MCL"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
                 {/* Siding */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Siding <span className="text-red-500">*</span></label>
@@ -996,16 +1066,20 @@ export default function DOMasterPage() {
                   />
                 </div>
 
-                {/* Coal Company */}
+                {/* Coal Type */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Company</label>
-                  <input
-                    type="text"
-                    value={form.coalCompany}
-                    onChange={(e) => setForm({ ...form, coalCompany: e.target.value })}
-                    placeholder="e.g. MCL"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
-                  />
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Type</label>
+                  <select
+                    value={form.coalType}
+                    onChange={(e) => setForm({ ...form, coalType: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="ROM">ROM (Run of Mine)</option>
+                    <option value="Slack">Slack</option>
+                    <option value="Steam">Steam</option>
+                    <option value="Washed">Washed</option>
+                    <option value="Non Coking Coal">Non Coking Coal</option>
+                  </select>
                 </div>
               </div>
 
@@ -1037,19 +1111,17 @@ export default function DOMasterPage() {
                   />
                 </div>
 
-                {/* Coal Type */}
+                {/* Status */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Type</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Status</label>
                   <select
-                    value={form.coalType}
-                    onChange={(e) => setForm({ ...form, coalType: e.target.value })}
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="ROM">ROM (Run of Mine)</option>
-                    <option value="Slack">Slack</option>
-                    <option value="Steam">Steam</option>
-                    <option value="Washed">Washed</option>
-                    <option value="Non Coking Coal">Non Coking Coal</option>
+                    <option value="Open">Open</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Expired">Expired</option>
                   </select>
                 </div>
               </div>
@@ -1077,19 +1149,8 @@ export default function DOMasterPage() {
                   />
                 </div>
 
-                {/* Status */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
-                  >
-                    <option value="Open">Open</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Expired">Expired</option>
-                  </select>
-                </div>
+                {/* Empty block to align grid */}
+                <div className="space-y-1"></div>
               </div>
 
               <div className="border-t border-slate-100 pt-4 flex justify-end gap-2">

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body)) {
       const recordsToCreate = [];
       for (const item of body) {
-        const { doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status } = item;
+        const { doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status, customer, mode } = item;
         if (!doNo || !siding || doQty === undefined) {
           continue; // Skip invalid records in batch
         }
@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
           endDate: endDate || null,
           tolerance: parseFloat(tolerance) || 0,
           status: status || 'Open',
+          customer: customer ? customer.trim() : null,
+          mode: mode ? mode.trim() : 'RCR',
         });
       }
 
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: result.count });
     }
 
-    const { id, doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status } = body;
+    const { id, doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status, customer, mode } = body;
 
     if (!doNo || !siding || doQty === undefined) {
       return NextResponse.json({ error: 'DO No, Siding, and DO Qty are required fields' }, { status: 400 });
@@ -109,6 +111,8 @@ export async function POST(req: NextRequest) {
           endDate,
           tolerance: parseFloat(tolerance) || 0,
           status,
+          customer: customer ? customer.trim() : null,
+          mode: mode || 'RCR',
         },
       });
     } else {
@@ -126,6 +130,8 @@ export async function POST(req: NextRequest) {
           endDate,
           tolerance: parseFloat(tolerance) || 0,
           status,
+          customer: customer ? customer.trim() : null,
+          mode: mode || 'RCR',
         },
       });
     }
