@@ -805,11 +805,11 @@ export default function SectionExcelImport({ sectionName }: { sectionName: strin
       <button
         onClick={() => inputRef.current?.click()}
         className="flex min-h-10 items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition-all hover:bg-blue-100 active:scale-[0.98] sm:px-3.5"
-        title="Import Excel"
+        title={`Import ${sectionName}`}
         disabled={loading}
       >
         <Upload className="h-4 w-4" />
-        <span className="hidden sm:inline">{loading ? 'Importing...' : 'Import Excel'}</span>
+        <span className="hidden sm:inline">{loading ? 'Importing...' : `Import ${sectionName}`}</span>
       </button>
 
       {mounted && typeof document !== 'undefined' && createPortal(
