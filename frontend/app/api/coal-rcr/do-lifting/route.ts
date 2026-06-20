@@ -41,16 +41,27 @@ export async function POST(req: NextRequest) {
 
     // Support bulk inserts
     if (Array.isArray(body)) {
+      // Fetch all DO Masters to auto-resolve OCP/Customer
+      const doMasters = await prisma.coalDOMaster.findMany({
+        select: { doNo: true, mines: true, customer: true }
+      });
+      const doMap = new Map(doMasters.map(d => [d.doNo.toUpperCase().trim(), d]));
+
       const recordsToCreate = [];
       for (const item of body) {
         const { doNo, ocp, customer, passNo, passDate, truckNo, mineralQty } = item;
         if (!doNo || !passNo || !truckNo || mineralQty === undefined) {
           continue; // Skip invalid records in batch
         }
+        const upperDo = doNo.toUpperCase().trim();
+        const matchedDO = doMap.get(upperDo);
+        const resolvedOcp = ocp ? ocp.trim() : (matchedDO?.mines || null);
+        const resolvedCustomer = customer ? customer.trim() : (matchedDO?.customer || null);
+
         recordsToCreate.push({
-          doNo: doNo.toUpperCase().trim(),
-          ocp: ocp ? ocp.trim() : null,
-          customer: customer ? customer.trim() : null,
+          doNo: upperDo,
+          ocp: resolvedOcp,
+          customer: resolvedCustomer,
           passNo: passNo.toUpperCase().trim(),
           passDate: passDate ? passDate.trim() : null,
           truckNo: truckNo.toUpperCase().trim(),
@@ -80,6 +91,14 @@ export async function POST(req: NextRequest) {
     const upperPassNo = passNo.toUpperCase().trim();
     const upperTruckNo = truckNo.toUpperCase().trim();
 
+    // Fetch matched DO to auto-resolve OCP/Customer if missing
+    const matchedDO = await prisma.coalDOMaster.findUnique({
+      where: { doNo: upperDoNo },
+      select: { mines: true, customer: true }
+    });
+    const resolvedOcp = ocp ? ocp.trim() : (matchedDO?.mines || null);
+    const resolvedCustomer = customer ? customer.trim() : (matchedDO?.customer || null);
+
     // Check for duplicate Pass No if this is a new record or a modified Pass No
     const existing = await prisma.coalDOLifting.findUnique({
       where: { passNo: upperPassNo },
@@ -95,8 +114,8 @@ export async function POST(req: NextRequest) {
         where: { id },
         data: {
           doNo: upperDoNo,
-          ocp: ocp ? ocp.trim() : null,
-          customer: customer ? customer.trim() : null,
+          ocp: resolvedOcp,
+          customer: resolvedCustomer,
           passNo: upperPassNo,
           passDate: passDate || null,
           truckNo: upperTruckNo,
@@ -107,8 +126,8 @@ export async function POST(req: NextRequest) {
       record = await prisma.coalDOLifting.create({
         data: {
           doNo: upperDoNo,
-          ocp: ocp ? ocp.trim() : null,
-          customer: customer ? customer.trim() : null,
+          ocp: resolvedOcp,
+          customer: resolvedCustomer,
           passNo: upperPassNo,
           passDate: passDate || null,
           truckNo: upperTruckNo,

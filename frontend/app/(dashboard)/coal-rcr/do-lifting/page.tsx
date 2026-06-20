@@ -20,7 +20,7 @@ import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
-import { DOLiftingRecord } from '../types';
+import { DOLiftingRecord, DOMasterRecord } from '../types';
 
 const DO_LIFTING_KEY = 'tms_coal_do_lifting';
 const ITEMS_PER_PAGE = 15;
@@ -94,6 +94,7 @@ const parseDateToYYYYMMDD = (val: unknown): string => {
 export default function DOLiftingPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<DOLiftingRecord[]>([]);
+  const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [ocpFilter, setOcpFilter] = useState<string>('All');
@@ -157,6 +158,23 @@ export default function DOLiftingPage() {
     }
   };
 
+  const fetchDoRecords = async () => {
+    try {
+      const token = localStorage.getItem('tms_token');
+      const response = await fetch('/api/coal-rcr/do-master', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (response.ok) {
+        const res = await response.json();
+        if (res.success) {
+          setDoRecords(res.data || []);
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching DO records:", e);
+    }
+  };
+
   useEffect(() => {
     const local = readLocalValue<DOLiftingRecord[]>(DO_LIFTING_KEY, []);
     const hasCache = local && local.length > 0;
@@ -164,6 +182,7 @@ export default function DOLiftingPage() {
       setRecords(local);
     }
     fetchData(!hasCache);
+    fetchDoRecords();
   }, []);
 
   /* ── Excel import listener ── */
@@ -188,7 +207,7 @@ export default function DOLiftingPage() {
 
       rows.forEach((row) => {
         const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
-        const ocp = getCellValue(detail.import.headers, row, ['ocp', 'mines', 'mine name', 'mine']).trim();
+        const ocp = getCellValue(detail.import.headers, row, ['ocp', 'mines', 'mine name', 'mine', 'ocp / mine']).trim();
         const customer = getCellValue(detail.import.headers, row, ['customer', 'client', 'buyer', 'customer name']).trim();
         const passNo = getCellValue(detail.import.headers, row, ['pass no', 'pass number', 'pass_no', 'pass_number', 'gp no', 'gate pass']).toUpperCase().trim();
         const passDateStr = getCellValue(detail.import.headers, row, ['pass date', 'pass_date', 'date']).trim();
@@ -203,10 +222,14 @@ export default function DOLiftingPage() {
         const mineralQty = parseFloat(mineralQtyStr) || 0;
         const passDate = parseDateToYYYYMMDD(passDateStr);
 
+        const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+        const resolvedOcp = ocp || (matchedDO ? (matchedDO.mines || '') : '');
+        const resolvedCustomer = customer || (matchedDO ? (matchedDO.customer || '') : '');
+
         recordsToImport.push({
           doNo,
-          ocp: ocp || null,
-          customer: customer || null,
+          ocp: resolvedOcp || null,
+          customer: resolvedCustomer || null,
           passNo,
           passDate: passDate || null,
           truckNo,
@@ -263,7 +286,7 @@ export default function DOLiftingPage() {
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
-  }, [records]);
+  }, [records, doRecords]);
 
   // Unique list of OCPs/Mines for filtering
   const uniqueOCPs = useMemo(() => {
@@ -347,6 +370,17 @@ export default function DOLiftingPage() {
       mineralQty: String(record.mineralQty)
     });
     setIsModalOpen(true);
+  };
+
+  // Auto-fill ocp and customer when DO is selected
+  const handleDOChange = (doNo: string) => {
+    const matchedDO = doRecords.find(d => d.doNo === doNo);
+    setForm(prev => ({
+      ...prev,
+      doNo,
+      ocp: matchedDO ? (matchedDO.mines || '') : '',
+      customer: matchedDO ? (matchedDO.customer || '') : ''
+    }));
   };
 
   // Submit Handler
@@ -812,14 +846,17 @@ export default function DOLiftingPage() {
                 {/* DO No */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={form.doNo}
-                    onChange={(e) => setForm({ ...form, doNo: e.target.value })}
-                    placeholder="e.g. DO-2026-1002"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
-                  />
+                    onChange={(e) => handleDOChange(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="">Select DO Number</option>
+                    {doRecords.map(d => (
+                      <option key={d.id} value={d.doNo}>{d.doNo}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* OCP */}
