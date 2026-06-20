@@ -1,0 +1,283 @@
+<form method="post" action="./PermitWiseTransportDetails.aspx?linkn=313&amp;linkm=15&amp;Openstate=0" id="ctl38" runat="server">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="" />
+</div>
+<div>
+	<table cellspacing="0" cellpadding="4" rules="cols" id="grdpermitwise" style="color:Black;background-color:White;border-color:#DEDFDE;border-width:1px;border-style:None;width:100%;border-collapse:collapse;">
+		<tr style="color:White;background-color:#6B696B;font-weight:bold;">
+			<th scope="col">Sl.No.</th><th scope="col">Pass Number</th><th scope="col">Pass Date</th><th scope="col">Truck Number</th><th scope="col">Mineral Quantity(In MT)</th>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_0">1</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_0" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONdLXBRqCJdOAL0KMVCchciyclIUqPSwcs=" target="_blank">I52608856/15</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl43$hdnPassType" id="grdpermitwise_hdnPassType_0" value="3" />
+                                                                        </td><td>6/8/2026 6:21:32 PM</td><td>OD35H3549</td><td align="right">33.07</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_1">2</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_1" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOdGdvC5aa7WCEGM7v9rP69h1Ma7LdTHyk=" target="_blank">I52608856/17</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl44$hdnPassType" id="grdpermitwise_hdnPassType_1" value="3" />
+                                                                        </td><td>6/8/2026 9:12:30 PM</td><td>OD35G9208</td><td align="right">34.31</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_2">3</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_2" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOO2mSaN9kblegbR1MfNA3JPRc+ZDqnbOxM=" target="_blank">I52608856/13</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl45$hdnPassType" id="grdpermitwise_hdnPassType_2" value="3" />
+                                                                        </td><td>6/8/2026 3:57:45 PM</td><td>OD04K2287</td><td align="right">23.72</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_3">4</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_3" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPRrZ40qMjwTTaziLaF3xGbAo7+89BW3NU=" target="_blank">I52608856/16</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl46$hdnPassType" id="grdpermitwise_hdnPassType_3" value="3" />
+                                                                        </td><td>6/8/2026 6:26:37 PM</td><td>OD35H5596</td><td align="right">32.95</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_4">5</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_4" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPf5Q4AP00RqGzMJiDv2ToAPZ8F0eORqss=" target="_blank">I52608856/14</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl47$hdnPassType" id="grdpermitwise_hdnPassType_4" value="3" />
+                                                                        </td><td>6/8/2026 5:52:33 PM</td><td>OD35G2797</td><td align="right">33.18</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_5">6</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_5" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPO59SQorPgzbrrpk0qrscUH3V5bfHU7nI=" target="_blank">I52608856/10</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl48$hdnPassType" id="grdpermitwise_hdnPassType_5" value="3" />
+                                                                        </td><td>6/8/2026 9:30:22 AM</td><td>OD04Q6217</td><td align="right">28.17</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_6">7</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_6" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOP5PW8OReUZi6kgMkKkZVZi0nGMn+GI4Ko=" target="_blank">I52608856/12</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl49$hdnPassType" id="grdpermitwise_hdnPassType_6" value="3" />
+                                                                        </td><td>6/8/2026 3:01:57 PM</td><td>OD35G9804</td><td align="right">33.44</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_7">8</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_7" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONfLAXzorEVeTiAeLY1z4hP6n4o4TVXezA=" target="_blank">I52608856/11</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl50$hdnPassType" id="grdpermitwise_hdnPassType_7" value="3" />
+                                                                        </td><td>6/8/2026 9:41:19 AM</td><td>OD05AZ4339</td><td align="right">28.99</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_8">9</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_8" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONqKC/hJA/T/i7Dzn0AXj8b6UOeWIrMnD8=" target="_blank">I52608856/18</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl51$hdnPassType" id="grdpermitwise_hdnPassType_8" value="3" />
+                                                                        </td><td>6/9/2026 2:55:30 PM</td><td>OD35G7374</td><td align="right">32.73</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_9">10</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_9" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOO08BVAnFZQ/ODUx0ICUdf8lBfU64kDw2I=" target="_blank">I52608856/20</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl52$hdnPassType" id="grdpermitwise_hdnPassType_9" value="3" />
+                                                                        </td><td>6/10/2026 3:15:15 PM</td><td>OD23G1471</td><td align="right">29.42</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_10">11</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_10" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOM6/6Ij6cXqcl/3A8R2deRYrs0Ha4yrJfM=" target="_blank">I52608856/26</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl53$hdnPassType" id="grdpermitwise_hdnPassType_10" value="3" />
+                                                                        </td><td>6/10/2026 4:36:02 PM</td><td>OD04M9452</td><td align="right">29.23</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_11">12</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_11" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONZ1BfGUe4ffJQpMcj8ifxjSeaDLYwtb+o=" target="_blank">I52608856/23</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl54$hdnPassType" id="grdpermitwise_hdnPassType_11" value="3" />
+                                                                        </td><td>6/10/2026 4:06:26 PM</td><td>OR21C7039</td><td align="right">23.84</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_12">13</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_12" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOzWUsDZ4UZ9TaW9XKFQVdbiDRtX3xHKfw=" target="_blank">I52608856/22</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl55$hdnPassType" id="grdpermitwise_hdnPassType_12" value="3" />
+                                                                        </td><td>6/10/2026 3:41:46 PM</td><td>OR21D5561</td><td align="right">24.29</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_13">14</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_13" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chON3qTuznYDDTe7rbSS1ug7F8DyyNGcVwhY=" target="_blank">I52608856/21</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl56$hdnPassType" id="grdpermitwise_hdnPassType_13" value="3" />
+                                                                        </td><td>6/10/2026 3:31:06 PM</td><td>OD35H6875</td><td align="right">33.10</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_14">15</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_14" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chON2D3XeGwPnMNFMdlGpL06Jkol92pipS7A=" target="_blank">I52608856/28</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl57$hdnPassType" id="grdpermitwise_hdnPassType_14" value="3" />
+                                                                        </td><td>6/10/2026 5:52:11 PM</td><td>OD29F2239</td><td align="right">29.87</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_15">16</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_15" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOM0pBx8kxnzZQNTbimJeRZNaCXW3W7DcLM=" target="_blank">I52608856/24</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl58$hdnPassType" id="grdpermitwise_hdnPassType_15" value="3" />
+                                                                        </td><td>6/10/2026 4:20:17 PM</td><td>OD04L4252</td><td align="right">29.03</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_16">17</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_16" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPrcjxtvSqmLh1M0rz1Rc7h99bA0IHhatU=" target="_blank">I52608856/19</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl59$hdnPassType" id="grdpermitwise_hdnPassType_16" value="3" />
+                                                                        </td><td>6/10/2026 11:27:30 AM</td><td>OD35G4176</td><td align="right">33.17</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_17">18</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_17" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOM1oYvVXTpV07InTUGF0/cAbDhap1GtICs=" target="_blank">I52608856/29</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl60$hdnPassType" id="grdpermitwise_hdnPassType_17" value="3" />
+                                                                        </td><td>6/10/2026 6:06:55 PM</td><td>OD29G1671</td><td align="right">29.16</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_18">19</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_18" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONn/7iDFJUNow3zRDLQl2fxt4Rp1QfmIRk=" target="_blank">I52608856/30</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl61$hdnPassType" id="grdpermitwise_hdnPassType_18" value="3" />
+                                                                        </td><td>6/10/2026 6:24:31 PM</td><td>OD05X1022</td><td align="right">24.26</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_19">20</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_19" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOBrDkrt98iGpI5d8p9/jhRFDxwdz+y/I8=" target="_blank">I52608856/25</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl62$hdnPassType" id="grdpermitwise_hdnPassType_19" value="3" />
+                                                                        </td><td>6/10/2026 4:32:17 PM</td><td>OD04L9452</td><td align="right">29.06</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_20">21</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_20" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOK1sSvxTGb/zYBKMl/+rpIKAYVkV2Cbao=" target="_blank">I52608856/27</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl63$hdnPassType" id="grdpermitwise_hdnPassType_20" value="3" />
+                                                                        </td><td>6/10/2026 5:36:04 PM</td><td>OD29F2297</td><td align="right">29.40</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_21">22</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_21" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOP1j4eg6KcoiZRnHlk7DDZG1VyfuIka77g=" target="_blank">I52608856/34</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl64$hdnPassType" id="grdpermitwise_hdnPassType_21" value="3" />
+                                                                        </td><td>6/11/2026 4:55:54 PM</td><td>OD35G0965</td><td align="right">33.08</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_22">23</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_22" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPelECW/pyV8uEbSuY1yno9jviHDW1ji6M=" target="_blank">I52608856/31</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl65$hdnPassType" id="grdpermitwise_hdnPassType_22" value="3" />
+                                                                        </td><td>6/11/2026 11:36:49 AM</td><td>OD05BA2962</td><td align="right">28.31</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_23">24</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_23" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOfIoHraVObtBSGSVLLE5z2Ri4POV2RAhc=" target="_blank">I52608856/32</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl66$hdnPassType" id="grdpermitwise_hdnPassType_23" value="3" />
+                                                                        </td><td>6/11/2026 11:50:37 AM</td><td>OD21J0461</td><td align="right">24.17</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_24">25</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_24" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONIv4UAtsmKES721FM28+VnRY/9Pk+92iA=" target="_blank">I52608856/33</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl67$hdnPassType" id="grdpermitwise_hdnPassType_24" value="3" />
+                                                                        </td><td>6/11/2026 12:40:52 PM</td><td>OD05BD1667</td><td align="right">28.23</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_25">26</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_25" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOPH94egluaIUFSWNo/KIjfWmQ+7PhQSpQI=" target="_blank">I52608856/39</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl68$hdnPassType" id="grdpermitwise_hdnPassType_25" value="3" />
+                                                                        </td><td>6/12/2026 7:32:29 PM</td><td>OD04N2586</td><td align="right">28.41</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_26">27</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_26" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOZNUb/YWOkvWAY/kLYfSezqjPFwTPRj3w=" target="_blank">I52608856/38</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl69$hdnPassType" id="grdpermitwise_hdnPassType_26" value="3" />
+                                                                        </td><td>6/12/2026 7:16:00 PM</td><td>OD05AP9611</td><td align="right">29.22</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_27">28</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_27" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOcfyYNbG/MRp/udY+Lt78EwfliCICBp+0=" target="_blank">I52608856/35</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl70$hdnPassType" id="grdpermitwise_hdnPassType_27" value="3" />
+                                                                        </td><td>6/12/2026 3:13:02 PM</td><td>OD35J3378</td><td align="right">33.25</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_28">29</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_28" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOO+hy7vsXT3kn0+xI6bwk0KD4eEZdYBSYo=" target="_blank">I52608856/37</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl71$hdnPassType" id="grdpermitwise_hdnPassType_28" value="3" />
+                                                                        </td><td>6/12/2026 5:30:59 PM</td><td>OD35J1778</td><td align="right">33.15</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_29">30</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_29" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONZr0b/he5lBwlbgXeTX18gfDvLwkl26RU=" target="_blank">I52608856/36</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl72$hdnPassType" id="grdpermitwise_hdnPassType_29" value="3" />
+                                                                        </td><td>6/12/2026 5:19:09 PM</td><td>OD35H8478</td><td align="right">33.37</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_30">31</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_30" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOMKzfVKOxamTTOrkk8gIJLK5/b/FuHNEis=" target="_blank">I52608856/43</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl73$hdnPassType" id="grdpermitwise_hdnPassType_30" value="3" />
+                                                                        </td><td>6/14/2026 11:39:07 AM</td><td>OD21F3891</td><td align="right">24.22</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_31">32</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_31" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONYj1LWzYEZq18rlWzofdHXAlWSQLLf+tE=" target="_blank">I52608856/41</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl74$hdnPassType" id="grdpermitwise_hdnPassType_31" value="3" />
+                                                                        </td><td>6/14/2026 8:44:43 AM</td><td>OD19W9921</td><td align="right">32.91</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_32">33</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_32" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOO43JRuuSs7Aa3eXFfOqSx0ZzNwsmF9dYc=" target="_blank">I52608856/42</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl75$hdnPassType" id="grdpermitwise_hdnPassType_32" value="3" />
+                                                                        </td><td>6/14/2026 11:32:32 AM</td><td>OD05Y0115</td><td align="right">23.20</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_33">34</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_33" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOOz9nOjCPfxRyM5uazwZoONGroPYcjFng4=" target="_blank">I52608856/40</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl76$hdnPassType" id="grdpermitwise_hdnPassType_33" value="3" />
+                                                                        </td><td>6/14/2026 8:03:56 AM</td><td>OD35G9921</td><td align="right">33.07</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_34">35</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_34" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONPK1EaoZ/dzpwNQdc9gPMqfDGRb78Gufc=" target="_blank">I52608856/44</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl77$hdnPassType" id="grdpermitwise_hdnPassType_34" value="3" />
+                                                                        </td><td>6/15/2026 11:10:22 AM</td><td>OD35H9745</td><td align="right">32.21</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_35">36</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_35" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONbOFDnYCJGAwstprzux5Spqq72rta3rt8=" target="_blank">I52608856/45</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl78$hdnPassType" id="grdpermitwise_hdnPassType_35" value="3" />
+                                                                        </td><td>6/18/2026 6:58:08 PM</td><td>OD04N2586</td><td align="right">28.41</td>
+		</tr><tr style="background-color:#F7F7DE;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_36">37</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_36" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chONcdCpbCg34Kl9x30Y4SrT9Y6E2X+86sr8=" target="_blank">I52608856/46</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl79$hdnPassType" id="grdpermitwise_hdnPassType_36" value="3" />
+                                                                        </td><td>6/18/2026 7:02:03 PM</td><td>OD05AY8558</td><td align="right">33.25</td>
+		</tr><tr style="background-color:White;">
+			<td align="center">
+                                                                            <span id="grdpermitwise_lblslno_37">38</span>
+                                                                        </td><td>
+                                                                            <a id="grdpermitwise_hyplpassno_37" href="../epass/ViewPassDetail_M.aspx?Y6IqeX4chOMd4gWfTINSTul282NKsw2ThMxZooLkCO8=" target="_blank">I52608856/47</a>
+                                                                            <input type="hidden" name="grdpermitwise$ctl80$hdnPassType" id="grdpermitwise_hdnPassType_37" value="3" />
+                                                                        </td><td>6/19/2026 12:13:09 PM</td><td>OD35H9921</td><td align="right">33.14</td>
+		</tr><tr style="background-color:#CCCC99;">
+			<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td align="right" style="font-weight:bold;">Total:</td><td align="right" style="font-weight:bold;">1135.990</td>
+		</tr>
+	</table>
+</div>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+</div></form>

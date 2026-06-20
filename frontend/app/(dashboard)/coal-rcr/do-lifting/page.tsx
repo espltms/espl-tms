@@ -236,16 +236,16 @@ export default function DOLiftingPage() {
         }
 
         if (!doNo) {
-          // Try matching by DO No if permit lookup failed
+          skippedCount++;
+          return;
+        } else {
           const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
           if (!matchedDO) {
             skippedCount++;
             return;
           }
-        } else if (!resolvedOcp || !resolvedCustomer) {
-          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
-          resolvedOcp = resolvedOcp || (matchedDO ? (matchedDO.mines || '') : '');
-          resolvedCustomer = resolvedCustomer || (matchedDO ? (matchedDO.customer || '') : '');
+          resolvedOcp = resolvedOcp || matchedDO.mines || '';
+          resolvedCustomer = resolvedCustomer || matchedDO.customer || '';
         }
 
         recordsToImport.push({
