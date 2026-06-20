@@ -206,15 +206,15 @@ export default function DOLiftingPage() {
       let skippedCount = 0;
 
       rows.forEach((row) => {
-        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
+        let doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
         const ocp = getCellValue(detail.import.headers, row, ['ocp', 'mines', 'mine name', 'mine', 'ocp / mine']).trim();
         const customer = getCellValue(detail.import.headers, row, ['customer', 'client', 'buyer', 'customer name']).trim();
         const passNo = getCellValue(detail.import.headers, row, ['pass no', 'pass number', 'pass_no', 'pass_number', 'gp no', 'gate pass']).toUpperCase().trim();
         const passDateStr = getCellValue(detail.import.headers, row, ['pass date', 'pass_date', 'date']).trim();
         const truckNo = getCellValue(detail.import.headers, row, ['truck no', 'truck number', 'truck_no', 'truck_number', 'vehicle no', 'vehicle number']).toUpperCase().trim();
-        const mineralQtyStr = getCellValue(detail.import.headers, row, ['mineral qty', 'mineral quantity', 'mineral_qty', 'qty', 'quantity']);
+        const mineralQtyStr = getCellValue(detail.import.headers, row, ['mineral qty', 'mineral quantity', 'mineral_qty', 'qty', 'quantity', 'mineral quantity(in mt)']);
 
-        if (!doNo || !passNo || !truckNo || !mineralQtyStr) {
+        if (!passNo || !truckNo || !mineralQtyStr) {
           skippedCount++;
           return;
         }
@@ -222,9 +222,31 @@ export default function DOLiftingPage() {
         const mineralQty = parseFloat(mineralQtyStr) || 0;
         const passDate = parseDateToYYYYMMDD(passDateStr);
 
-        const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
-        const resolvedOcp = ocp || (matchedDO ? (matchedDO.mines || '') : '');
-        const resolvedCustomer = customer || (matchedDO ? (matchedDO.customer || '') : '');
+        // Auto-fetch DO Master details using permit number from Pass No (format: permitNo/slNo)
+        let resolvedOcp = ocp;
+        let resolvedCustomer = customer;
+        if (!doNo && passNo.includes('/')) {
+          const permitNo = passNo.split('/')[0].trim();
+          const matchedDO = doRecords.find(d => d.permitNo && d.permitNo.toUpperCase().trim() === permitNo);
+          if (matchedDO) {
+            doNo = matchedDO.doNo.toUpperCase().trim();
+            resolvedOcp = resolvedOcp || matchedDO.mines || '';
+            resolvedCustomer = resolvedCustomer || matchedDO.customer || '';
+          }
+        }
+
+        if (!doNo) {
+          // Try matching by DO No if permit lookup failed
+          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+          if (!matchedDO) {
+            skippedCount++;
+            return;
+          }
+        } else if (!resolvedOcp || !resolvedCustomer) {
+          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
+          resolvedOcp = resolvedOcp || (matchedDO ? (matchedDO.mines || '') : '');
+          resolvedCustomer = resolvedCustomer || (matchedDO ? (matchedDO.customer || '') : '');
+        }
 
         recordsToImport.push({
           doNo,
@@ -381,6 +403,26 @@ export default function DOLiftingPage() {
       ocp: matchedDO ? (matchedDO.mines || '') : '',
       customer: matchedDO ? (matchedDO.customer || '') : ''
     }));
+  };
+
+  // Auto-fetch DO Master details when Pass No is entered (format: permitNo/slNo)
+  const handlePassNoChange = (passNoValue: string) => {
+    setForm(prev => ({ ...prev, passNo: passNoValue }));
+    if (passNoValue.includes('/')) {
+      const permitNo = passNoValue.split('/')[0].trim().toUpperCase();
+      if (permitNo.length >= 3) {
+        const matchedDO = doRecords.find(d => d.permitNo && d.permitNo.toUpperCase().trim() === permitNo);
+        if (matchedDO) {
+          setForm(prev => ({
+            ...prev,
+            passNo: passNoValue,
+            doNo: matchedDO.doNo,
+            ocp: matchedDO.mines || '',
+            customer: matchedDO.customer || ''
+          }));
+        }
+      }
+    }
   };
 
   // Submit Handler
@@ -892,8 +934,8 @@ export default function DOLiftingPage() {
                     type="text"
                     required
                     value={form.passNo}
-                    onChange={(e) => setForm({ ...form, passNo: e.target.value })}
-                    placeholder="e.g. GP-554012"
+                    onChange={(e) => handlePassNoChange(e.target.value)}
+                    placeholder="e.g. I52608856/15"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none uppercase font-mono font-semibold"
                   />
                 </div>
