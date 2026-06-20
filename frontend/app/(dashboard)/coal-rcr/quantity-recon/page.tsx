@@ -365,6 +365,7 @@ export default function QuantityReconciliationPage() {
                   
                   const imDiff = imQty - actQty;
                   const shortage = grnQty - actQty;
+                  const doStatus = doRecords.find(d => d.doNo === rr.doNo)?.status || 'Active';
 
                   return (
                     <tr key={rr.id} className="hover:bg-slate-50 transition-colors">
@@ -389,10 +390,12 @@ export default function QuantityReconciliationPage() {
                         {shortage === 0 ? '—' : `${shortage > 0 ? '+' : ''}${shortage.toFixed(2)}`}
                       </td>
                       <td className="px-5 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                          Math.abs(shortage) <= 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+                          doStatus === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          doStatus === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                          'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
-                          {Math.abs(shortage) <= 1 ? 'Ok' : 'Slippage'}
+                          {doStatus}
                         </span>
                       </td>
                     </tr>
