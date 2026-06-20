@@ -583,13 +583,7 @@ export default function QualityTrackingPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Quality Penalty</span>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-red-600">₹{stats.totalPenalty.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-red-500 font-semibold">deductions</span>
-          </div>
-        </div>
+
       </div>
 
       {/* Filter panel */}
@@ -721,14 +715,14 @@ export default function QualityTrackingPage() {
                 <th className="px-5 py-4 text-right">FC (%)</th>
                 <th className="px-5 py-4 text-right">GCV ADB (kcal)</th>
                 <th className="px-5 py-4 text-right">GCV ARB (kcal)</th>
-                <th className="px-5 py-4 text-right">Penalty (₹)</th>
+
                 <th className="px-5 py-4 text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 13 : 12} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching quality logs...
                     </span>
@@ -736,7 +730,7 @@ export default function QualityTrackingPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 14 : 13} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 13 : 12} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No Quality records found.
                   </td>
                 </tr>
@@ -779,7 +773,7 @@ export default function QualityTrackingPage() {
                       <td className="px-5 py-4 font-mono text-right">{Number(r.fc || 0).toFixed(2)}%</td>
                       <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvAdb || 0))}</td>
                       <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(Number(r.gcvArb || 0))}</td>
-                      <td className="px-5 py-4 font-mono text-right font-bold text-red-600">₹{Number(r.qualityPenalty || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -977,17 +971,7 @@ export default function QualityTrackingPage() {
                   />
                 </div>
 
-                {/* Quality Penalty */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider text-red-500">Quality Penalty (₹)</label>
-                  <input
-                    type="number"
-                    value={form.qualityPenalty}
-                    onChange={(e) => setForm({ ...form, qualityPenalty: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-red-700 border-red-100 placeholder-red-300 font-bold focus:outline-none font-mono"
-                  />
-                </div>
+
               </div>
 
               <div className="border-t border-slate-100 pt-4 flex justify-end gap-2">
