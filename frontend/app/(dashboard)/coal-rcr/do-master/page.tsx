@@ -376,7 +376,10 @@ export default function DOMasterPage() {
         (r.customer && r.customer.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mode && r.mode.toUpperCase().includes(searchQuery.toUpperCase()));
         
-      const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
+      const matchesStatus = statusFilter === 'All' || 
+                            (statusFilter === 'Open' && (r.status === 'Open' || r.status === 'Active')) ||
+                            (statusFilter === 'Expired' && (r.status === 'Expired' || r.status === 'Cancelled')) ||
+                            r.status === statusFilter;
       const matchesOCP = ocpFilter === 'All' || (r.mines && r.mines.trim().toLowerCase() === ocpFilter.trim().toLowerCase());
       
       return matchesSearch && matchesStatus && matchesOCP;
@@ -721,9 +724,9 @@ export default function DOMasterPage() {
               className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
             >
               <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
+              <option value="Open">Open</option>
               <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="Expired">Expired</option>
             </select>
           </div>
         </div>
