@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { DOMasterRecord, RREntryRecord } from '../types';
 import { readLocalValue } from '@/lib/syncedStorage';
-import SectionExcelImport from '@/components/SectionExcelImport';
+import CentralExcelImport from '@/components/CentralExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
@@ -550,12 +550,7 @@ export default function QuantityReconciliationPage() {
           <p className="text-xs text-slate-500 mt-1">Reconcile weight differences and track DO-wise balance status including tolerance limits.</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-          {user?.role?.endsWith('_ADMIN') && (
-            <>
-              <SectionExcelImport sectionName="DO Master" />
-              <SectionExcelImport sectionName="RR Entry" />
-            </>
-          )}
+          {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
           <SectionExcelExport sectionName="Quantity Reconciliation" />
           <button
             onClick={() => fetchData()}

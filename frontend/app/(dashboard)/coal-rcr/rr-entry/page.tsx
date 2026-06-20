@@ -24,6 +24,7 @@ import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedS
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import CentralExcelImport from '@/components/CentralExcelImport';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DOMasterRecord, RREntryRecord } from '../types';
 
@@ -1284,12 +1285,7 @@ export default function RREntryPage() {
           )}
           {activeSectionTab === 'recon' && (
             <>
-              {user?.role?.endsWith('_ADMIN') && (
-                <>
-                  <SectionExcelImport sectionName="DO Master" />
-                  <SectionExcelImport sectionName="RR Entry" />
-                </>
-              )}
+              {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
               <SectionExcelExport sectionName="Quantity Reconciliation" />
             </>
           )}
