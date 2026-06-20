@@ -43,21 +43,24 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body)) {
       const recordsToCreate = [];
       for (const item of body) {
-        const { doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status, customer, mode } = item;
-        if (!doNo || !siding || doQty === undefined) {
+        const { doNo, poNo, month, auctionDate, siding, mines, coalCompany, doQty, coalType, startDate, endDate, permitNo, permitValidDate, tolerance, status, customer, mode } = item;
+        if (!doNo || doQty === undefined) {
           continue; // Skip invalid records in batch
         }
         recordsToCreate.push({
           doNo: doNo.toUpperCase().trim(),
-          poNo: poNo ? poNo.toUpperCase().trim() : '',
+          poNo: poNo ? poNo.toUpperCase().trim() : null,
           month: month ? month.trim() : null,
-          siding: siding.trim(),
+          auctionDate: auctionDate ? auctionDate.trim() : null,
+          siding: siding ? siding.trim() : null,
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
           doQty: parseFloat(doQty) || 0,
           coalType: coalType || 'ROM',
           startDate: startDate || null,
           endDate: endDate || null,
+          permitNo: permitNo ? permitNo.toUpperCase().trim() : null,
+          permitValidDate: permitValidDate || null,
           tolerance: parseFloat(tolerance) || 0,
           status: status || 'Open',
           customer: customer ? customer.trim() : null,
@@ -77,10 +80,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: result.count });
     }
 
-    const { id, doNo, poNo, month, siding, mines, coalCompany, doQty, coalType, startDate, endDate, tolerance, status, customer, mode } = body;
+    const { id, doNo, poNo, month, auctionDate, siding, mines, coalCompany, doQty, coalType, startDate, endDate, permitNo, permitValidDate, tolerance, status, customer, mode } = body;
 
-    if (!doNo || !siding || doQty === undefined) {
-      return NextResponse.json({ error: 'DO No, Siding, and DO Qty are required fields' }, { status: 400 });
+    if (!doNo || doQty === undefined) {
+      return NextResponse.json({ error: 'DO No and DO Qty are required fields' }, { status: 400 });
     }
 
     const upperDoNo = doNo.toUpperCase().trim();
@@ -100,17 +103,20 @@ export async function POST(req: NextRequest) {
         where: { id },
         data: {
           doNo: upperDoNo,
-          poNo: poNo ? poNo.toUpperCase().trim() : '',
+          poNo: poNo ? poNo.toUpperCase().trim() : null,
           month: month ? month.trim() : null,
-          siding: siding.trim(),
+          auctionDate: auctionDate || null,
+          siding: siding || null,
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
           doQty: parseFloat(doQty) || 0,
-          coalType,
-          startDate,
-          endDate,
+          coalType: coalType || 'ROM',
+          startDate: startDate || null,
+          endDate: endDate || null,
+          permitNo: permitNo ? permitNo.toUpperCase().trim() : null,
+          permitValidDate: permitValidDate || null,
           tolerance: parseFloat(tolerance) || 0,
-          status,
+          status: status || 'Open',
           customer: customer ? customer.trim() : null,
           mode: mode || 'RCR',
         },
@@ -119,17 +125,20 @@ export async function POST(req: NextRequest) {
       record = await prisma.coalDOMaster.create({
         data: {
           doNo: upperDoNo,
-          poNo: poNo ? poNo.toUpperCase().trim() : '',
+          poNo: poNo ? poNo.toUpperCase().trim() : null,
           month: month ? month.trim() : null,
-          siding: siding.trim(),
+          auctionDate: auctionDate || null,
+          siding: siding || null,
           mines: mines ? mines.trim() : null,
           coalCompany: coalCompany ? coalCompany.trim() : null,
           doQty: parseFloat(doQty) || 0,
-          coalType,
-          startDate,
-          endDate,
+          coalType: coalType || 'ROM',
+          startDate: startDate || null,
+          endDate: endDate || null,
+          permitNo: permitNo ? permitNo.toUpperCase().trim() : null,
+          permitValidDate: permitValidDate || null,
           tolerance: parseFloat(tolerance) || 0,
-          status,
+          status: status || 'Open',
           customer: customer ? customer.trim() : null,
           mode: mode || 'RCR',
         },

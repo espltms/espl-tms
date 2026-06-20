@@ -147,6 +147,7 @@ export default function DOMasterPage() {
     doNo: '',
     poNo: '',
     month: '',
+    auctionDate: '',
     siding: '',
     mines: '',
     coalCompany: '',
@@ -154,6 +155,8 @@ export default function DOMasterPage() {
     coalType: 'ROM',
     startDate: '',
     endDate: '',
+    permitNo: '',
+    permitValidDate: '',
     tolerance: '0',
     status: 'Open' as DOMasterRecord['status'],
     customer: '',
@@ -233,21 +236,20 @@ export default function DOMasterPage() {
 
       rows.forEach((row) => {
         const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
-        const poNo = getCellValue(detail.import.headers, row, ['po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number']).toUpperCase().trim();
-        const siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
-        const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine']).trim();
-        const coalCompany = getCellValue(detail.import.headers, row, ['coal company', 'coal_company', 'company']).trim();
+        const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine', 'ocp / mine', 'ocp']).trim();
         const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
         const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
-        const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start']);
-        const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end']);
+        const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start', 'valid from', 'valid from date']);
+        const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end', 'valid upto', 'valid up to']);
         const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
         const month = getCellValue(detail.import.headers, row, ['month']).trim();
-        const toleranceRaw = getCellValue(detail.import.headers, row, ['tolerance', 'tolerance %', 'tolerance_percent']);
         const customer = getCellValue(detail.import.headers, row, ['customer', 'client', 'buyer', 'customer name']).trim();
         const modeRaw = getCellValue(detail.import.headers, row, ['mode', 'transport mode', 'trans mode']).trim().toLowerCase();
+        const auctionDateStr = getCellValue(detail.import.headers, row, ['auction date', 'auction_date', 'auction']).trim();
+        const permitNo = getCellValue(detail.import.headers, row, ['permit no', 'permit number', 'permit_no', 'permit_number', 'permit']).toUpperCase().trim();
+        const permitValidDateStr = getCellValue(detail.import.headers, row, ['permit valid date', 'permit_valid_date', 'permit validity']).trim();
 
-        if (!doNo || !siding || !doQtyStr) {
+        if (!doNo || !doQtyStr) {
           skippedCount++;
           return;
         }
@@ -255,7 +257,8 @@ export default function DOMasterPage() {
         const doQty = parseFloat(doQtyStr) || 0;
         const startDate = parseDateToYYYYMMDD(startDateStr);
         const endDate = parseDateToYYYYMMDD(endDateStr);
-        const tolerance = parseFloat(toleranceRaw) || 0;
+        const auctionDate = parseDateToYYYYMMDD(auctionDateStr);
+        const permitValidDate = parseDateToYYYYMMDD(permitValidDateStr);
 
         let coalType = 'ROM';
         if (['ROM', 'Slack', 'Steam', 'Washed', 'Non Coking Coal', 'Non Cooking Coals'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
@@ -280,16 +283,15 @@ export default function DOMasterPage() {
 
         recordsToImport.push({
           doNo,
-          poNo: poNo || null,
-          siding,
+          month: month || null,
+          auctionDate: auctionDate || null,
           mines: mines || null,
-          coalCompany: coalCompany || null,
           doQty,
           coalType,
           startDate: startDate || null,
           endDate: endDate || null,
-          month: month || null,
-          tolerance,
+          permitNo: permitNo || null,
+          permitValidDate: permitValidDate || null,
           status,
           customer: customer || null,
           mode
@@ -405,6 +407,7 @@ export default function DOMasterPage() {
       doNo: '',
       poNo: '',
       month: '',
+      auctionDate: '',
       siding: '',
       mines: '',
       coalCompany: '',
@@ -412,6 +415,8 @@ export default function DOMasterPage() {
       coalType: 'ROM',
       startDate: '',
       endDate: '',
+      permitNo: '',
+      permitValidDate: '',
       tolerance: '0',
       status: 'Open',
       customer: '',
@@ -427,13 +432,16 @@ export default function DOMasterPage() {
       doNo: record.doNo,
       poNo: record.poNo || '',
       month: record.month || '',
-      siding: record.siding,
+      auctionDate: record.auctionDate || '',
+      siding: record.siding || '',
       mines: record.mines || '',
       coalCompany: record.coalCompany || '',
       doQty: String(record.doQty),
-      coalType: record.coalType,
+      coalType: record.coalType || 'ROM',
       startDate: record.startDate || '',
       endDate: record.endDate || '',
+      permitNo: record.permitNo || '',
+      permitValidDate: record.permitValidDate || '',
       tolerance: String(record.tolerance || 0),
       status: record.status,
       customer: record.customer || '',
@@ -445,23 +453,26 @@ export default function DOMasterPage() {
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.doNo || !form.siding || !form.doQty) {
-      setToast({ message: "Please fill in all required fields (DO No, Siding, DO Qty)", type: 'error' });
+    if (!form.doNo || !form.doQty) {
+      setToast({ message: "Please fill in all required fields (DO No, DO Qty)", type: 'error' });
       return;
     }
 
     const recordData = {
       id: editingRecord ? editingRecord.id : undefined,
       doNo: form.doNo.toUpperCase().trim(),
-      poNo: form.poNo ? form.poNo.toUpperCase().trim() : '',
+      poNo: form.poNo ? form.poNo.toUpperCase().trim() : null,
       month: form.month ? form.month.trim() : null,
-      siding: form.siding.trim(),
+      auctionDate: form.auctionDate || null,
+      siding: form.siding ? form.siding.trim() : null,
       mines: form.mines.trim(),
-      coalCompany: form.coalCompany.trim(),
+      coalCompany: form.coalCompany ? form.coalCompany.trim() : null,
       doQty: parseFloat(form.doQty) || 0,
-      coalType: form.coalType,
+      coalType: form.coalType || 'ROM',
       startDate: form.startDate || null,
       endDate: form.endDate || null,
+      permitNo: form.permitNo ? form.permitNo.toUpperCase().trim() : null,
+      permitValidDate: form.permitValidDate || null,
       tolerance: parseFloat(form.tolerance) || 0,
       status: form.status,
       customer: form.customer ? form.customer.trim() : null,
@@ -783,17 +794,16 @@ export default function DOMasterPage() {
                 )}
                 <th className="px-5 py-4 w-12 text-center">SL.</th>
                 <th className="px-5 py-4">Month</th>
+                <th className="px-5 py-4">Auction Date</th>
                 <th className="px-5 py-4">DO No</th>
+                <th className="px-5 py-4">OCP / Mine</th>
                 <th className="px-5 py-4">Customer</th>
                 <th className="px-5 py-4">Mode</th>
-                <th className="px-5 py-4">OCP / Mine</th>
                 <th className="px-5 py-4 text-right">DO Qty (MT)</th>
-                <th className="px-5 py-4 text-right">Lifted Qty (MT)</th>
-                <th className="px-5 py-4 text-right">Balance Qty (MT)</th>
-                <th className="px-5 py-4">Valid Till</th>
-                <th className="px-5 py-4 text-right">Tolerance %</th>
-                <th className="px-5 py-4 text-right">Tolerance Qty</th>
-                <th className="px-5 py-4 text-right">Bal (Excl. Tol)</th>
+                <th className="px-5 py-4">Valid from (Date)</th>
+                <th className="px-5 py-4">Valid upto</th>
+                <th className="px-5 py-4">Permit No</th>
+                <th className="px-5 py-4">Permit Valid date</th>
                 <th className="px-5 py-4 text-center">Status</th>
                 <th className="px-5 py-4 text-center w-24">Actions</th>
               </tr>
@@ -801,7 +811,7 @@ export default function DOMasterPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 16 : 15} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                  <td colSpan={isDeleteMode ? 15 : 14} className="px-6 py-12 text-center text-slate-500 font-semibold">
                     <span className="flex items-center justify-center gap-2 text-slate-400">
                       <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching DO orders...
                     </span>
@@ -809,19 +819,12 @@ export default function DOMasterPage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isDeleteMode ? 16 : 15} className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan={isDeleteMode ? 15 : 14} className="px-6 py-12 text-center text-slate-400 font-bold">
                     No DO records found.
                   </td>
                 </tr>
               ) : (
                 paginatedRecords.map((r, idx) => {
-                  const linkedRRs = rrEntries.filter(rr => rr.doNo.toUpperCase().trim() === r.doNo.toUpperCase().trim());
-                  const liftedQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.rrActQty) || 0), 0);
-                  const balanceQty = Number(r.doQty) - liftedQty;
-                  const tolerance = Number(r.tolerance) || 0;
-                  const toleranceQty = Number(r.doQty) * (tolerance / 100);
-                  const balanceExcludingTolerance = balanceQty - toleranceQty;
-
                   return (
                     <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
                       {isDeleteMode && (
@@ -846,8 +849,14 @@ export default function DOMasterPage() {
                       <td className="px-5 py-4 font-semibold text-slate-700 whitespace-nowrap">
                         {r.month || '—'}
                       </td>
+                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap font-mono text-[10px]">
+                        {r.auctionDate || '—'}
+                      </td>
                       <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
                         {r.doNo}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {r.mines || '—'}
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-700">
                         {r.customer || '—'}
@@ -859,29 +868,20 @@ export default function DOMasterPage() {
                           {r.mode || 'RCR'}
                         </span>
                       </td>
-                      <td className="px-5 py-4 font-semibold text-slate-700">
-                        {r.mines || '—'}
-                      </td>
                       <td className="px-5 py-4 font-mono font-bold text-slate-800 text-right">
                         {Number(r.doQty).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-5 py-4 font-mono font-bold text-emerald-600 text-right">
-                        {liftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-5 py-4 font-mono font-bold text-slate-800 text-right">
-                        {balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap font-mono text-[10px]">
+                        {r.startDate || '—'}
                       </td>
                       <td className="px-5 py-4 text-slate-500 whitespace-nowrap font-mono text-[10px]">
                         {r.endDate || '—'}
                       </td>
-                      <td className="px-5 py-4 font-mono font-semibold text-slate-700 text-right">
-                        {tolerance}%
+                      <td className="px-5 py-4 font-mono font-semibold text-slate-700">
+                        {r.permitNo || '—'}
                       </td>
-                      <td className="px-5 py-4 font-mono font-semibold text-slate-700 text-right">
-                        {toleranceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className={`px-5 py-4 font-mono font-bold text-right ${balanceExcludingTolerance < 0 ? 'text-red-500' : 'text-slate-800'}`}>
-                        {balanceExcludingTolerance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap font-mono text-[10px]">
+                        {r.permitValidDate || '—'}
                       </td>
                       <td className="px-5 py-4 text-center">
                         <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
@@ -963,6 +963,29 @@ export default function DOMasterPage() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-3 gap-4">
+                {/* Month */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Month</label>
+                  <input
+                    type="text"
+                    value={form.month}
+                    onChange={(e) => setForm({ ...form, month: e.target.value })}
+                    placeholder="e.g. June 2026"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
+
+                {/* Auction Date */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Auction Date</label>
+                  <input
+                    type="date"
+                    value={form.auctionDate}
+                    onChange={(e) => setForm({ ...form, auctionDate: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                  />
+                </div>
+
                 {/* DO No */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
@@ -975,33 +998,21 @@ export default function DOMasterPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
                   />
                 </div>
-
-                {/* PO No */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">PO Number</label>
-                  <input
-                    type="text"
-                    value={form.poNo}
-                    onChange={(e) => setForm({ ...form, poNo: e.target.value })}
-                    placeholder="e.g. PO-VAL-2026-01"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
-                  />
-                </div>
-
-                {/* Month */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Month</label>
-                  <input
-                    type="text"
-                    value={form.month}
-                    onChange={(e) => setForm({ ...form, month: e.target.value })}
-                    placeholder="e.g. June 2026"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
+                {/* OCP / Mine */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">OCP / Mine</label>
+                  <input
+                    type="text"
+                    value={form.mines}
+                    onChange={(e) => setForm({ ...form, mines: e.target.value })}
+                    placeholder="e.g. Lajkura OCP"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
+
                 {/* Customer */}
                 <div className="space-y-1">
                   <label className="font-bold text-slate-500 uppercase tracking-wider">Customer</label>
@@ -1026,61 +1037,6 @@ export default function DOMasterPage() {
                     <option value="Road">Road</option>
                   </select>
                 </div>
-
-                {/* Coal Company */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Company</label>
-                  <input
-                    type="text"
-                    value={form.coalCompany}
-                    onChange={(e) => setForm({ ...form, coalCompany: e.target.value })}
-                    placeholder="e.g. MCL"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                {/* Siding */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Siding <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    value={form.siding}
-                    onChange={(e) => setForm({ ...form, siding: e.target.value })}
-                    placeholder="e.g. Paramanandpur Siding"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
-                  />
-                </div>
-
-                {/* Mines */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Mines</label>
-                  <input
-                    type="text"
-                    value={form.mines}
-                    onChange={(e) => setForm({ ...form, mines: e.target.value })}
-                    placeholder="e.g. Lajkura OCP"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none"
-                  />
-                </div>
-
-                {/* Coal Type */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Coal Type</label>
-                  <select
-                    value={form.coalType}
-                    onChange={(e) => setForm({ ...form, coalType: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
-                  >
-                    <option value="ROM">ROM (Run of Mine)</option>
-                    <option value="Slack">Slack</option>
-                    <option value="Steam">Steam</option>
-                    <option value="Washed">Washed</option>
-                    <option value="Non Coking Coal">Non Coking Coal</option>
-                  </select>
-                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -1098,16 +1054,50 @@ export default function DOMasterPage() {
                   />
                 </div>
 
-                {/* Tolerance % */}
+                {/* Valid From */}
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider">Tolerance %</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Valid From</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={form.tolerance}
-                    onChange={(e) => setForm({ ...form, tolerance: e.target.value })}
-                    placeholder="e.g. 10.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                    type="date"
+                    value={form.startDate}
+                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                  />
+                </div>
+
+                {/* Valid Upto */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Valid Upto</label>
+                  <input
+                    type="date"
+                    value={form.endDate}
+                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                {/* Permit No */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider">Permit No</label>
+                  <input
+                    type="text"
+                    value={form.permitNo}
+                    onChange={(e) => setForm({ ...form, permitNo: e.target.value })}
+                    placeholder="e.g. PERMIT-8902"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none uppercase font-mono font-semibold"
+                  />
+                </div>
+
+                {/* Permit Valid Date */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Permit Valid Date</label>
+                  <input
+                    type="date"
+                    value={form.permitValidDate}
+                    onChange={(e) => setForm({ ...form, permitValidDate: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
                   />
                 </div>
 
@@ -1124,33 +1114,6 @@ export default function DOMasterPage() {
                     <option value="Expired">Expired</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                {/* Start Date */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Start Date</label>
-                  <input
-                    type="date"
-                    value={form.startDate}
-                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-
-                {/* End Date */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> End Date</label>
-                  <input
-                    type="date"
-                    value={form.endDate}
-                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-
-                {/* Empty block to align grid */}
-                <div className="space-y-1"></div>
               </div>
 
               <div className="border-t border-slate-100 pt-4 flex justify-end gap-2">

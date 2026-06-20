@@ -279,23 +279,26 @@ model Invoice {
 }
 
 model CoalDOMaster {
-  id           String    @id @default(uuid())
-  doNo         String    @unique
-  poNo         String?
-  month        String?   // e.g. "June 2026"
-  siding       String
-  mines        String?   // OCP / Mine Name
-  coalCompany  String?
-  doQty        Decimal   @db.Decimal(12, 2)
-  coalType     String
-  startDate    String?
-  endDate      String?   // Valid Till
-  tolerance    Decimal   @db.Decimal(5, 2) @default(0.00) // Tolerance %
-  status       String    @default("Open") // Open / Completed / Expired
-  customer     String?
-  mode         String    @default("RCR")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  doNo            String    @unique
+  poNo            String?
+  month           String?   // e.g. "June 2026"
+  auctionDate     String?   // Auction Date
+  siding          String?   // Siding (made optional)
+  mines           String?   // OCP / Mine Name
+  coalCompany     String?
+  doQty           Decimal   @db.Decimal(12, 2)
+  coalType        String    @default("ROM") // (made default ROM)
+  startDate       String?   // Valid from (Date)
+  endDate         String?   // Valid upto
+  permitNo        String?   // Permit No
+  permitValidDate String?   // Permit Valid date
+  tolerance       Decimal   @db.Decimal(5, 2) @default(0.00) // Tolerance %
+  status          String    @default("Open") // Open / Completed / Expired
+  customer        String?
+  mode            String    @default("RCR")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model CoalRREntry {

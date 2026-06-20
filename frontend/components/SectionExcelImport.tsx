@@ -103,15 +103,18 @@ const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
     'do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number',
     'po no', 'po number', 'po_no', 'po_number', 'purchase order no', 'purchase order number',
     'siding', 'siding name',
-    'mines', 'mine name', 'mine',
+    'mines', 'mine name', 'mine', 'ocp / mine', 'ocp',
     'coal company', 'coal_company', 'company',
     'do qty', 'do quantity', 'quantity', 'qty', 'do_qty',
     'coal type', 'coal_type',
-    'start date', 'start_date', 'validity start',
-    'end date', 'end_date', 'validity end',
+    'start date', 'start_date', 'validity start', 'valid from', 'valid from date',
+    'end date', 'end_date', 'validity end', 'valid upto', 'valid up to',
     'status',
     'customer', 'client', 'buyer', 'customer name',
-    'mode', 'transport mode', 'trans mode'
+    'mode', 'transport mode', 'trans mode',
+    'auction date', 'auction_date', 'auction',
+    'permit no', 'permit number', 'permit_no', 'permit_number', 'permit',
+    'permit valid date', 'permit_valid_date', 'permit validity'
   ],
   'DO Lifting': [
     'do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number',
