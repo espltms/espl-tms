@@ -550,8 +550,6 @@ export default function QuantityReconciliationPage() {
           <p className="text-xs text-slate-500 mt-1">Reconcile weight differences and track DO-wise balance status including tolerance limits.</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-          {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
-          <SectionExcelExport sectionName="Quantity Reconciliation" />
           <button
             onClick={() => fetchData()}
             disabled={loading}
@@ -606,10 +604,14 @@ export default function QuantityReconciliationPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 1) Before Completed
           </h3>
+          <div className="flex items-center gap-2">
+            {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
+            <SectionExcelExport sectionName="Before Completed" />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
@@ -656,10 +658,14 @@ export default function QuantityReconciliationPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 2) After Completed
           </h3>
+          <div className="flex items-center gap-2">
+            {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
+            <SectionExcelExport sectionName="After Completed" />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[1500px]">
