@@ -186,7 +186,7 @@ export default function SummaryDashboardPage() {
       let lapsedQty = 0;
       matchedDOs.forEach(d => {
         const doLifted = matchedRRs.filter(r => r.doNo === d.doNo).reduce((acc, r) => acc + Number(r.rrChQty), 0);
-        if (d.status === 'Active' || d.status === 'Open') {
+        if (d.status === 'Active') {
           balanceQty += Math.max(0, Number(d.doQty) - doLifted);
         } else {
           lapsedQty += Math.max(0, Number(d.doQty) - doLifted);
@@ -613,7 +613,7 @@ export default function SummaryDashboardPage() {
                     const aggregateDetails = getDORRDetails(d.doNo);
                     
                     // calculations
-                    const isCompleted = d.status !== 'Active' && d.status !== 'Open';
+                    const isCompleted = d.status !== 'Active';
                     const balance = isCompleted ? 0 : Math.max(0, Number(d.doQty) - aggregateDetails.sumChQty);
                     const lapsed = isCompleted ? Math.max(0, Number(d.doQty) - aggregateDetails.sumChQty) : 0;
 
@@ -633,7 +633,7 @@ export default function SummaryDashboardPage() {
                           <td className="px-5 py-4 font-mono text-right text-red-600 font-semibold">₹{Math.round(aggregateDetails.sumPenalties).toLocaleString('en-IN')}</td>
                           <td className="px-5 py-4 text-center">
                             <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
-                              (d.status === 'Active' || d.status === 'Open') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                              d.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
                             }`}>
                               {d.status}
                             </span>
@@ -897,7 +897,7 @@ export default function SummaryDashboardPage() {
                         <div className="flex items-center justify-between">
                           <span className="font-mono font-black text-slate-800 uppercase text-xs">{d.doNo}</span>
                           <span className={`rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
-                            (d.status === 'Active' || d.status === 'Open') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                            d.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
                           }`}>{d.status}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-[10px] text-slate-500 font-medium">

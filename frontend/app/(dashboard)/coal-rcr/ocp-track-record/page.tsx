@@ -374,7 +374,7 @@ export default function OcpTrackRecordPage() {
                       <td className="px-5 py-4 text-center">
                         <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
                           d.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          d.status === 'Expired' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                          d.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
                           'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
                           {d.status}

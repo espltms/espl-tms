@@ -158,7 +158,7 @@ export default function DOMasterPage() {
     permitNo: '',
     permitValidDate: '',
     tolerance: '0',
-    status: 'Open' as DOMasterRecord['status'],
+    status: 'Active' as DOMasterRecord['status'],
     customer: '',
     mode: 'RCR' as DOMasterRecord['mode']
   });
@@ -271,9 +271,14 @@ export default function DOMasterPage() {
           }
         }
 
-        let status = 'Open';
-        if (['Open', 'Completed', 'Expired'].some(s => s.toLowerCase() === statusRaw.toLowerCase())) {
-          status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+        let status: DOMasterRecord['status'] = 'Active';
+        const sLower = statusRaw.toLowerCase();
+        if (sLower === 'completed') {
+          status = 'Completed';
+        } else if (sLower === 'expired' || sLower === 'cancelled') {
+          status = 'Cancelled';
+        } else if (sLower === 'open' || sLower === 'active') {
+          status = 'Active';
         }
 
         let mode: DOMasterRecord['mode'] = 'RCR';
@@ -376,10 +381,7 @@ export default function DOMasterPage() {
         (r.customer && r.customer.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mode && r.mode.toUpperCase().includes(searchQuery.toUpperCase()));
         
-      const matchesStatus = statusFilter === 'All' || 
-                            (statusFilter === 'Open' && (r.status === 'Open' || r.status === 'Active')) ||
-                            (statusFilter === 'Expired' && (r.status === 'Expired' || r.status === 'Cancelled')) ||
-                            r.status === statusFilter;
+      const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
       const matchesOCP = ocpFilter === 'All' || (r.mines && r.mines.trim().toLowerCase() === ocpFilter.trim().toLowerCase());
       
       return matchesSearch && matchesStatus && matchesOCP;
@@ -396,9 +398,9 @@ export default function DOMasterPage() {
   const stats = useMemo(() => {
     const safeRecords = records || [];
     const totalCount = safeRecords.length;
-    const activeCount = safeRecords.filter(r => r && (r.status === 'Active' || r.status === 'Open')).length;
+    const activeCount = safeRecords.filter(r => r && r.status === 'Active').length;
     const totalQty = safeRecords.reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
-    const activeQty = safeRecords.filter(r => r && (r.status === 'Active' || r.status === 'Open')).reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
+    const activeQty = safeRecords.filter(r => r && r.status === 'Active').reduce((acc, r) => acc + (r ? Number(r.doQty) : 0), 0);
     
     return { totalCount, activeCount, totalQty, activeQty };
   }, [records]);
@@ -421,7 +423,7 @@ export default function DOMasterPage() {
       permitNo: '',
       permitValidDate: '',
       tolerance: '0',
-      status: 'Open',
+      status: 'Active',
       customer: '',
       mode: 'RCR'
     });
@@ -724,9 +726,9 @@ export default function DOMasterPage() {
               className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
             >
               <option value="All">All Statuses</option>
-              <option value="Open">Open</option>
+              <option value="Active">Active</option>
               <option value="Completed">Completed</option>
-              <option value="Expired">Expired</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -888,11 +890,11 @@ export default function DOMasterPage() {
                       </td>
                       <td className="px-5 py-4 text-center">
                         <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold border ${
-                          r.status === 'Open' || r.status === 'Active'
+                          r.status === 'Active'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : r.status === 'Completed'
                               ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
                           {r.status}
                         </span>
@@ -1112,9 +1114,9 @@ export default function DOMasterPage() {
                     onChange={(e) => setForm({ ...form, status: e.target.value as any })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="Open">Open</option>
+                    <option value="Active">Active</option>
                     <option value="Completed">Completed</option>
-                    <option value="Expired">Expired</option>
+                    <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>

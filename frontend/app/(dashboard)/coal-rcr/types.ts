@@ -14,7 +14,7 @@ export interface DOMasterRecord {
   permitNo?: string | null;
   permitValidDate?: string | null;
   tolerance?: number;
-  status: 'Open' | 'Completed' | 'Expired' | 'Active' | 'Cancelled';
+  status: 'Active' | 'Completed' | 'Cancelled';
   customer?: string | null;
   mode: 'RCR' | 'Road';
 }

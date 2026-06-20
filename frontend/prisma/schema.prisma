@@ -294,7 +294,7 @@ model CoalDOMaster {
   permitNo        String?   // Permit No
   permitValidDate String?   // Permit Valid date
   tolerance       Decimal   @db.Decimal(5, 2) @default(0.00) // Tolerance %
-  status          String    @default("Open") // Open / Completed / Expired
+  status          String    @default("Active") // Active / Completed / Cancelled
   customer        String?
   mode            String    @default("RCR")
   createdAt       DateTime  @default(now())
