@@ -84,3 +84,15 @@ export interface BillingPaymentRecord {
   finalPayable: number;
   remarks: string;
 }
+
+export interface DOLiftingRecord {
+  id: string;
+  doNo: string;
+  ocp?: string | null;
+  customer?: string | null;
+  passNo: string;
+  passDate?: string | null;
+  truckNo: string;
+  mineralQty: number;
+}
+

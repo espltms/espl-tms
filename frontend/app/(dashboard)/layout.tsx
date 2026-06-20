@@ -51,6 +51,7 @@ const navigationDivisions = [
     title: "Coal RCR Transportation",
     items: [
       { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'DO Lifting', path: '/coal-rcr/do-lifting', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'RR Entry', path: '/coal-rcr/rr-entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'Quantity Reconciliation', path: '/coal-rcr/quantity-recon', icon: GitCompare, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'Quality Analysis', path: '/coal-rcr/quality-tracking', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },

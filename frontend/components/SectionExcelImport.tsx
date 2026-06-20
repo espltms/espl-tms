@@ -113,6 +113,15 @@ const SECTION_COLUMN_ALIASES: Record<string, string[]> = {
     'customer', 'client', 'buyer', 'customer name',
     'mode', 'transport mode', 'trans mode'
   ],
+  'DO Lifting': [
+    'do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number',
+    'ocp', 'mines', 'mine name', 'mine',
+    'customer', 'client', 'buyer', 'customer name',
+    'pass no', 'pass number', 'pass_no', 'pass_number',
+    'pass date', 'pass_date',
+    'truck no', 'truck number', 'truck_no', 'truck_number', 'vehicle no', 'vehicle number',
+    'mineral qty', 'mineral quantity', 'mineral_qty', 'qty', 'quantity'
+  ],
   'RR Entry': [
     'do no', 'do number', 'do_no',
     'siding', 'siding name',
