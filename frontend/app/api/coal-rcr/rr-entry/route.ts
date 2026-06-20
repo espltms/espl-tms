@@ -70,16 +70,6 @@ export async function POST(req: NextRequest) {
 
           const upperRrNo = rrNo.toUpperCase().trim();
 
-          // Check if it already exists
-          const existing = await tx.coalRREntry.findUnique({
-            where: { rrNo: upperRrNo }
-          });
-
-          if (existing) {
-            // Already exists, skip or update? Since it is skipDuplicates originally, we skip
-            continue;
-          }
-
           await tx.coalRREntry.create({
             data: {
               doNo,
@@ -177,15 +167,6 @@ export async function POST(req: NextRequest) {
     }
 
     const upperRrNo = rrNo.toUpperCase().trim();
-
-    // Check for duplicate RR No
-    const existing = await prisma.coalRREntry.findUnique({
-      where: { rrNo: upperRrNo },
-    });
-
-    if (existing && (!id || existing.id !== id)) {
-      return NextResponse.json({ error: `RR Number "${upperRrNo}" already exists` }, { status: 409 });
-    }
 
     let record: any;
     await prisma.$transaction(async (tx) => {

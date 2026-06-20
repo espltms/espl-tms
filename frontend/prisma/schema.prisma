@@ -305,7 +305,7 @@ model CoalRREntry {
   id            String    @id @default(uuid())
   doNo          String
   siding        String
-  rrNo          String    @unique
+  rrNo          String
   rrDate        String?
   invoiceDate   String?
   receiptDate   String?
