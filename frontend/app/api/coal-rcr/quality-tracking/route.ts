@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       const recordsToCreate = [];
       for (const item of body) {
         const { doNo, rrNo, tm, im, ash, vm, fc, gcvAdb, gcvArb, qualityPenalty } = item;
-        if (!doNo || !rrNo || qualityPenalty === undefined) {
+        if (!doNo || !rrNo) {
           continue; // Skip invalid records in batch
         }
         recordsToCreate.push({
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
 
     const { id, doNo, rrNo, tm, im, ash, vm, fc, gcvAdb, gcvArb, qualityPenalty } = body;
 
-    if (!doNo || !rrNo || qualityPenalty === undefined) {
-      return NextResponse.json({ error: 'DO No, RR No, and Quality Penalty are required fields' }, { status: 400 });
+    if (!doNo || !rrNo) {
+      return NextResponse.json({ error: 'DO No and RR No are required fields' }, { status: 400 });
     }
 
     const upperRrNo = rrNo.toUpperCase().trim();

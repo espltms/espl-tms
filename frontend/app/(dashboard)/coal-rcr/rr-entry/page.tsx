@@ -296,122 +296,343 @@ export default function RREntryPage() {
 
     const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
-      if (!detail || detail.sectionName !== 'RR Entry') return;
-      setLoading(true);
-      const token = localStorage.getItem('tms_token');
-      const rows = detail.import.rows;
-      const recordsToImport: any[] = [];
-      let skippedCount = 0;
+      if (!detail) return;
 
-      rows.forEach((row) => {
-        const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-        const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name', 'source siding', 'source_siding']).trim();
-        const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
-        const invoiceDateStr = getCellValue(detail.import.headers, row, ['invoice date', 'invoice_date']);
-        const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
-        const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
-        const fromVal = getCellValue(detail.import.headers, row, ['from', 'loading point', 'from_station']);
-        const toVal = getCellValue(detail.import.headers, row, ['to', 'destination', 'to_station']);
-        const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name', 'ocp / mine']);
-        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty', 'rr actual qty']);
-        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty', 'rr chargeable qty']);
-        const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty', 'vll in-motion qty']);
-        const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
-        const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
-        const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count', 'no of wagon']);
-        const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
+      if (detail.sectionName === 'RR Entry') {
+        setLoading(true);
+        const token = localStorage.getItem('tms_token');
+        const rows = detail.import.rows;
+        const recordsToImport: any[] = [];
+        let skippedCount = 0;
 
-        // New fields
-        const fnrNo = getCellValue(detail.import.headers, row, ['fnr no', 'fnr_no', 'fnr number', 'fnr', 'fnr_number']).trim();
-        const inMotionQtyStr = getCellValue(detail.import.headers, row, ['in motion qty', 'in_motion_qty', 'in motion weight', 'in-motion qty', 'in motion']);
-        const esplTInvNo = getCellValue(detail.import.headers, row, ['espl t inv no', 'espl (t) inv no', 'espl t invoice no', 'espl(t)invno', 'espl (t) inv no.']).trim();
-        const esplHInvNo = getCellValue(detail.import.headers, row, ['espl h inv no', 'espl (h) inv no', 'espl h invoice no', 'espl(h)invno', 'espl (h) inv no.']).trim();
-        const invDateStr = getCellValue(detail.import.headers, row, ['date', 'inv date', 'invoice date', 'inv_date']);
-        const tInvAmtStr = getCellValue(detail.import.headers, row, ['t inv amt', 't_inv_amt', 't inv amount', 't invoice amount', 'tinvamt']);
-        const hInvAmtStr = getCellValue(detail.import.headers, row, ['h inv amt', 'h_inv_amt', 'h inv amount', 'h invoice amount', 'hinvamt']);
+        rows.forEach((row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+          let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name', 'source siding', 'source_siding']).trim();
+          const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
+          const invoiceDateStr = getCellValue(detail.import.headers, row, ['invoice date', 'invoice_date']);
+          const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
+          const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
+          const fromVal = getCellValue(detail.import.headers, row, ['from', 'loading point', 'from_station']);
+          const toVal = getCellValue(detail.import.headers, row, ['to', 'destination', 'to_station']);
+          const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name', 'ocp / mine']);
+          const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty', 'rr actual qty']);
+          const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty', 'rr chargeable qty']);
+          const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty', 'vll in-motion qty']);
+          const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
+          const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
+          const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count', 'no of wagon']);
+          const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
 
-        // Quality fields
-        const tmStr = getCellValue(detail.import.headers, row, ['tm', 'tm%', 'total moisture']);
-        const imStr = getCellValue(detail.import.headers, row, ['im', 'im%', 'inherent moisture']);
-        const vmStr = getCellValue(detail.import.headers, row, ['vm', 'vm%', 'volatile matter']);
-        const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash%', 'ash content']);
-        const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fc%', 'fixed carbon']);
-        const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
-        const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
-        const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
+          // New fields
+          const fnrNo = getCellValue(detail.import.headers, row, ['fnr no', 'fnr_no', 'fnr number', 'fnr', 'fnr_number']).trim();
+          const inMotionQtyStr = getCellValue(detail.import.headers, row, ['in motion qty', 'in_motion_qty', 'in motion weight', 'in-motion qty', 'in motion']);
+          const esplTInvNo = getCellValue(detail.import.headers, row, ['espl t inv no', 'espl (t) inv no', 'espl t invoice no', 'espl(t)invno', 'espl (t) inv no.']).trim();
+          const esplHInvNo = getCellValue(detail.import.headers, row, ['espl h inv no', 'espl (h) inv no', 'espl h invoice no', 'espl(h)invno', 'espl (h) inv no.']).trim();
+          const invDateStr = getCellValue(detail.import.headers, row, ['date', 'inv date', 'invoice date', 'inv_date']);
+          const tInvAmtStr = getCellValue(detail.import.headers, row, ['t inv amt', 't_inv_amt', 't inv amount', 't invoice amount', 'tinvamt']);
+          const hInvAmtStr = getCellValue(detail.import.headers, row, ['h inv amt', 'h_inv_amt', 'h inv amount', 'h invoice amount', 'hinvamt']);
 
-        // Deduction fields
-        const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a', 'pol1a', 'pol 1']);
-        const pol2Str = getCellValue(detail.import.headers, row, ['pol2', 'pol 2']);
-        const enhcStr = getCellValue(detail.import.headers, row, ['enhc']);
-        const dclaStr = getCellValue(detail.import.headers, row, ['dcla']);
-        const faucStr = getCellValue(detail.import.headers, row, ['fauc']);
-        const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
-        const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage']);
-        const shortageStr = getCellValue(detail.import.headers, row, ['shortage']);
-        const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
-        const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
-        const mrExclGstStr = getCellValue(detail.import.headers, row, ['mr excl gst', 'mr_excl_gst']);
-        const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+          // Quality fields
+          const tmStr = getCellValue(detail.import.headers, row, ['tm', 'tm%', 'total moisture']);
+          const imStr = getCellValue(detail.import.headers, row, ['im', 'im%', 'inherent moisture']);
+          const vmStr = getCellValue(detail.import.headers, row, ['vm', 'vm%', 'volatile matter']);
+          const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash%', 'ash content']);
+          const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fc%', 'fixed carbon']);
+          const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
+          const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
+          const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
 
-        if (!doNo || !rrNo || !grnQtyStr) {
-          skippedCount++;
+          // Deduction fields
+          const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a', 'pol1a', 'pol 1']);
+          const pol2Str = getCellValue(detail.import.headers, row, ['pol2', 'pol 2']);
+          const enhcStr = getCellValue(detail.import.headers, row, ['enhc']);
+          const dclaStr = getCellValue(detail.import.headers, row, ['dcla']);
+          const faucStr = getCellValue(detail.import.headers, row, ['fauc']);
+          const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
+          const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage']);
+          const shortageStr = getCellValue(detail.import.headers, row, ['shortage']);
+          const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
+          const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
+          const mrExclGstStr = getCellValue(detail.import.headers, row, ['mr excl gst', 'mr_excl_gst']);
+          const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
+
+          if (!doNo || !rrNo || !grnQtyStr) {
+            skippedCount++;
+            return;
+          }
+
+          const rrDate = parseDateToYYYYMMDD(rrDateStr);
+          const invoiceDate = parseDateToYYYYMMDD(invoiceDateStr);
+          const receiptDate = parseDateToYYYYMMDD(receiptDateStr);
+          const loadingDate = parseDateToYYYYMMDD(loadingDateStr);
+          const invDate = parseDateToYYYYMMDD(invDateStr);
+
+          // Find siding from DO Master if siding is empty or MVAA
+          if ((!siding || siding.toUpperCase() === 'MVAA') && doRecords) {
+            const matchedDO = doRecords.find(d => d.doNo === doNo);
+            if (matchedDO && matchedDO.siding) {
+              siding = matchedDO.siding;
+            }
+          }
+
+          recordsToImport.push({
+            doNo,
+            siding: siding || 'MVAA',
+            rrNo,
+            rrDate: rrDate || null,
+            invoiceDate: invoiceDate || null,
+            receiptDate: receiptDate || null,
+            loadingDate: loadingDate || null,
+            from: fromVal || null,
+            to: toVal || null,
+            ocp: ocpVal || null,
+            rrActQty: parseFloat(rrActQtyStr) || 0,
+            rrChQty: parseFloat(rrChQtyStr) || 0,
+            vllQty: parseFloat(vllQtyStr) || 0,
+            grnQty: parseFloat(grnQtyStr) || 0,
+            normalisedQty: parseFloat(normalisedQtyStr) || parseFloat(grnQtyStr) || 0,
+            noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
+            udRemark: udRemarkVal || null,
+            fnrNo: fnrNo || null,
+            inMotionQty: inMotionQtyStr ? parseFloat(inMotionQtyStr) : null,
+            esplTInvNo: esplTInvNo || null,
+            esplHInvNo: esplHInvNo || null,
+            invDate: invDate || null,
+            tInvAmt: tInvAmtStr ? parseFloat(tInvAmtStr) : null,
+            hInvAmt: hInvAmtStr ? parseFloat(hInvAmtStr) : null,
+            quality: {
+              tm: parseFloat(tmStr) || 0,
+              im: parseFloat(imStr) || 0,
+              ash: parseFloat(ashStr) || 0,
+              vm: parseFloat(vmStr) || 0,
+              fc: parseFloat(fcStr) || 0,
+              gcvAdb: parseFloat(gcvAdbStr) || 0,
+              gcvArb: parseFloat(gcvArbStr) || 0,
+              qualityPenalty: parseFloat(qualityPenaltyStr) || 0,
+            },
+            deductions: {
+              pol1: parseFloat(pol1Str) || 0,
+              pol2: parseFloat(pol2Str) || 0,
+              enhc: parseFloat(enhcStr) || 0,
+              dcla: parseFloat(dclaStr) || 0,
+              fauc: parseFloat(faucStr) || 0,
+              deadFreight: parseFloat(deadFreightStr) || 0,
+              punitive: parseFloat(getCellValue(detail.import.headers, row, ['punitive', 'punitive charges'])) || 0,
+              dc: parseFloat(dcStr) || 0,
+              shortage: parseFloat(shortageStr) || 0,
+              qualitySlippage: parseFloat(qualitySlippageStr) || 0,
+              railwayLeakage: parseFloat(railwayLeakageStr) || 0,
+              mrExclGst: parseFloat(mrExclGstStr) || 0,
+              finalDeduction: parseFloat(finalDeductionStr) || 
+                ((parseFloat(pol1Str) || 0) +
+                 (parseFloat(pol2Str) || 0) +
+                 (parseFloat(enhcStr) || 0) +
+                 (parseFloat(dclaStr) || 0) +
+                 (parseFloat(faucStr) || 0) +
+                 (parseFloat(deadFreightStr) || 0) +
+                 (parseFloat(dcStr) || 0) +
+                 (parseFloat(shortageStr) || 0) +
+                 (parseFloat(qualitySlippageStr) || 0) +
+                 (parseFloat(railwayLeakageStr) || 0)),
+              remarks: getCellValue(detail.import.headers, row, ['remarks', 'deduction remarks', 'deduction remark'])
+            }
+          });
+        });
+
+        if (recordsToImport.length === 0) {
+          setToast({
+            message: `Excel Import failed: No valid records found in the sheet.`,
+            type: 'error',
+            title: 'Import Failed'
+          });
+          setLoading(false);
           return;
         }
 
-        if (!siding) {
-          const matchedDO = doRecords.find(d => d.doNo.toUpperCase().trim() === doNo);
-          siding = matchedDO ? matchedDO.siding : '';
+        try {
+          const response = await fetch('/api/coal-rcr/rr-entry', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordsToImport)
+          });
+
+          if (response.ok) {
+            const resData = await response.json();
+            const importedCount = resData.count || 0;
+            const duplicatesCount = recordsToImport.length - importedCount;
+
+            setToast({
+              message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+              type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+              title: 'Import Result'
+            });
+          } else {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Server returned an error');
+          }
+        } catch (error: any) {
+          console.error("Error importing RR records:", error);
+          setToast({
+            message: `Excel Import failed: ${error.message || 'Network error'}`,
+            type: 'error',
+            title: 'Import Error'
+          });
+        }
+        setLoading(false);
+        fetchData();
+
+      } else if (detail.sectionName === 'DO Master') {
+        setLoading(true);
+        const token = localStorage.getItem('tms_token');
+        const rows = detail.import.rows;
+        const recordsToImport: any[] = [];
+        let skippedCount = 0;
+
+        rows.forEach((row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
+          const mines = getCellValue(detail.import.headers, row, ['mines', 'mine name', 'mine', 'ocp / mine', 'ocp']).trim();
+          const doQtyStr = getCellValue(detail.import.headers, row, ['do qty', 'do quantity', 'quantity', 'qty', 'do_qty']);
+          const coalTypeRaw = getCellValue(detail.import.headers, row, ['coal type', 'coal_type']).trim();
+          const startDateStr = getCellValue(detail.import.headers, row, ['start date', 'start_date', 'validity start', 'valid from', 'valid from date']);
+          const endDateStr = getCellValue(detail.import.headers, row, ['end date', 'end_date', 'validity end', 'valid upto', 'valid up to']);
+          const statusRaw = getCellValue(detail.import.headers, row, ['status']).trim();
+          const month = getCellValue(detail.import.headers, row, ['month']).trim();
+          const customer = getCellValue(detail.import.headers, row, ['customer', 'client', 'buyer', 'customer name']).trim();
+          const modeRaw = getCellValue(detail.import.headers, row, ['mode', 'transport mode', 'trans mode']).trim().toLowerCase();
+          const auctionDateStr = getCellValue(detail.import.headers, row, ['auction date', 'auction_date', 'auction']).trim();
+          const permitNo = getCellValue(detail.import.headers, row, ['permit no', 'permit number', 'permit_no', 'permit_number', 'permit']).toUpperCase().trim();
+          const permitValidDateStr = getCellValue(detail.import.headers, row, ['permit valid date', 'permit_valid_date', 'permit validity']).trim();
+
+          if (!doNo || !doQtyStr) {
+            skippedCount++;
+            return;
+          }
+
+          const doQty = parseFloat(doQtyStr) || 0;
+          const startDate = parseDateToYYYYMMDD(startDateStr);
+          const endDate = parseDateToYYYYMMDD(endDateStr);
+          const auctionDate = parseDateToYYYYMMDD(auctionDateStr);
+          const permitValidDate = parseDateToYYYYMMDD(permitValidDateStr);
+
+          let coalType = 'ROM';
+          if (['ROM', 'Slack', 'Steam', 'Washed', 'Non Coking Coal', 'Non Cooking Coals'].some(t => t.toLowerCase() === coalTypeRaw.toLowerCase())) {
+            if (coalTypeRaw.toUpperCase() === 'ROM') {
+              coalType = 'ROM';
+            } else if (coalTypeRaw.toLowerCase().startsWith('non')) {
+              coalType = 'Non Coking Coal';
+            } else {
+              coalType = coalTypeRaw.charAt(0).toUpperCase() + coalTypeRaw.slice(1).toLowerCase();
+            }
+          }
+
+          let status: DOMasterRecord['status'] = 'Active';
+          const sLower = statusRaw.toLowerCase();
+          if (sLower === 'completed') {
+            status = 'Completed';
+          } else if (sLower === 'expired' || sLower === 'cancelled') {
+            status = 'Cancelled';
+          } else if (sLower === 'open' || sLower === 'active') {
+            status = 'Active';
+          }
+
+          let mode: DOMasterRecord['mode'] = 'RCR';
+          if (modeRaw === 'road') {
+            mode = 'Road';
+          }
+
+          recordsToImport.push({
+            doNo,
+            month: month || null,
+            auctionDate: auctionDate || null,
+            mines: mines || null,
+            doQty,
+            coalType,
+            startDate: startDate || null,
+            endDate: endDate || null,
+            permitNo: permitNo || null,
+            permitValidDate: permitValidDate || null,
+            status,
+            customer: customer || null,
+            mode
+          });
+        });
+
+        if (recordsToImport.length === 0) {
+          setToast({
+            message: `Excel Import failed: No valid records found in the sheet.`,
+            type: 'error',
+            title: 'Import Failed'
+          });
+          setLoading(false);
+          return;
         }
 
-        const grnQty = parseFloat(grnQtyStr) || 0;
-        const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
-        const inMotionQty = parseFloat(inMotionQtyStr) || parseFloat(vllQtyStr) || 0;
-        const tInvAmt = parseFloat(tInvAmtStr) || 0;
-        const hInvAmt = parseFloat(hInvAmtStr) || 0;
-        const invDate = parseDateToYYYYMMDD(invDateStr);
+        try {
+          const response = await fetch('/api/coal-rcr/do-master', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordsToImport)
+          });
 
-        const finalDeduction = parseFloat(finalDeductionStr) || (
-          (parseFloat(pol1Str) || 0) +
-          (parseFloat(pol2Str) || 0) +
-          (parseFloat(enhcStr) || 0) +
-          (parseFloat(dclaStr) || 0) +
-          (parseFloat(faucStr) || 0) +
-          (parseFloat(deadFreightStr) || 0) +
-          (parseFloat(dcStr) || 0) +
-          (parseFloat(shortageStr) || 0) +
-          (parseFloat(qualitySlippageStr) || 0) +
-          (parseFloat(railwayLeakageStr) || 0) +
-          (parseFloat(mrExclGstStr) || 0)
-        );
+          if (response.ok) {
+            const resData = await response.json();
+            const importedCount = resData.count || 0;
+            const duplicatesCount = recordsToImport.length - importedCount;
 
-        recordsToImport.push({
-          doNo,
-          siding,
-          rrNo,
-          rrDate: parseDateToYYYYMMDD(rrDateStr) || null,
-          invoiceDate: parseDateToYYYYMMDD(invoiceDateStr) || null,
-          receiptDate: parseDateToYYYYMMDD(receiptDateStr) || null,
-          loadingDate: parseDateToYYYYMMDD(loadingDateStr) || null,
-          from: fromVal || null,
-          to: toVal || null,
-          ocp: ocpVal || null,
-          rrActQty: parseFloat(rrActQtyStr) || 0,
-          rrChQty: parseFloat(rrChQtyStr) || 0,
-          vllQty: inMotionQty, // Sync vllQty with inMotionQty
-          grnQty,
-          normalisedQty,
-          noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
-          udRemark: udRemarkVal || null,
-          fnrNo: fnrNo || null,
-          inMotionQty: inMotionQty || null,
-          esplTInvNo: esplTInvNo || null,
-          esplHInvNo: esplHInvNo || null,
-          invDate: invDate || null,
-          tInvAmt: tInvAmt || null,
-          hInvAmt: hInvAmt || null,
-          quality: {
+            setToast({
+              message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+              type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+              title: 'Import Result'
+            });
+          } else {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Server returned an error');
+          }
+        } catch (error: any) {
+          console.error("Error importing DO records:", error);
+          setToast({
+            message: `Excel Import failed: ${error.message || 'Network error'}`,
+            type: 'error',
+            title: 'Import Error'
+          });
+        }
+        setLoading(false);
+        fetchData();
+
+      } else if (detail.sectionName === 'Quality Tracking') {
+        setLoading(true);
+        const token = localStorage.getItem('tms_token');
+        const rows = detail.import.rows;
+        const recordsToImport: any[] = [];
+        let skippedCount = 0;
+
+        rows.forEach((row) => {
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
+          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
+          const tmStr = getCellValue(detail.import.headers, row, ['tm', 'total moisture', 'tm %']);
+          const imStr = getCellValue(detail.import.headers, row, ['im', 'inherent moisture', 'im %']);
+          const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash %']);
+          const vmStr = getCellValue(detail.import.headers, row, ['vm', 'volatile matter', 'vm %']);
+          const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fixed carbon', 'fc %']);
+          const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
+          const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
+          const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
+
+          if (!doNo || !rrNo) {
+            skippedCount++;
+            return;
+          }
+
+          recordsToImport.push({
+            doNo,
+            rrNo,
             tm: parseFloat(tmStr) || 0,
             im: parseFloat(imStr) || 0,
             ash: parseFloat(ashStr) || 0,
@@ -419,71 +640,55 @@ export default function RREntryPage() {
             fc: parseFloat(fcStr) || 0,
             gcvAdb: parseFloat(gcvAdbStr) || 0,
             gcvArb: parseFloat(gcvArbStr) || 0,
-            qualityPenalty: parseFloat(qualityPenaltyStr) || 0,
-          },
-          deductions: {
-            pol1: parseFloat(pol1Str) || 0,
-            pol2: parseFloat(pol2Str) || 0,
-            enhc: parseFloat(enhcStr) || 0,
-            dcla: parseFloat(dclaStr) || 0,
-            fauc: parseFloat(faucStr) || 0,
-            deadFreight: parseFloat(deadFreightStr) || 0,
-            dc: parseFloat(dcStr) || 0,
-            shortage: parseFloat(shortageStr) || 0,
-            qualitySlippage: parseFloat(qualitySlippageStr) || 0,
-            railwayLeakage: parseFloat(railwayLeakageStr) || 0,
-            mrExclGst: parseFloat(mrExclGstStr) || 0,
-            finalDeduction: finalDeduction || 0,
-            remarks: udRemarkVal || null,
-          }
-        });
-      });
-
-      if (recordsToImport.length === 0) {
-        setToast({
-          message: `Excel Import failed: No valid records found in the sheet.`,
-          type: 'error',
-          title: 'Import Failed'
-        });
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/coal-rcr/rr-entry', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify(recordsToImport)
-        });
-
-        if (response.ok) {
-          const resData = await response.json();
-          const importedCount = resData.count || 0;
-          const duplicatesCount = recordsToImport.length - importedCount;
-
-          setToast({
-            message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
-            type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
-            title: 'Import Result'
+            qualityPenalty: parseFloat(qualityPenaltyStr) || 0
           });
-        } else {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Server returned an error');
-        }
-      } catch (error: any) {
-        console.error("Error importing RR records:", error);
-        setToast({
-          message: `Excel Import failed: ${error.message || 'Network error'}`,
-          type: 'error',
-          title: 'Import Error'
         });
-      }
 
-      setLoading(false);
-      fetchData();
+        if (recordsToImport.length === 0) {
+          setToast({
+            message: `Excel Import failed: No valid records found in the sheet.`,
+            type: 'error',
+            title: 'Import Failed'
+          });
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/coal-rcr/quality-tracking', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(recordsToImport)
+          });
+
+          if (response.ok) {
+            const resData = await response.json();
+            const importedCount = resData.count || 0;
+            const duplicatesCount = recordsToImport.length - importedCount;
+
+            setToast({
+              message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+              type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
+              title: 'Import Result'
+            });
+          } else {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Server returned an error');
+          }
+        } catch (error: any) {
+          console.error("Error importing Quality records:", error);
+          setToast({
+            message: `Excel Import failed: ${error.message || 'Network error'}`,
+            type: 'error',
+            title: 'Import Error'
+          });
+        }
+        setLoading(false);
+        fetchData();
+      }
     };
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
@@ -1075,6 +1280,23 @@ export default function RREntryPage() {
               >
                 <Plus className="h-4 w-4" /> Add RR Entry
               </button>
+            </>
+          )}
+          {activeSectionTab === 'recon' && (
+            <>
+              {user?.role?.endsWith('_ADMIN') && (
+                <>
+                  <SectionExcelImport sectionName="DO Master" />
+                  <SectionExcelImport sectionName="RR Entry" />
+                </>
+              )}
+              <SectionExcelExport sectionName="Quantity Reconciliation" />
+            </>
+          )}
+          {activeSectionTab === 'quality' && (
+            <>
+              {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="Quality Tracking" />}
+              <SectionExcelExport sectionName="Quality Analysis" />
             </>
           )}
           <button
