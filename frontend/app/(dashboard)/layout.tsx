@@ -53,9 +53,7 @@ const navigationDivisions = [
       { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'DO Lifting', path: '/coal-rcr/do-lifting', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'RR Entry', path: '/coal-rcr/rr-entry?tab=entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'Charges & Deductions', path: '/coal-rcr/deduction-penalty', icon: Scale, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'Billing/ Payment', path: '/coal-rcr/billing-payment', icon: BadgeCent, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'OCP-wise Track Record', path: '/coal-rcr/ocp-track-record', icon: Milestone, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+
       { label: 'Summary Dashboard', path: '/coal-rcr/summary-dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
     ]
   },
