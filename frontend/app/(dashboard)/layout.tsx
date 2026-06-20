@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { useAuthStore } from '../../store/auth.store';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -149,18 +149,39 @@ const ClockWidget = memo(function ClockWidget() {
   );
 });
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const router = useRouter();
-  const pathname = usePathname();
+function SectionTitle({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
-  const { user, logout, isAuthenticated } = useAuthStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const currentTab = searchParams.get('tab') || 'entry';
+  
+  const currentSectionName = useMemo(() => {
+    const isLinkActive = (itemPath: string) => {
+      const [basePath, query] = itemPath.split('?');
+      if (pathname !== basePath) return false;
+      if (!query) {
+        if (basePath === '/coal-rcr/rr-entry') {
+          return currentTab === 'entry';
+        }
+        return true;
+      }
+      const tabParam = query.split('tab=')[1];
+      return currentTab === tabParam;
+    };
+    return allNavItems.find((n) => isLinkActive(n.path))?.label || 'Current Section';
+  }, [pathname, currentTab]);
+
+  return <>{currentSectionName}</>;
+}
+
+function DesktopSidebarNav({
+  allowedDivisions,
+  pathname,
+}: {
+  allowedDivisions: any[];
+  pathname: string;
+}) {
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'entry';
+
   const isLinkActive = (itemPath: string) => {
     const [basePath, query] = itemPath.split('?');
     if (pathname !== basePath) return false;
@@ -173,6 +194,106 @@ export default function DashboardLayout({
     const tabParam = query.split('tab=')[1];
     return currentTab === tabParam;
   };
+
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+      {allowedDivisions.map((division, idx) => (
+        <div key={idx} className="space-y-1">
+          <span className="px-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
+            {division.title}
+          </span>
+          <div className="space-y-0.5 mt-1.5">
+            {division.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = isLinkActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wide transition-all ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-600 border-l-2 border-blue-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MobileSidebarNav({
+  allowedDivisions,
+  pathname,
+  setMobileMenuOpen,
+}: {
+  allowedDivisions: any[];
+  pathname: string;
+  setMobileMenuOpen: (open: boolean) => void;
+}) {
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'entry';
+
+  const isLinkActive = (itemPath: string) => {
+    const [basePath, query] = itemPath.split('?');
+    if (pathname !== basePath) return false;
+    if (!query) {
+      if (basePath === '/coal-rcr/rr-entry') {
+        return currentTab === 'entry';
+      }
+      return true;
+    }
+    const tabParam = query.split('tab=')[1];
+    return currentTab === tabParam;
+  };
+
+  return (
+    <nav className="flex-1 overflow-y-auto space-y-5 px-4 py-5">
+      {allowedDivisions.map((division) => (
+        <div key={division.title} className="space-y-2">
+          <span className="px-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+            {division.title}
+          </span>
+          <div className="space-y-1">
+            {division.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = isLinkActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${
+                    isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-primary' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, logout, isAuthenticated } = useAuthStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -273,8 +394,6 @@ export default function DashboardLayout({
     }
   };
 
-  const currentSectionName = allNavItems.find((n) => isLinkActive(n.path))?.label || 'Current Section';
-
   if (!mounted || !isAuthenticated) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#f4f6f9]">
@@ -297,35 +416,9 @@ export default function DashboardLayout({
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-            {allowedDivisions.map((division, idx) => (
-              <div key={idx} className="space-y-1">
-                <span className="px-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-                  {division.title}
-                </span>
-                <div className="space-y-0.5 mt-1.5">
-                  {division.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = isLinkActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        href={item.path}
-                        className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wide transition-all ${
-                          isActive
-                            ? 'bg-blue-50 text-blue-600 border-l-2 border-blue-600 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                        }`}
-                      >
-                        <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+          <Suspense fallback={<div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 animate-pulse" />}>
+            <DesktopSidebarNav allowedDivisions={allowedDivisions} pathname={pathname} />
+          </Suspense>
         </div>
 
         {/* User Card & Logout bottom pane */}
@@ -366,7 +459,9 @@ export default function DashboardLayout({
               <Menu className="h-5 w-5" />
             </button>
             <h1 className="min-w-0 truncate text-[11px] font-extrabold tracking-widest text-slate-800 uppercase font-sans sm:text-xs">
-              {currentSectionName}
+              <Suspense fallback="Current Section">
+                <SectionTitle pathname={pathname} />
+              </Suspense>
             </h1>
           </div>
 
@@ -402,34 +497,13 @@ export default function DashboardLayout({
                 <Image src="/images/espl-logo.png" alt="ESPL Logo" width={135} height={36} priority className="h-9 w-auto" />
                 <span className="font-sans text-xl font-extrabold text-slate-800">ESPL TMS</span>
               </div>
-              <nav className="flex-1 overflow-y-auto space-y-5 px-4 py-5">
-                {allowedDivisions.map((division) => (
-                  <div key={division.title} className="space-y-2">
-                    <span className="px-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                      {division.title}
-                    </span>
-                    <div className="space-y-1">
-                      {division.items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = isLinkActive(item.path);
-                        return (
-                          <Link
-                            key={item.path}
-                            href={item.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${
-                              isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-500 hover:bg-slate-100'
-                            }`}
-                          >
-                            <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-primary' : 'text-slate-400'}`} />
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </nav>
+              <Suspense fallback={<nav className="flex-1 overflow-y-auto space-y-5 px-4 py-5 animate-pulse" />}>
+                <MobileSidebarNav
+                  allowedDivisions={allowedDivisions}
+                  pathname={pathname}
+                  setMobileMenuOpen={setMobileMenuOpen}
+                />
+              </Suspense>
             </div>
             
             {/* User Card & Logout bottom pane */}
