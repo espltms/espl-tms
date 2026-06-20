@@ -15,12 +15,16 @@ import {
   FileText,
   CheckCircle2,
   AlertTriangle,
-  Info
+  Info,
+  GitCompare,
+  Activity,
+  Scale
 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import SectionExcelImport from '@/components/SectionExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DOMasterRecord, RREntryRecord } from '../types';
 
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
@@ -119,6 +123,11 @@ const parseDateToYYYYMMDD = (val: unknown): string => {
 
 export default function RREntryPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
+
+  const [activeSectionTab, setActiveSectionTab] = useState<'entry' | 'recon' | 'quality'>('entry');
   const [records, setRecords] = useState<RREntryRecord[]>([]);
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,6 +137,18 @@ export default function RREntryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // States for Reconciliation Tab
+  const [reconSearchQuery, setReconSearchQuery] = useState('');
+  const [reconDoFilter, setReconDoFilter] = useState('All');
+  const [reconOcpFilter, setReconOcpFilter] = useState('All');
+  const [reconCurrentPage, setReconCurrentPage] = useState(1);
+
+  // States for Quality Tab
+  const [qualitySearchQuery, setQualitySearchQuery] = useState('');
+  const [qualityDoFilter, setQualityDoFilter] = useState('All');
+  const [qualityOcpFilter, setQualityOcpFilter] = useState('All');
+  const [qualityCurrentPage, setQualityCurrentPage] = useState(1);
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -142,6 +163,12 @@ export default function RREntryPage() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (urlTab === 'recon' || urlTab === 'quality' || urlTab === 'entry') {
+      setActiveSectionTab(urlTab);
+    }
+  }, [urlTab]);
 
   const [activeTab, setActiveTab] = useState<'rr-details' | 'quality' | 'deductions'>('rr-details');
 
@@ -164,6 +191,13 @@ export default function RREntryPage() {
     normalisedQty: '',
     noOfWagons: '',
     udRemark: '',
+    fnrNo: '',
+    inMotionQty: '',
+    esplTInvNo: '',
+    esplHInvNo: '',
+    invDate: '',
+    tInvAmt: '',
+    hInvAmt: '',
 
     // Quality Tab
     quality: {
@@ -272,21 +306,30 @@ export default function RREntryPage() {
       rows.forEach((row) => {
         const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
         const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name']).trim();
+        let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name', 'source siding', 'source_siding']).trim();
         const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
         const invoiceDateStr = getCellValue(detail.import.headers, row, ['invoice date', 'invoice_date']);
         const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
         const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
         const fromVal = getCellValue(detail.import.headers, row, ['from', 'loading point', 'from_station']);
         const toVal = getCellValue(detail.import.headers, row, ['to', 'destination', 'to_station']);
-        const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name']);
-        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty']);
-        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty']);
+        const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name', 'ocp / mine']);
+        const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty', 'rr actual qty']);
+        const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty', 'rr chargeable qty']);
         const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty', 'vll in-motion qty']);
         const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
         const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
-        const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count']);
+        const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count', 'no of wagon']);
         const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
+
+        // New fields
+        const fnrNo = getCellValue(detail.import.headers, row, ['fnr no', 'fnr_no', 'fnr number', 'fnr', 'fnr_number']).trim();
+        const inMotionQtyStr = getCellValue(detail.import.headers, row, ['in motion qty', 'in_motion_qty', 'in motion weight', 'in-motion qty', 'in motion']);
+        const esplTInvNo = getCellValue(detail.import.headers, row, ['espl t inv no', 'espl (t) inv no', 'espl t invoice no', 'espl(t)invno', 'espl (t) inv no.']).trim();
+        const esplHInvNo = getCellValue(detail.import.headers, row, ['espl h inv no', 'espl (h) inv no', 'espl h invoice no', 'espl(h)invno', 'espl (h) inv no.']).trim();
+        const invDateStr = getCellValue(detail.import.headers, row, ['date', 'inv date', 'invoice date', 'inv_date']);
+        const tInvAmtStr = getCellValue(detail.import.headers, row, ['t inv amt', 't_inv_amt', 't inv amount', 't invoice amount', 'tinvamt']);
+        const hInvAmtStr = getCellValue(detail.import.headers, row, ['h inv amt', 'h_inv_amt', 'h inv amount', 'h invoice amount', 'hinvamt']);
 
         // Quality fields
         const tmStr = getCellValue(detail.import.headers, row, ['tm', 'tm%', 'total moisture']);
@@ -299,8 +342,8 @@ export default function RREntryPage() {
         const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
 
         // Deduction fields
-        const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a']);
-        const pol2Str = getCellValue(detail.import.headers, row, ['pol2']);
+        const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a', 'pol1a', 'pol 1']);
+        const pol2Str = getCellValue(detail.import.headers, row, ['pol2', 'pol 2']);
         const enhcStr = getCellValue(detail.import.headers, row, ['enhc']);
         const dclaStr = getCellValue(detail.import.headers, row, ['dcla']);
         const faucStr = getCellValue(detail.import.headers, row, ['fauc']);
@@ -324,6 +367,11 @@ export default function RREntryPage() {
 
         const grnQty = parseFloat(grnQtyStr) || 0;
         const normalisedQty = parseFloat(normalisedQtyStr !== '' ? normalisedQtyStr : grnQtyStr) || 0;
+        const inMotionQty = parseFloat(inMotionQtyStr) || parseFloat(vllQtyStr) || 0;
+        const tInvAmt = parseFloat(tInvAmtStr) || 0;
+        const hInvAmt = parseFloat(hInvAmtStr) || 0;
+        const invDate = parseDateToYYYYMMDD(invDateStr);
+
         const finalDeduction = parseFloat(finalDeductionStr) || (
           (parseFloat(pol1Str) || 0) +
           (parseFloat(pol2Str) || 0) +
@@ -351,11 +399,18 @@ export default function RREntryPage() {
           ocp: ocpVal || null,
           rrActQty: parseFloat(rrActQtyStr) || 0,
           rrChQty: parseFloat(rrChQtyStr) || 0,
-          vllQty: parseFloat(vllQtyStr) || 0,
+          vllQty: inMotionQty, // Sync vllQty with inMotionQty
           grnQty,
           normalisedQty,
           noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
           udRemark: udRemarkVal || null,
+          fnrNo: fnrNo || null,
+          inMotionQty: inMotionQty || null,
+          esplTInvNo: esplTInvNo || null,
+          esplHInvNo: esplHInvNo || null,
+          invDate: invDate || null,
+          tInvAmt: tInvAmt || null,
+          hInvAmt: hInvAmt || null,
           quality: {
             tm: parseFloat(tmStr) || 0,
             im: parseFloat(imStr) || 0,
@@ -536,6 +591,115 @@ export default function RREntryPage() {
     return { totalCount, totalGrnQty, totalNormQty };
   }, [records]);
 
+  // Reconciliation selectors
+  const doSummaryList = useMemo(() => {
+    return doRecords.map(doRec => {
+      const linkedRRs = records.filter(rr => rr.doNo === doRec.doNo);
+      
+      const totalLiftedQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.rrActQty) || 0), 0);
+      const totalGrnQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.grnQty) || 0), 0);
+      const totalInMotionQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.inMotionQty) || Number(rr.vllQty) || 0), 0);
+      
+      const doQty = Number(doRec.doQty) || 0;
+      const balanceQty = doQty - totalLiftedQty;
+      const tolerancePercent = Number(doRec.tolerance) || 0;
+      const toleranceQty = doQty * (tolerancePercent / 100);
+      const balanceExclTolerance = balanceQty - toleranceQty;
+
+      return {
+        ...doRec,
+        doQty,
+        totalLiftedQty,
+        totalGrnQty,
+        totalInMotionQty,
+        balanceQty,
+        tolerancePercent,
+        toleranceQty,
+        balanceExclTolerance,
+        rrCount: linkedRRs.length
+      };
+    });
+  }, [doRecords, records]);
+
+  const reconStats = useMemo(() => {
+    let totalDOQty = 0;
+    let totalLiftedQty = 0;
+    let totalInMotionQty = 0;
+    let totalGrnQty = 0;
+
+    doSummaryList.forEach(item => {
+      totalDOQty += item.doQty;
+      totalLiftedQty += item.totalLiftedQty;
+      totalInMotionQty += item.totalInMotionQty;
+      totalGrnQty += item.totalGrnQty;
+    });
+
+    const weightDifference = totalInMotionQty - totalLiftedQty;
+
+    return {
+      totalDOQty,
+      totalLiftedQty,
+      totalInMotionQty,
+      totalGrnQty,
+      weightDifference
+    };
+  }, [doSummaryList]);
+
+  const filteredReconRRs = useMemo(() => {
+    return records.filter(rr => {
+      const matchesDO = reconDoFilter === 'All' || rr.doNo === reconDoFilter;
+      const matchesOCP = reconOcpFilter === 'All' || (rr.ocp && rr.ocp.trim().toLowerCase() === reconOcpFilter.trim().toLowerCase());
+      const matchesSearch = 
+        rr.rrNo.toUpperCase().includes(reconSearchQuery.toUpperCase()) ||
+        rr.doNo.toUpperCase().includes(reconSearchQuery.toUpperCase()) ||
+        (rr.ocp && rr.ocp.toUpperCase().includes(reconSearchQuery.toUpperCase())) ||
+        (rr.siding && rr.siding.toUpperCase().includes(reconSearchQuery.toUpperCase()));
+      return matchesDO && matchesOCP && matchesSearch;
+    });
+  }, [records, reconDoFilter, reconOcpFilter, reconSearchQuery]);
+
+  const reconTotalPages = Math.ceil(filteredReconRRs.length / ITEMS_PER_PAGE);
+  const paginatedReconRRs = useMemo(() => {
+    return filteredReconRRs.slice((reconCurrentPage - 1) * ITEMS_PER_PAGE, reconCurrentPage * ITEMS_PER_PAGE);
+  }, [filteredReconRRs, reconCurrentPage]);
+
+  // Quality selectors
+  const filteredQualityRecords = useMemo(() => {
+    return records.filter(rr => {
+      const matchesDO = qualityDoFilter === 'All' || rr.doNo === qualityDoFilter;
+      const matchesOCP = qualityOcpFilter === 'All' || (rr.ocp && rr.ocp.trim().toLowerCase() === qualityOcpFilter.trim().toLowerCase());
+      const matchesSearch = 
+        rr.rrNo.toUpperCase().includes(qualitySearchQuery.toUpperCase()) ||
+        rr.doNo.toUpperCase().includes(qualitySearchQuery.toUpperCase()) ||
+        (rr.ocp && rr.ocp.toUpperCase().includes(qualitySearchQuery.toUpperCase())) ||
+        (rr.siding && rr.siding.toUpperCase().includes(qualitySearchQuery.toUpperCase()));
+      return matchesDO && matchesOCP && matchesSearch;
+    });
+  }, [records, qualityDoFilter, qualityOcpFilter, qualitySearchQuery]);
+
+  const qualityTotalPages = Math.ceil(filteredQualityRecords.length / ITEMS_PER_PAGE);
+  const paginatedQualityRecords = useMemo(() => {
+    return filteredQualityRecords.slice((qualityCurrentPage - 1) * ITEMS_PER_PAGE, qualityCurrentPage * ITEMS_PER_PAGE);
+  }, [filteredQualityRecords, qualityCurrentPage]);
+
+  const qualityStats = useMemo(() => {
+    const safeRecords = records || [];
+    const totalCount = safeRecords.filter(r => r.quality && (Number(r.quality.gcvAdb) > 0 || Number(r.quality.tm) > 0)).length;
+    
+    const rrsWithGCV = safeRecords.filter(r => r.quality && Number(r.quality.gcvAdb) > 0);
+    const avgGcvAdb = rrsWithGCV.length > 0
+      ? Math.round(rrsWithGCV.reduce((acc, r) => acc + Number(r.quality?.gcvAdb || 0), 0) / rrsWithGCV.length)
+      : 0;
+    const avgGcvArb = rrsWithGCV.length > 0
+      ? Math.round(rrsWithGCV.reduce((acc, r) => acc + Number(r.quality?.gcvArb || 0), 0) / rrsWithGCV.length)
+      : 0;
+      
+    const totalPenalty = safeRecords.reduce((acc, r) => acc + Number(r.quality?.qualityPenalty || 0), 0);
+    
+    return { totalCount, avgGcvAdb, avgGcvArb, totalPenalty };
+  }, [records]);
+
+
   // Open Modal for Add
   const handleOpenAdd = () => {
     if (doRecords.length === 0) {
@@ -561,6 +725,13 @@ export default function RREntryPage() {
       normalisedQty: '',
       noOfWagons: '',
       udRemark: '',
+      fnrNo: '',
+      inMotionQty: '',
+      esplTInvNo: '',
+      esplHInvNo: '',
+      invDate: '',
+      tInvAmt: '',
+      hInvAmt: '',
       quality: {
         tm: '',
         im: '',
@@ -606,13 +777,20 @@ export default function RREntryPage() {
       from: record.from || '',
       to: record.to || '',
       ocp: record.ocp || '',
-      rrActQty: record.rrActQty !== undefined ? String(record.rrActQty) : '',
-      rrChQty: record.rrChQty !== undefined ? String(record.rrChQty) : '',
-      vllQty: record.vllQty !== undefined ? String(record.vllQty) : '',
-      grnQty: record.grnQty !== undefined ? String(record.grnQty) : '',
-      normalisedQty: record.normalisedQty !== undefined ? String(record.normalisedQty) : '',
+      rrActQty: record.rrActQty !== undefined && record.rrActQty !== null ? String(record.rrActQty) : '',
+      rrChQty: record.rrChQty !== undefined && record.rrChQty !== null ? String(record.rrChQty) : '',
+      vllQty: record.vllQty !== undefined && record.vllQty !== null ? String(record.vllQty) : '',
+      grnQty: record.grnQty !== undefined && record.grnQty !== null ? String(record.grnQty) : '',
+      normalisedQty: record.normalisedQty !== undefined && record.normalisedQty !== null ? String(record.normalisedQty) : '',
       noOfWagons: record.noOfWagons !== undefined && record.noOfWagons !== null ? String(record.noOfWagons) : '',
       udRemark: record.udRemark || '',
+      fnrNo: record.fnrNo || '',
+      inMotionQty: record.inMotionQty !== undefined && record.inMotionQty !== null ? String(record.inMotionQty) : (record.vllQty !== undefined && record.vllQty !== null ? String(record.vllQty) : ''),
+      esplTInvNo: record.esplTInvNo || '',
+      esplHInvNo: record.esplHInvNo || '',
+      invDate: record.invDate || '',
+      tInvAmt: record.tInvAmt !== undefined && record.tInvAmt !== null ? String(record.tInvAmt) : '',
+      hInvAmt: record.hInvAmt !== undefined && record.hInvAmt !== null ? String(record.hInvAmt) : '',
       quality: {
         tm: record.quality?.tm !== undefined ? String(record.quality.tm) : '',
         im: record.quality?.im !== undefined ? String(record.quality.im) : '',
@@ -644,6 +822,11 @@ export default function RREntryPage() {
     setIsModalOpen(true);
   };
 
+  const handleOpenQualityEdit = (record: any) => {
+    handleOpenEdit(record);
+    setActiveTab('quality');
+  };
+
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -666,11 +849,18 @@ export default function RREntryPage() {
       ocp: form.ocp || null,
       rrActQty: parseFloat(form.rrActQty) || 0,
       rrChQty: parseFloat(form.rrChQty) || 0,
-      vllQty: parseFloat(form.vllQty) || 0,
+      vllQty: parseFloat(form.inMotionQty) || parseFloat(form.vllQty) || 0,
       grnQty: parseFloat(form.grnQty) || 0,
       normalisedQty: parseFloat(form.normalisedQty !== undefined && form.normalisedQty !== '' ? form.normalisedQty : form.grnQty) || 0,
       noOfWagons: form.noOfWagons ? parseInt(form.noOfWagons) || null : null,
       udRemark: form.udRemark || null,
+      fnrNo: form.fnrNo || null,
+      inMotionQty: form.inMotionQty ? parseFloat(form.inMotionQty) : null,
+      esplTInvNo: form.esplTInvNo || null,
+      esplHInvNo: form.esplHInvNo || null,
+      invDate: form.invDate || null,
+      tInvAmt: form.tInvAmt ? parseFloat(form.tInvAmt) : null,
+      hInvAmt: form.hInvAmt ? parseFloat(form.hInvAmt) : null,
       quality: {
         tm: parseFloat(form.quality.tm) || 0,
         im: parseFloat(form.quality.im) || 0,
@@ -840,23 +1030,48 @@ export default function RREntryPage() {
           </div>
         </div>
       )}
+
       {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">RR Entry</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Log railway receipt logs, actual and challan invoice weights, VLL, and GRN receipts
-          </p>
+          {activeSectionTab === 'entry' && (
+            <>
+              <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">RR Entry</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Log railway receipt logs, actual and challan weights, in-motion weight, and GRN receipts.
+              </p>
+            </>
+          )}
+          {activeSectionTab === 'recon' && (
+            <>
+              <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quantity Reconciliation</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Reconcile weight discrepancies (In-Motion vs Actual, GRN weights) and track DO-wise balance status.
+              </p>
+            </>
+          )}
+          {activeSectionTab === 'quality' && (
+            <>
+              <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quality Analysis</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Track chemical proximate parameters (ash, moisture, GCV) and quality penalties per Railway Receipt.
+              </p>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-          {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="RR Entry" />}
-          <SectionExcelExport sectionName="RR Entry" />
-          <button
-            onClick={handleOpenAdd}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm shrink-0"
-          >
-            <Plus className="h-4 w-4" /> Add RR Entry
-          </button>
+          {activeSectionTab === 'entry' && (
+            <>
+              {user?.role?.endsWith('_ADMIN') && <SectionExcelImport sectionName="RR Entry" />}
+              <SectionExcelExport sectionName="RR Entry" />
+              <button
+                onClick={handleOpenAdd}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm shrink-0"
+              >
+                <Plus className="h-4 w-4" /> Add RR Entry
+              </button>
+            </>
+          )}
           <button
             onClick={() => fetchData()}
             disabled={loading}
@@ -868,280 +1083,824 @@ export default function RREntryPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total RR Registered</span>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-800">{stats.totalCount}</span>
-            <span className="text-[10px] text-slate-400">wagons / shipments</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total GRN Received</span>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-blue-600">{stats.totalGrnQty.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-slate-400">Metric Tons</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Normalised Weight</span>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-emerald-700">{stats.totalNormQty.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-slate-400">MT normalised</span>
-          </div>
-        </div>
+      {/* Tabs Selector Navigation */}
+      <div className="flex border border-slate-200 bg-slate-50/50 rounded-2xl p-1 shadow-sm shrink-0 gap-1">
+        <button
+          onClick={() => {
+            setActiveSectionTab('entry');
+            router.push('/coal-rcr/rr-entry?tab=entry');
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
+            activeSectionTab === 'entry'
+              ? 'bg-blue-600 text-white shadow-sm font-sans'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 font-sans'
+          }`}
+        >
+          <ClipboardList className="h-4 w-4" />
+          1. RR Entry
+        </button>
+        <button
+          onClick={() => {
+            setActiveSectionTab('recon');
+            router.push('/coal-rcr/rr-entry?tab=recon');
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
+            activeSectionTab === 'recon'
+              ? 'bg-blue-600 text-white shadow-sm font-sans'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 font-sans'
+          }`}
+        >
+          <GitCompare className="h-4 w-4" />
+          2. Quantity Reconciliation
+        </button>
+        <button
+          onClick={() => {
+            setActiveSectionTab('quality');
+            router.push('/coal-rcr/rr-entry?tab=quality');
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
+            activeSectionTab === 'quality'
+              ? 'bg-blue-600 text-white shadow-sm font-sans'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 font-sans'
+          }`}
+        >
+          <Activity className="h-4 w-4" />
+          3. Quality Analysis
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex-1 relative max-w-md">
-          <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            placeholder="Search by RR No, DO No, Siding..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-9 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-colors font-sans"
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-3.5 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-4 self-end md:self-auto flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-semibold font-sans">Filter by OCP:</span>
-            <select
-              value={ocpFilter}
-              onChange={(e) => { setOcpFilter(e.target.value); setCurrentPage(1); }}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer animate-fade-in"
-            >
-              <option value="All">All OCPs</option>
-              {uniqueOCPs.map(ocp => (
-                <option key={ocp} value={ocp}>{ocp}</option>
-              ))}
-            </select>
+      {/* Stats Panel */}
+      {activeSectionTab === 'entry' && (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total RR Registered</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-800">{stats.totalCount}</span>
+              <span className="text-[10px] text-slate-400">wagons / shipments</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-semibold font-sans">Filter by DO:</span>
-            <select
-              value={doNoFilter}
-              onChange={(e) => { setDoNoFilter(e.target.value); setCurrentPage(1); }}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
-            >
-              <option value="All">All DO Numbers</option>
-              {doRecords.map(d => (
-                <option key={d.id} value={d.doNo}>{d.doNo}</option>
-              ))}
-            </select>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total GRN Received</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-blue-600">{stats.totalGrnQty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-slate-400">Metric Tons</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Normalised Weight</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-emerald-700">{stats.totalNormQty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-slate-400">MT normalised</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Table grid */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <ClipboardList className="h-4.5 w-4.5 text-blue-600" /> RR Receipts ({filteredRecords.length})
-          </h3>
-          {user?.role?.endsWith('_ADMIN') && (
-            <div className="flex items-center gap-2">
-              {isDeleteMode ? (
-                <>
-                  {selectedIds.length > 0 && (
-                    <button
-                      onClick={handleBulkDelete}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete Selected ({selectedIds.length})
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setIsDeleteMode(false);
-                      setSelectedIds([]);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setIsDeleteMode(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+      {activeSectionTab === 'recon' && (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Allocated DO Qty</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-800">{reconStats.totalDOQty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-slate-400">Metric Tons</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Lifted (Actual)</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-blue-600">{reconStats.totalLiftedQty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-slate-400">Metric Tons</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total GRN Received</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-emerald-700">{reconStats.totalGrnQty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-slate-400">Metric Tons</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Weight Diff (IM vs Act)</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className={`text-2xl font-extrabold ${reconStats.weightDifference >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {reconStats.weightDifference >= 0 ? '+' : ''}{reconStats.weightDifference.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[10px] text-slate-400">MT</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSectionTab === 'quality' && (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Analyzed RRs</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-800">{qualityStats.totalCount}</span>
+              <span className="text-[10px] text-slate-400">RRs tested</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Avg GCV (ADB)</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-blue-600">{qualityStats.avgGcvAdb.toLocaleString()}</span>
+              <span className="text-[10px] text-slate-400">kcal/kg</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Avg GCV (ARB)</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-blue-600">{qualityStats.avgGcvArb.toLocaleString()}</span>
+              <span className="text-[10px] text-slate-400">kcal/kg</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Quality Penalty</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-red-600">₹{qualityStats.totalPenalty.toLocaleString('en-IN')}</span>
+              <span className="text-[10px] text-red-500 font-semibold">deductions</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Content Views */}
+      {activeSectionTab === 'entry' && (
+        <div className="space-y-6">
+          {/* Filters */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex-1 relative max-w-md">
+              <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                placeholder="Search by RR No, DO No, Siding, OCP..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-9 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-colors font-sans"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-3.5 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                  Select to Delete
+                  <X className="h-3 w-3" />
                 </button>
               )}
             </div>
-          )}
-        </div>
+            <div className="flex items-center gap-4 self-end md:self-auto flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-semibold font-sans">Filter by OCP:</span>
+                <select
+                  value={ocpFilter}
+                  onChange={(e) => { setOcpFilter(e.target.value); setCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+                >
+                  <option value="All">All OCPs</option>
+                  {uniqueOCPs.map(ocp => (
+                    <option key={ocp} value={ocp}>{ocp}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-semibold font-sans">Filter by DO:</span>
+                <select
+                  value={doNoFilter}
+                  onChange={(e) => { setDoNoFilter(e.target.value); setCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+                >
+                  <option value="All">All DO Numbers</option>
+                  {doRecords.map(d => (
+                    <option key={d.id} value={d.doNo}>{d.doNo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[1500px]">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
-                {isDeleteMode && (
-                  <th className="w-10 px-5 py-4 text-center">
-                    <input
-                      type="checkbox"
-                      checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedIds.includes(r.id))}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          const newSelections = [...selectedIds];
-                          paginatedRecords.forEach(r => {
-                            if (!newSelections.includes(r.id)) {
-                              newSelections.push(r.id);
-                            }
-                          });
-                          setSelectedIds(newSelections);
-                        } else {
-                          setSelectedIds(selectedIds.filter(id => !paginatedRecords.some(r => r.id === id)));
-                        }
-                      }}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
-                    />
-                  </th>
-                )}
-                <th className="px-5 py-4 w-12 text-center">SL.</th>
-                <th className="px-5 py-4">RR No</th>
-                <th className="px-5 py-4">RR Date</th>
-                <th className="px-5 py-4">Invoice Date</th>
-                <th className="px-5 py-4">Receipt Date</th>
-                <th className="px-5 py-4">From</th>
-                <th className="px-5 py-4">To</th>
-                <th className="px-5 py-4">OCP</th>
-                <th className="px-5 py-4">DO No</th>
-                <th className="px-5 py-4 text-right">RR Chargeable Weight</th>
-                <th className="px-5 py-4 text-right">RR Actual Qty</th>
-                <th className="px-5 py-4 text-right">VLL In-Motion Qty</th>
-                <th className="px-5 py-4 text-right">GRN Qty</th>
-                <th className="px-5 py-4 text-right">Normalised Qty</th>
-                <th className="px-5 py-4 text-center">No. of Wagons</th>
-                <th className="px-5 py-4">U/D Remark</th>
-                <th className="px-5 py-4 text-center w-24">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-600">
-              {loading ? (
-                <tr>
-                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-12 text-center text-slate-500 font-semibold">
-                    <span className="flex items-center justify-center gap-2 text-slate-400">
-                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching railway receipts...
-                    </span>
-                  </td>
-                </tr>
-              ) : filteredRecords.length === 0 ? (
-                <tr>
-                  <td colSpan={isDeleteMode ? 18 : 17} className="px-6 py-12 text-center text-slate-400 font-bold">
-                    No RR entries found.
-                  </td>
-                </tr>
-              ) : (
-                paginatedRecords.map((r, idx) => (
-                  <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
+          {/* Table Grid with 24 Columns */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 font-sans">
+                <ClipboardList className="h-4.5 w-4.5 text-blue-600" /> RR Receipts ({filteredRecords.length})
+              </h3>
+              {user?.role?.endsWith('_ADMIN') && (
+                <div className="flex items-center gap-2">
+                  {isDeleteMode ? (
+                    <>
+                      {selectedIds.length > 0 && (
+                        <button
+                          onClick={handleBulkDelete}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete Selected ({selectedIds.length})
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsDeleteMode(false);
+                          setSelectedIds([]);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setIsDeleteMode(true)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm shadow-slate-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                      Select to Delete
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse min-w-[2500px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
                     {isDeleteMode && (
-                      <td className="w-10 px-5 py-4 text-center">
+                      <th className="w-10 px-4 py-4 text-center">
                         <input
                           type="checkbox"
-                          checked={selectedIds.includes(r.id)}
+                          checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedIds.includes(r.id))}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedIds([...selectedIds, r.id]);
+                              const newSelections = [...selectedIds];
+                              paginatedRecords.forEach(r => {
+                                if (!newSelections.includes(r.id)) {
+                                  newSelections.push(r.id);
+                                }
+                              });
+                              setSelectedIds(newSelections);
                             } else {
-                              setSelectedIds(selectedIds.filter(id => id !== r.id));
+                              setSelectedIds(selectedIds.filter(id => !paginatedRecords.some(r => r.id === id)));
                             }
                           }}
                           className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
                         />
-                      </td>
+                      </th>
                     )}
-                    <td className="px-5 py-4 font-bold text-slate-400 text-center">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                    </td>
-                    <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
-                      {r.rrNo}
-                    </td>
-                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.rrDate || '—'}</td>
-                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.invoiceDate || '—'}</td>
-                    <td className="px-5 py-4 font-semibold font-mono text-slate-600">{r.receiptDate || '—'}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.from || '—'}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.to || '—'}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{r.ocp || '—'}</td>
-                    <td className="px-5 py-4 font-mono font-bold text-slate-700">
-                      {r.doNo}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrChQty || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.rrActQty || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right">{Number(r.vllQty || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-blue-600">{Number(r.grnQty || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-slate-800 text-right font-bold text-emerald-600">{Number(r.normalisedQty || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 text-center font-semibold text-slate-700">{r.noOfWagons || '—'}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-600 max-w-[150px] truncate" title={r.udRemark || ''}>{r.udRemark || '—'}</td>
-                    <td className="px-5 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(r)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(r.id)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                    <th className="px-4 py-4 w-12 text-center">SL.</th>
+                    <th className="px-4 py-4">RR No</th>
+                    <th className="px-4 py-4">RR Date</th>
+                    <th className="px-4 py-4">FNR NO</th>
+                    <th className="px-4 py-4">Source Siding</th>
+                    <th className="px-4 py-4">Destination</th>
+                    <th className="px-4 py-4">OCP</th>
+                    <th className="px-4 py-4">DO No</th>
+                    <th className="px-4 py-4 text-right">RR Chrg Qty</th>
+                    <th className="px-4 py-4 text-right">RR Act Qty</th>
+                    <th className="px-4 py-4 text-right">In Motion Qty</th>
+                    <th className="px-4 py-4 text-right">GRN Qty</th>
+                    <th className="px-4 py-4 text-center">No of Wagon</th>
+                    <th className="px-4 py-4 text-right">POL1/A</th>
+                    <th className="px-4 py-4 text-right">POL2</th>
+                    <th className="px-4 py-4 text-right">ENHC</th>
+                    <th className="px-4 py-4 text-right">DCLA</th>
+                    <th className="px-4 py-4 text-right">FAUC</th>
+                    <th className="px-4 py-4 text-right">DEAD FREIGHT</th>
+                    <th className="px-4 py-4">ESPL (T) INV NO.</th>
+                    <th className="px-4 py-4">ESPL (H) INV NO.</th>
+                    <th className="px-4 py-4">DATE</th>
+                    <th className="px-4 py-4 text-right">T INV AMT</th>
+                    <th className="px-4 py-4 text-right">H INV AMT</th>
+                    <th className="px-4 py-4 text-center w-24">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600 font-sans">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={isDeleteMode ? 26 : 25} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                        <span className="flex items-center justify-center gap-2 text-slate-400">
+                          <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching railway receipts...
+                        </span>
+                      </td>
+                    </tr>
+                  ) : filteredRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={isDeleteMode ? 26 : 25} className="px-6 py-12 text-center text-slate-400 font-bold">
+                        No RR entries found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedRecords.map((r, idx) => (
+                      <tr key={r.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(r.id) ? 'bg-blue-50/20' : ''}`}>
+                        {isDeleteMode && (
+                          <td className="w-10 px-4 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(r.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedIds([...selectedIds, r.id]);
+                                } else {
+                                  setSelectedIds(selectedIds.filter(id => id !== r.id));
+                                }
+                              }}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                            />
+                          </td>
+                        )}
+                        <td className="px-4 py-4 font-bold text-slate-400 text-center">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                        </td>
+                        <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
+                          {r.rrNo}
+                        </td>
+                        <td className="px-4 py-4 font-semibold font-mono text-slate-600">{r.rrDate || '—'}</td>
+                        <td className="px-4 py-4 font-semibold font-mono text-slate-600 uppercase">{r.fnrNo || '—'}</td>
+                        <td className="px-4 py-4 font-semibold text-slate-700">{r.siding || '—'}</td>
+                        <td className="px-4 py-4 font-semibold text-slate-700">{r.to || '—'}</td>
+                        <td className="px-4 py-4 font-semibold text-slate-700">{r.ocp || '—'}</td>
+                        <td className="px-4 py-4 font-mono font-bold text-slate-700">{r.doNo}</td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right">{Number(r.rrChQty || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right">{Number(r.rrActQty || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right">
+                          {Number(r.inMotionQty !== undefined && r.inMotionQty !== null ? r.inMotionQty : r.vllQty || 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right font-bold text-blue-600">{Number(r.grnQty || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 text-center font-semibold text-slate-700">{r.noOfWagons || '—'}</td>
+                        
+                        {/* Deductions Columns */}
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.pol1 || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.pol2 || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.enhc || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.dcla || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.fauc || 0).toFixed(2)}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-right">{Number(r.deductions?.deadFreight || 0).toFixed(2)}</td>
+                        
+                        {/* ESPL Invoice Columns */}
+                        <td className="px-4 py-4 font-semibold font-mono text-slate-700 uppercase">{r.esplTInvNo || '—'}</td>
+                        <td className="px-4 py-4 font-semibold font-mono text-slate-700 uppercase">{r.esplHInvNo || '—'}</td>
+                        <td className="px-4 py-4 font-semibold font-mono text-slate-600">{r.invDate || '—'}</td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right">
+                          {r.tInvAmt !== undefined && r.tInvAmt !== null ? Number(r.tInvAmt).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '—'}
+                        </td>
+                        <td className="px-4 py-4 font-mono text-slate-800 text-right">
+                          {r.hInvAmt !== undefined && r.hInvAmt !== null ? Number(r.hInvAmt).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '—'}
+                        </td>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/30">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              Page {currentPage} of {totalPages}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Next
-              </button>
+                        <td className="px-4 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleOpenEdit(r)}
+                              className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(r.id)}
+                              className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/30">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeSectionTab === 'recon' && (
+        <div className="space-y-8">
+          {/* DO Master Reconciliation Summary */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 font-sans">
+                <GitCompare className="h-4.5 w-4.5 text-blue-600" /> DO-wise Reconciliation Summary
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-5 py-4 w-12 text-center">SL.</th>
+                    <th className="px-5 py-4">DO Number</th>
+                    <th className="px-5 py-4">Month</th>
+                    <th className="px-5 py-4">Siding</th>
+                    <th className="px-5 py-4 text-right">DO Qty (MT)</th>
+                    <th className="px-5 py-4 text-right">Total Lifted Qty (MT)</th>
+                    <th className="px-5 py-4 text-right">Balance Qty (MT)</th>
+                    <th className="px-5 py-4 text-center">Tolerance %</th>
+                    <th className="px-5 py-4 text-right">Tolerance Qty (MT)</th>
+                    <th className="px-5 py-4 text-right">Final Balance (MT)</th>
+                    <th className="px-5 py-4 text-center">Linked RRs</th>
+                    <th className="px-5 py-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600 font-sans">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={12} className="px-6 py-12 text-center text-slate-400 font-semibold">
+                        Fetching DO reconciliation details...
+                      </td>
+                    </tr>
+                  ) : doSummaryList.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="px-6 py-12 text-center text-slate-400 font-bold">
+                        No DO records found.
+                      </td>
+                    </tr>
+                  ) : (
+                    doSummaryList.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
+                        <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
+                        <td className="px-5 py-4 font-semibold text-slate-600">{item.month || '—'}</td>
+                        <td className="px-5 py-4 font-semibold text-slate-700">{item.siding || '—'}</td>
+                        <td className="px-5 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toFixed(2)}</td>
+                        <td className="px-5 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toFixed(2)}</td>
+                        <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{item.balanceQty.toFixed(2)}</td>
+                        <td className="px-5 py-4 font-mono text-center font-bold text-slate-500">{item.tolerancePercent}%</td>
+                        <td className="px-5 py-4 font-mono text-right text-slate-500">{item.toleranceQty.toFixed(2)}</td>
+                        <td className={`px-5 py-4 font-mono text-right font-extrabold ${item.balanceExclTolerance < 0 ? 'text-red-500' : 'text-emerald-700'}`}>
+                          {item.balanceExclTolerance.toFixed(2)}
+                        </td>
+                        <td className="px-5 py-4 text-center font-mono font-bold text-slate-600">{item.rrCount} RRs</td>
+                        <td className="px-5 py-4 text-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+                            item.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                            item.status === 'Expired' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                            'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* RR Entry Weight Reconciliation */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 font-sans">
+                <GitCompare className="h-4.5 w-4.5 text-blue-600" /> RR-wise Weight Discrepancies
+              </h3>
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={reconSearchQuery}
+                    onChange={(e) => { setReconSearchQuery(e.target.value); setReconCurrentPage(1); }}
+                    placeholder="Search RR, siding, mine..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-blue-500/50 transition-colors"
+                  />
+                </div>
+                <select
+                  value={reconOcpFilter}
+                  onChange={(e) => { setReconOcpFilter(e.target.value); setReconCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="All">All OCPs</option>
+                  {uniqueOCPs.map(ocp => (
+                    <option key={ocp} value={ocp}>{ocp}</option>
+                  ))}
+                </select>
+                <select
+                  value={reconDoFilter}
+                  onChange={(e) => { setReconDoFilter(e.target.value); setReconCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="All">All DOs</option>
+                  {doRecords.map(d => (
+                    <option key={d.id} value={d.doNo}>{d.doNo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-5 py-4 w-12 text-center">SL.</th>
+                    <th className="px-5 py-4">RR No</th>
+                    <th className="px-5 py-4">DO No</th>
+                    <th className="px-5 py-4">OCP</th>
+                    <th className="px-5 py-4">Siding</th>
+                    <th className="px-5 py-4 text-right">RR Act Qty (A)</th>
+                    <th className="px-5 py-4 text-right">In-Motion Qty (B)</th>
+                    <th className="px-5 py-4 text-right">GRN Qty (C)</th>
+                    <th className="px-5 py-4 text-right">Weight Diff (B - A)</th>
+                    <th className="px-5 py-4 text-right">Shortage Qty (C - A)</th>
+                    <th className="px-5 py-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600 font-sans">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={11} className="px-6 py-12 text-center text-slate-400 font-semibold">
+                        Fetching RR discrepancies...
+                      </td>
+                    </tr>
+                  ) : filteredReconRRs.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="px-6 py-12 text-center text-slate-400 font-bold">
+                        No RR discrepancy records found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedReconRRs.map((rr, idx) => {
+                      const actQty = Number(rr.rrActQty) || 0;
+                      const imQty = Number(rr.inMotionQty !== undefined && rr.inMotionQty !== null ? rr.inMotionQty : rr.vllQty || 0);
+                      const grnQty = Number(rr.grnQty) || 0;
+                      
+                      const imDiff = imQty - actQty;
+                      const shortage = grnQty - actQty;
+
+                      return (
+                        <tr key={rr.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-4 font-bold text-slate-400 text-center">
+                            {(reconCurrentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                          </td>
+                          <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase">{rr.rrNo}</td>
+                          <td className="px-5 py-4 font-mono font-bold text-slate-700">{rr.doNo}</td>
+                          <td className="px-5 py-4 font-semibold text-slate-600">{rr.ocp || '—'}</td>
+                          <td className="px-5 py-4 font-semibold text-slate-600">{rr.siding || '—'}</td>
+                          <td className="px-5 py-4 font-mono text-right text-slate-700">{actQty.toFixed(2)}</td>
+                          <td className="px-5 py-4 font-mono text-right text-slate-700">{imQty.toFixed(2)}</td>
+                          <td className="px-5 py-4 font-mono text-right font-bold text-blue-600">{grnQty.toFixed(2)}</td>
+                          <td className={`px-5 py-4 font-mono text-right font-bold ${
+                            imDiff === 0 ? 'text-slate-500' : imDiff > 0 ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            {imDiff === 0 ? '—' : `${imDiff > 0 ? '+' : ''}${imDiff.toFixed(2)}`}
+                          </td>
+                          <td className={`px-5 py-4 font-mono text-right font-bold ${
+                            shortage === 0 ? 'text-slate-500' : shortage > 0 ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            {shortage === 0 ? '—' : `${shortage > 0 ? '+' : ''}${shortage.toFixed(2)}`}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                              Math.abs(shortage) <= 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                            }`}>
+                              {Math.abs(shortage) <= 1 ? 'Ok' : 'Slippage'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {reconTotalPages > 1 && (
+              <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/30">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Page {reconCurrentPage} of {reconTotalPages}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setReconCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={reconCurrentPage === 1}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setReconCurrentPage(p => Math.min(reconTotalPages, p + 1))}
+                    disabled={reconCurrentPage === reconTotalPages}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeSectionTab === 'quality' && (
+        <div className="space-y-6">
+          {/* Filter Panel */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex-1 relative max-w-md">
+              <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={qualitySearchQuery}
+                onChange={(e) => { setQualitySearchQuery(e.target.value); setQualityCurrentPage(1); }}
+                placeholder="Search by RR No or DO No..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-9 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-colors font-sans"
+              />
+              {qualitySearchQuery && (
+                <button 
+                  onClick={() => setQualitySearchQuery('')}
+                  className="absolute right-3 top-3.5 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-4 self-end md:self-auto flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-semibold font-sans">Filter by OCP:</span>
+                <select
+                  value={qualityOcpFilter}
+                  onChange={(e) => { setQualityOcpFilter(e.target.value); setQualityCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+                >
+                  <option value="All">All OCPs</option>
+                  {uniqueOCPs.map(ocp => (
+                    <option key={ocp} value={ocp}>{ocp}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-semibold font-sans">Filter by DO:</span>
+                <select
+                  value={qualityDoFilter}
+                  onChange={(e) => { setQualityDoFilter(e.target.value); setQualityCurrentPage(1); }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-bold font-sans focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
+                >
+                  <option value="All">All DO Numbers</option>
+                  {doRecords.map(d => (
+                    <option key={d.id} value={d.doNo}>{d.doNo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Quality Grid Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 font-sans">
+                <Activity className="h-4.5 w-4.5 text-blue-600" /> Quality Audits ({filteredQualityRecords.length})
+              </h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-5 py-4 w-12 text-center">SL.</th>
+                    <th className="px-5 py-4">RR No</th>
+                    <th className="px-5 py-4">DO No</th>
+                    <th className="px-5 py-4 text-right">Normalised Qty (MT)</th>
+                    <th className="px-5 py-4 text-right">TM (%)</th>
+                    <th className="px-5 py-4 text-right">IM (%)</th>
+                    <th className="px-5 py-4 text-right">Ash (%)</th>
+                    <th className="px-5 py-4 text-right">VM (%)</th>
+                    <th className="px-5 py-4 text-right">FC (%)</th>
+                    <th className="px-5 py-4 text-right">GCV ADB (kcal)</th>
+                    <th className="px-5 py-4 text-right">GCV ARB (kcal)</th>
+                    <th className="px-5 py-4 text-right">Penalty (₹)</th>
+                    <th className="px-5 py-4 text-center w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600 font-sans">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={13} className="px-6 py-12 text-center text-slate-500 font-semibold">
+                        <span className="flex items-center justify-center gap-2 text-slate-400">
+                          <RefreshCw className="h-4 w-4 animate-spin text-blue-600" /> Fetching quality logs...
+                        </span>
+                      </td>
+                    </tr>
+                  ) : filteredQualityRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="px-6 py-12 text-center text-slate-400 font-bold">
+                        No Quality records found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedQualityRecords.map((r, idx) => {
+                      const tm = r.quality?.tm !== undefined ? Number(r.quality.tm) : 0;
+                      const im = r.quality?.im !== undefined ? Number(r.quality.im) : 0;
+                      const ash = r.quality?.ash !== undefined ? Number(r.quality.ash) : 0;
+                      const vm = r.quality?.vm !== undefined ? Number(r.quality.vm) : 0;
+                      const fc = r.quality?.fc !== undefined ? Number(r.quality.fc) : 0;
+                      const gcvAdb = r.quality?.gcvAdb !== undefined ? Number(r.quality.gcvAdb) : 0;
+                      const gcvArb = r.quality?.gcvArb !== undefined ? Number(r.quality.gcvArb) : 0;
+                      const penalty = r.quality?.qualityPenalty !== undefined ? Number(r.quality.qualityPenalty) : 0;
+
+                      return (
+                        <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-4 font-bold text-slate-400 text-center">
+                            {(qualityCurrentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                          </td>
+                          <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase tracking-wider">
+                            {r.rrNo}
+                          </td>
+                          <td className="px-5 py-4 font-mono font-bold text-slate-700">
+                            {r.doNo}
+                          </td>
+                          <td className="px-5 py-4 font-mono text-right font-bold text-emerald-700">
+                            {Number(r.normalisedQty || 0).toFixed(2)}
+                          </td>
+                          <td className="px-5 py-4 font-mono text-right">{tm.toFixed(2)}%</td>
+                          <td className="px-5 py-4 font-mono text-right">{im.toFixed(2)}%</td>
+                          <td className="px-5 py-4 font-mono text-right">{ash.toFixed(2)}%</td>
+                          <td className="px-5 py-4 font-mono text-right">{vm.toFixed(2)}%</td>
+                          <td className="px-5 py-4 font-mono text-right">{fc.toFixed(2)}%</td>
+                          <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(gcvAdb)}</td>
+                          <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{Math.round(gcvArb)}</td>
+                          <td className="px-5 py-4 font-mono text-right font-bold text-red-600">
+                            ₹{penalty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleOpenQualityEdit(r)}
+                                className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(r.id)}
+                                className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {qualityTotalPages > 1 && (
+              <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/30">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Page {qualityCurrentPage} of {qualityTotalPages}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setQualityCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={qualityCurrentPage === 1}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setQualityCurrentPage(p => Math.min(qualityTotalPages, p + 1))}
+                    disabled={qualityCurrentPage === qualityTotalPages}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Entry/Edit Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-xl overflow-hidden animate-scale-up flex flex-col max-h-[90vh]">
-            {/* Header */}
+            {/* Modal Header */}
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50 shrink-0">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 font-sans">
                 <ClipboardList className="h-4.5 w-4.5 text-blue-600" />
                 {editingRecord ? 'Edit RR Entry' : 'Add RR Entry'}
               </h3>
@@ -1153,14 +1912,14 @@ export default function RREntryPage() {
               </button>
             </div>
 
-            {/* Tabs Navigation */}
+            {/* Modal Navigation Tabs */}
             <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('rr-details')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors font-sans ${
                   activeTab === 'rr-details'
-                    ? 'border-blue-600 text-blue-600 bg-white'
+                    ? 'border-blue-600 text-blue-600 bg-white shadow-sm'
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
@@ -1169,9 +1928,9 @@ export default function RREntryPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('quality')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors font-sans ${
                   activeTab === 'quality'
-                    ? 'border-blue-600 text-blue-600 bg-white'
+                    ? 'border-blue-600 text-blue-600 bg-white shadow-sm'
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
@@ -1180,9 +1939,9 @@ export default function RREntryPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('deductions')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors font-sans ${
                   activeTab === 'deductions'
-                    ? 'border-blue-600 text-blue-600 bg-white'
+                    ? 'border-blue-600 text-blue-600 bg-white shadow-sm'
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
@@ -1190,14 +1949,14 @@ export default function RREntryPage() {
               </button>
             </div>
 
-            {/* Form */}
+            {/* Modal Form Content */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
               
               {/* Tab 1: RR Details */}
               {activeTab === 'rr-details' && (
                 <div className="space-y-4">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Basic RR Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 font-sans">Basic RR Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">DO Number <span className="text-red-500">*</span></label>
                       <select
@@ -1213,17 +1972,6 @@ export default function RREntryPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider">Siding</label>
-                      <input
-                        type="text"
-                        readOnly
-                        value={form.siding}
-                        placeholder="Siding name"
-                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-500 focus:outline-none font-semibold cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">RR Number <span className="text-red-500">*</span></label>
                       <input
                         type="text"
@@ -1236,78 +1984,23 @@ export default function RREntryPage() {
                     </div>
 
                     <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">FNR Number</label>
+                      <input
+                        type="text"
+                        value={form.fnrNo}
+                        onChange={(e) => setForm({ ...form, fnrNo: e.target.value })}
+                        placeholder="e.g. FNR-1234"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500/50 uppercase font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">OCP / Mine Name</label>
                       <input
                         type="text"
                         value={form.ocp}
                         onChange={(e) => setForm({ ...form, ocp: e.target.value })}
                         placeholder="e.g. Ananta"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> RR Date</label>
-                      <input
-                        type="date"
-                        value={form.rrDate}
-                        onChange={(e) => setForm({ ...form, rrDate: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Invoice Date</label>
-                      <input
-                        type="date"
-                        value={form.invoiceDate}
-                        onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Receipt Date</label>
-                      <input
-                        type="date"
-                        value={form.receiptDate}
-                        onChange={(e) => setForm({ ...form, receiptDate: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Loading Date</label>
-                      <input
-                        type="date"
-                        value={form.loadingDate}
-                        onChange={(e) => setForm({ ...form, loadingDate: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider">From Station</label>
-                      <input
-                        type="text"
-                        value={form.from}
-                        onChange={(e) => setForm({ ...form, from: e.target.value })}
-                        placeholder="From Loading Point"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider">To Station</label>
-                      <input
-                        type="text"
-                        value={form.to}
-                        onChange={(e) => setForm({ ...form, to: e.target.value })}
-                        placeholder="Destination Siding"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
                       />
                     </div>
@@ -1324,7 +2017,7 @@ export default function RREntryPage() {
                     </div>
                   </div>
 
-                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 pt-2">Quantities & Weights (MT)</h4>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 pt-2 font-sans">Quantities & Weights (MT)</h4>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                     <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">RR Chargeable Wt</label>
@@ -1351,12 +2044,12 @@ export default function RREntryPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-wider">VLL In-Motion Qty</label>
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">In Motion Qty</label>
                       <input
                         type="number"
                         step="0.01"
-                        value={form.vllQty}
-                        onChange={(e) => setForm({ ...form, vllQty: e.target.value })}
+                        value={form.inMotionQty}
+                        onChange={(e) => setForm({ ...form, inMotionQty: e.target.value, vllQty: e.target.value })}
                         placeholder="0.00"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
                       />
@@ -1388,6 +2081,65 @@ export default function RREntryPage() {
                     </div>
                   </div>
 
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 pt-2 font-sans">ESPL Invoice Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">ESPL (T) Inv No.</label>
+                      <input
+                        type="text"
+                        value={form.esplTInvNo}
+                        onChange={(e) => setForm({ ...form, esplTInvNo: e.target.value })}
+                        placeholder="T Inv No"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">ESPL (H) Inv No.</label>
+                      <input
+                        type="text"
+                        value={form.esplHInvNo}
+                        onChange={(e) => setForm({ ...form, esplHInvNo: e.target.value })}
+                        placeholder="H Inv No"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">Invoice Date</label>
+                      <input
+                        type="date"
+                        value={form.invDate}
+                        onChange={(e) => setForm({ ...form, invDate: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none font-mono cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">T Inv Amt (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.tInvAmt}
+                        onChange={(e) => setForm({ ...form, tInvAmt: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-500 uppercase tracking-wider">H Inv Amt (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.hInvAmt}
+                        onChange={(e) => setForm({ ...form, hInvAmt: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
                     <label className="font-bold text-slate-500 uppercase tracking-wider">U/D Remark</label>
                     <textarea
@@ -1404,7 +2156,7 @@ export default function RREntryPage() {
               {/* Tab 2: Quality Analysis */}
               {activeTab === 'quality' && (
                 <div className="space-y-4">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Proximate Chemical Parameters & GCV</h4>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 font-sans">Proximate Chemical Parameters & GCV</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">Total Moisture (TM %)</label>
@@ -1534,7 +2286,7 @@ export default function RREntryPage() {
               {/* Tab 3: Charges & Deductions */}
               {activeTab === 'deductions' && (
                 <div className="space-y-4">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2">Commercial Surcharges & Penalty Deductions</h4>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-800 border-b border-slate-100 pb-2 font-sans">Commercial Surcharges & Penalty Deductions</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-1">
                       <label className="font-bold text-slate-500 uppercase tracking-wider">POL 1 / A (₹)</label>
@@ -1730,7 +2482,7 @@ export default function RREntryPage() {
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-white font-extrabold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm"
+                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-white font-extrabold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm font-sans"
                   >
                     Save Record
                   </button>

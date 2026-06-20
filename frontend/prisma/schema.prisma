@@ -320,6 +320,13 @@ model CoalRREntry {
   normalisedQty Decimal   @db.Decimal(12, 2)
   noOfWagons    Int?
   udRemark      String?
+  fnrNo         String?
+  inMotionQty   Decimal?  @db.Decimal(12, 2)
+  esplTInvNo    String?
+  esplHInvNo    String?
+  invDate       String?
+  tInvAmt       Decimal?  @db.Decimal(12, 2)
+  hInvAmt       Decimal?  @db.Decimal(12, 2)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

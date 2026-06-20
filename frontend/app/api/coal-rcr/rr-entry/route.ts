@@ -60,7 +60,8 @@ export async function POST(req: NextRequest) {
           const {
             doNo, siding, rrNo, rrDate, invoiceDate, receiptDate, loadingDate,
             from, to, ocp, rrActQty, rrChQty, vllQty, grnQty, normalisedQty,
-            noOfWagons, udRemark, quality, deductions
+            noOfWagons, udRemark, quality, deductions,
+            fnrNo, inMotionQty, esplTInvNo, esplHInvNo, invDate, tInvAmt, hInvAmt
           } = item;
 
           if (!doNo || !rrNo || grnQty === undefined) {
@@ -98,6 +99,13 @@ export async function POST(req: NextRequest) {
               normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
               noOfWagons: noOfWagons ? parseInt(noOfWagons) || null : null,
               udRemark: udRemark || null,
+              fnrNo: fnrNo || null,
+              inMotionQty: inMotionQty !== undefined && inMotionQty !== null ? parseFloat(inMotionQty) : null,
+              esplTInvNo: esplTInvNo || null,
+              esplHInvNo: esplHInvNo || null,
+              invDate: invDate || null,
+              tInvAmt: tInvAmt !== undefined && tInvAmt !== null ? parseFloat(tInvAmt) : null,
+              hInvAmt: hInvAmt !== undefined && hInvAmt !== null ? parseFloat(hInvAmt) : null,
             }
           });
 
@@ -160,7 +168,8 @@ export async function POST(req: NextRequest) {
     const {
       id, doNo, siding, rrNo, rrDate, invoiceDate, receiptDate, loadingDate,
       from, to, ocp, rrActQty, rrChQty, vllQty, grnQty, normalisedQty,
-      noOfWagons, udRemark, quality, deductions
+      noOfWagons, udRemark, quality, deductions,
+      fnrNo, inMotionQty, esplTInvNo, esplHInvNo, invDate, tInvAmt, hInvAmt
     } = body;
 
     if (!doNo || !rrNo || grnQty === undefined) {
@@ -198,6 +207,13 @@ export async function POST(req: NextRequest) {
         normalisedQty: parseFloat(normalisedQty !== undefined && normalisedQty !== '' ? normalisedQty : grnQty) || 0,
         noOfWagons: noOfWagons ? parseInt(noOfWagons) || null : null,
         udRemark: udRemark || null,
+        fnrNo: fnrNo || null,
+        inMotionQty: inMotionQty !== undefined && inMotionQty !== null ? parseFloat(inMotionQty) : null,
+        esplTInvNo: esplTInvNo || null,
+        esplHInvNo: esplHInvNo || null,
+        invDate: invDate || null,
+        tInvAmt: tInvAmt !== undefined && tInvAmt !== null ? parseFloat(tInvAmt) : null,
+        hInvAmt: hInvAmt !== undefined && hInvAmt !== null ? parseFloat(hInvAmt) : null,
       };
 
       if (id && id.startsWith('rr-') === false) { // check if it is a real DB id or temp client-side id

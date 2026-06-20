@@ -38,6 +38,15 @@ export interface RREntryRecord {
   normalisedQty: number;
   noOfWagons?: number | null;
   udRemark?: string | null;
+  fnrNo?: string | null;
+  inMotionQty?: number | null;
+  esplTInvNo?: string | null;
+  esplHInvNo?: string | null;
+  invDate?: string | null;
+  tInvAmt?: number | null;
+  hInvAmt?: number | null;
+  quality?: any;
+  deductions?: any;
 }
 
 export interface QualityTrackingRecord {

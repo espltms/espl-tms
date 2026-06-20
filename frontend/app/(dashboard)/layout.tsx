@@ -3,7 +3,7 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useAuthStore } from '../../store/auth.store';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   LayoutDashboard, 
@@ -52,9 +52,9 @@ const navigationDivisions = [
     items: [
       { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'DO Lifting', path: '/coal-rcr/do-lifting', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'RR Entry', path: '/coal-rcr/rr-entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'Quantity Reconciliation', path: '/coal-rcr/quantity-recon', icon: GitCompare, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-      { label: 'Quality Analysis', path: '/coal-rcr/quality-tracking', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'RR Entry', path: '/coal-rcr/rr-entry?tab=entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'Quantity Reconciliation', path: '/coal-rcr/rr-entry?tab=recon', icon: GitCompare, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'Quality Analysis', path: '/coal-rcr/rr-entry?tab=quality', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'Charges & Deductions', path: '/coal-rcr/deduction-penalty', icon: Scale, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'Billing/ Payment', path: '/coal-rcr/billing-payment', icon: BadgeCent, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'OCP-wise Track Record', path: '/coal-rcr/ocp-track-record', icon: Milestone, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
@@ -95,9 +95,9 @@ const navigationDivisions = [
 const allNavItems = navigationDivisions.flatMap(div => div.items);
 
 const ROLE_ACCESS = {
-  SUPER_ADMIN: allNavItems.map(item => item.path),
-  SYS_ADMIN: allNavItems.map(item => item.path).filter(path => path !== '/fleet-master'),
-  BHAWANIPATNA_ADMIN: allNavItems.map(item => item.path).filter(path => !path.startsWith('/coal-rcr')),
+  SUPER_ADMIN: allNavItems.map(item => item.path.split('?')[0]),
+  SYS_ADMIN: allNavItems.map(item => item.path.split('?')[0]).filter(path => path !== '/fleet-master'),
+  BHAWANIPATNA_ADMIN: allNavItems.map(item => item.path.split('?')[0]).filter(path => !path.startsWith('/coal-rcr')),
   LANJIGARH_LOADER: ['/trips'],
   PARAMANANDPUR_UNLOADER: ['/unloading'],
   DHARAMGARH_UNLOADER: ['/unloading'],
@@ -156,8 +156,23 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, logout, isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const currentTab = searchParams.get('tab') || 'entry';
+  const isLinkActive = (itemPath: string) => {
+    const [basePath, query] = itemPath.split('?');
+    if (pathname !== basePath) return false;
+    if (!query) {
+      if (basePath === '/coal-rcr/rr-entry') {
+        return currentTab === 'entry';
+      }
+      return true;
+    }
+    const tabParam = query.split('tab=')[1];
+    return currentTab === tabParam;
+  };
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -258,7 +273,7 @@ export default function DashboardLayout({
     }
   };
 
-  const currentSectionName = allNavItems.find((n) => n.path === pathname)?.label || 'Current Section';
+  const currentSectionName = allNavItems.find((n) => isLinkActive(n.path))?.label || 'Current Section';
 
   if (!mounted || !isAuthenticated) {
     return (
@@ -291,7 +306,7 @@ export default function DashboardLayout({
                 <div className="space-y-0.5 mt-1.5">
                   {division.items.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.path;
+                    const isActive = isLinkActive(item.path);
                     return (
                       <Link
                         key={item.path}
@@ -396,7 +411,7 @@ export default function DashboardLayout({
                     <div className="space-y-1">
                       {division.items.map((item) => {
                         const Icon = item.icon;
-                        const isActive = pathname === item.path;
+                        const isActive = isLinkActive(item.path);
                         return (
                           <Link
                             key={item.path}
