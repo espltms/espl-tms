@@ -15,12 +15,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden. Only Super Admins and System Admins can access Coal RCR data.' }, { status: 403 });
     }
 
-    const rrRecords = await prisma.coalRREntry.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const qualityRecords = await prisma.coalQualityTracking.findMany();
-    const deductionRecords = await prisma.coalDeductionPenalty.findMany();
+    const [rrRecords, qualityRecords, deductionRecords] = await Promise.all([
+      prisma.coalRREntry.findMany({
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.coalQualityTracking.findMany(),
+      prisma.coalDeductionPenalty.findMany(),
+    ]);
 
     const qualityMap = new Map(qualityRecords.map(q => [q.rrNo, q]));
     const deductionMap = new Map(deductionRecords.map(d => [d.rrNo, d]));
