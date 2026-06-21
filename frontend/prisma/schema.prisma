@@ -329,6 +329,9 @@ model CoalRREntry {
   hInvAmt       Decimal?  @db.Decimal(12, 2)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([doNo])
+  @@index([rrNo])
 }
 
 model CoalQualityTracking {
@@ -345,6 +348,8 @@ model CoalQualityTracking {
   qualityPenalty Decimal   @db.Decimal(12, 2)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@index([doNo])
 }
 
 model CoalDeductionPenalty {
@@ -367,6 +372,8 @@ model CoalDeductionPenalty {
   remarks         String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([doNo])
 }
 
 model CoalBillingPayment {
@@ -382,6 +389,8 @@ model CoalBillingPayment {
   remarks      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  @@index([doNo])
 }
 
 model CoalDOLifting {

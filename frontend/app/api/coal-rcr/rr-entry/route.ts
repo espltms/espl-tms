@@ -22,9 +22,12 @@ export async function GET(req: NextRequest) {
     const qualityRecords = await prisma.coalQualityTracking.findMany();
     const deductionRecords = await prisma.coalDeductionPenalty.findMany();
 
+    const qualityMap = new Map(qualityRecords.map(q => [q.rrNo, q]));
+    const deductionMap = new Map(deductionRecords.map(d => [d.rrNo, d]));
+
     const data = rrRecords.map(rr => {
-      const quality = qualityRecords.find(q => q.rrNo === rr.rrNo);
-      const deductions = deductionRecords.find(d => d.rrNo === rr.rrNo);
+      const quality = qualityMap.get(rr.rrNo);
+      const deductions = deductionMap.get(rr.rrNo);
       return {
         ...rr,
         quality: quality || null,

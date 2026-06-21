@@ -119,7 +119,6 @@ const parseDateToYYYYMMDD = (val: unknown): string => {
 export default function DOMasterPage() {
   const { user } = useAuthStore();
   const [records, setRecords] = useState<DOMasterRecord[]>([]);
-  const [rrEntries, setRrEntries] = useState<RREntryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -184,17 +183,6 @@ export default function DOMasterPage() {
       } else {
         const local = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
         setRecords(local || []);
-      }
-
-      // Fetch RR entries to calculate Lifted Qty
-      const rrResponse = await fetch('/api/coal-rcr/rr-entry', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (rrResponse.ok) {
-        const rrRes = await rrResponse.json();
-        if (rrRes.success) {
-          setRrEntries(rrRes.data || []);
-        }
       }
     } catch (e) {
       console.error("Error fetching DO records:", e);
