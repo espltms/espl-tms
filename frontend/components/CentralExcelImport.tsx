@@ -583,7 +583,7 @@ export default function CentralExcelImport({ onImportSuccess }: { onImportSucces
         disabled={loading}
       >
         <Upload className="h-4 w-4" />
-        <span>{loading ? 'Reading File...' : 'Central Excel Import'}</span>
+        <span>{loading ? 'Reading File...' : 'Import Excel'}</span>
       </button>
 
       {mounted && typeof document !== 'undefined' && createPortal(
