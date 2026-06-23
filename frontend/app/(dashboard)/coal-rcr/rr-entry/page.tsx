@@ -771,7 +771,7 @@ export default function RREntryPage() {
       const matchesSearch = 
         r.rrNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
         r.doNo.toUpperCase().includes(searchQuery.toUpperCase()) ||
-        r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
+        (r.siding && r.siding.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.ocp && r.ocp.toUpperCase().includes(searchQuery.toUpperCase()));
         
       const matchesDO = doNoFilter === 'All' || r.doNo === doNoFilter;

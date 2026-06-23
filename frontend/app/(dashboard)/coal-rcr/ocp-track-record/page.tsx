@@ -182,7 +182,7 @@ export default function OcpTrackRecordPage() {
       return (
         r.rrNo.toUpperCase().includes(matchText) ||
         r.doNo.toUpperCase().includes(matchText) ||
-        r.siding.toUpperCase().includes(matchText)
+        (r.siding && r.siding.toUpperCase().includes(matchText))
       );
     });
   }, [mineData.mineRRs, searchQuery]);

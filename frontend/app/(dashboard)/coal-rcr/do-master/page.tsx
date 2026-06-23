@@ -364,7 +364,7 @@ export default function DOMasterPage() {
         (r.poNo && r.poNo.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.month && r.month.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mines && r.mines.toUpperCase().includes(searchQuery.toUpperCase())) ||
-        r.siding.toUpperCase().includes(searchQuery.toUpperCase()) ||
+        (r.siding && r.siding.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.coalCompany && r.coalCompany.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.customer && r.customer.toUpperCase().includes(searchQuery.toUpperCase())) ||
         (r.mode && r.mode.toUpperCase().includes(searchQuery.toUpperCase()));

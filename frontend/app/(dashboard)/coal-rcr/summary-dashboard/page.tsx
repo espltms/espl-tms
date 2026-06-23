@@ -167,14 +167,14 @@ export default function SummaryDashboardPage() {
   const sidingAggregations = useMemo((): SidingAggregation[] => {
     return uniqueSidings.map(sidingName => {
       // Find DOs for this siding
-      const matchedDOs = doRecords.filter(d => d.siding.trim().toLowerCase() === sidingName.toLowerCase());
+      const matchedDOs = doRecords.filter(d => (d.siding || '').trim().toLowerCase() === sidingName.toLowerCase());
       const matchedDONos = matchedDOs.map(d => d.doNo);
       
       const totalDoQty = matchedDOs.reduce((acc, d) => acc + Number(d.doQty), 0);
 
       // Find RRs for these DOs/Siding
       const matchedRRs = rrRecords.filter(r => 
-        r.siding.trim().toLowerCase() === sidingName.toLowerCase() ||
+        (r.siding || '').trim().toLowerCase() === sidingName.toLowerCase() ||
         matchedDONos.includes(r.doNo)
       );
       const matchedRRNos = matchedRRs.map(r => r.rrNo);
@@ -242,25 +242,25 @@ export default function SummaryDashboardPage() {
   // Filters logic applied to lists
   const filteredDOsList = useMemo(() => {
     return doRecords.filter(d => {
-      const matchesSiding = selectedSiding === 'All' || d.siding.trim().toLowerCase() === selectedSiding.toLowerCase();
+      const matchesSiding = selectedSiding === 'All' || (d.siding || '').trim().toLowerCase() === selectedSiding.toLowerCase();
       const matchesDO = selectedDO === 'All' || d.doNo === selectedDO;
       const matchesQuery = searchQuery === '' || 
-        d.doNo.includes(searchQuery.toUpperCase()) || 
-        d.poNo.includes(searchQuery.toUpperCase()) ||
-        d.siding.toUpperCase().includes(searchQuery.toUpperCase());
+        (d.doNo || '').includes(searchQuery.toUpperCase()) || 
+        (d.poNo || '').includes(searchQuery.toUpperCase()) ||
+        (d.siding || '').toUpperCase().includes(searchQuery.toUpperCase());
       return matchesSiding && matchesDO && matchesQuery;
     });
   }, [doRecords, selectedSiding, selectedDO, searchQuery]);
 
   const filteredRRsList = useMemo(() => {
     return rrRecords.filter(r => {
-      const matchesSiding = selectedSiding === 'All' || r.siding.trim().toLowerCase() === selectedSiding.toLowerCase();
+      const matchesSiding = selectedSiding === 'All' || (r.siding || '').trim().toLowerCase() === selectedSiding.toLowerCase();
       const matchesDO = selectedDO === 'All' || r.doNo === selectedDO;
       const matchesRR = selectedRR === 'All' || r.rrNo === selectedRR;
       const matchesQuery = searchQuery === '' || 
-        r.rrNo.includes(searchQuery.toUpperCase()) || 
-        r.doNo.includes(searchQuery.toUpperCase()) ||
-        r.siding.toUpperCase().includes(searchQuery.toUpperCase());
+        (r.rrNo || '').includes(searchQuery.toUpperCase()) || 
+        (r.doNo || '').includes(searchQuery.toUpperCase()) ||
+        (r.siding || '').toUpperCase().includes(searchQuery.toUpperCase());
       return matchesSiding && matchesDO && matchesRR && matchesQuery;
     });
   }, [rrRecords, selectedSiding, selectedDO, selectedRR, searchQuery]);
@@ -557,7 +557,7 @@ export default function SummaryDashboardPage() {
                   </tr>
                 ) : (
                   sidingAggregations
-                    .filter(s => selectedSiding === 'All' || s.siding.trim().toLowerCase() === selectedSiding.toLowerCase())
+                    .filter(s => selectedSiding === 'All' || (s.siding || '').trim().toLowerCase() === selectedSiding.toLowerCase())
                     .map((r, idx) => (
                       <tr key={r.siding} className="hover:bg-slate-50 transition-colors">
                         <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
