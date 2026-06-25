@@ -42,15 +42,16 @@ export const fetchSyncedValue = async <T>(key: string, fallback: T): Promise<T> 
 };
 
 export const saveSyncedValue = async <T>(key: string, value: T) => {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(key, JSON.stringify(value));
+  const token = getToken();
+  if (!token) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    }
+    return;
   }
 
-  const token = getToken();
-  if (!token) return;
-
   try {
-    await fetch('/api/synced-records', {
+    const response = await fetch('/api/synced-records', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +63,17 @@ export const saveSyncedValue = async <T>(key: string, value: T) => {
         payload: value,
       }),
     });
-  } catch {
-    // Keep local copy if the network/database is temporarily unavailable.
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Server sync failed');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch (err) {
+    // Re-throw so calling components are aware of sync failures
+    throw err;
   }
 };

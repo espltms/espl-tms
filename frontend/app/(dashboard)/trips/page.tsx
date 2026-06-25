@@ -12,8 +12,10 @@ import {
   X, 
   Calendar,
   CheckCircle,
+  CheckCircle2,
   FileCheck2,
-  Trash2
+  Trash2,
+  Database
 } from 'lucide-react';
 
 import { getTrips, getPurchaseOrders, getDrivers, getTrucks } from '@/app/data/dataHelper';
@@ -178,6 +180,14 @@ export default function TripsPage() {
 
   const [activeGatepass, setActiveGatepass] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; title?: string } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const ITEMS_PER_PAGE = 15;
 
@@ -408,7 +418,7 @@ export default function TripsPage() {
       return value && String(value).trim() ? String(value).trim() : '-';
     };
 
-    const handleExcelImport = (event: Event) => {
+    const handleExcelImport = async (event: Event) => {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
       if (!detail || detail.sectionName !== 'Trip Dispatch & Loading') return;
 
@@ -561,33 +571,35 @@ export default function TripsPage() {
 
       if (newTripsList.length === 0) return;
 
-      setTrips(prev => [
-        ...newTripsList,
-        ...prev.filter(trip => !newTripsList.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
-      ]);
-      setLoadingRecords(prev => [
-        ...newLoadingRecords,
-        ...prev.filter(rec => !newLoadingRecords.some(importedRec => importedRec.challanNo === rec.challanNo)),
-      ]);
-
       const existingTrips = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
-      saveSyncedValue(ASSIGNED_TRIPS_KEY, [
+      const nextTrips = [
         ...newTripsList,
         ...existingTrips.filter(trip => !newTripsList.some(importedTrip => importedTrip.tripNumber === trip.tripNumber)),
-      ]);
+      ];
 
       const existingLoading = JSON.parse(window.localStorage.getItem(LOADING_RECORDS_KEY) || '[]') as LoadingRecord[];
-      saveSyncedValue(LOADING_RECORDS_KEY, [
+      const nextLoading = [
         ...newLoadingRecords,
         ...existingLoading.filter(rec => !newLoadingRecords.some(importedRec => importedRec.challanNo === rec.challanNo)),
-      ]);
+      ];
 
-      newTripsList.forEach(t => {
-        upsertTruckStatusOverride(t.truckId || '', 'IN_TRANSIT');
-      });
+      try {
+        await saveSyncedValue(ASSIGNED_TRIPS_KEY, nextTrips);
+        await saveSyncedValue(LOADING_RECORDS_KEY, nextLoading);
 
-      setPurchaseOrders([...purchaseOrders]);
-      setCurrentPage(1);
+        setTrips(nextTrips);
+        setLoadingRecords(nextLoading);
+
+        newTripsList.forEach(t => {
+          upsertTruckStatusOverride(t.truckId || '', 'IN_TRANSIT');
+        });
+
+        setPurchaseOrders([...purchaseOrders]);
+        setCurrentPage(1);
+        setToast({ message: `Successfully imported ${newTripsList.length} trips.`, type: 'success' });
+      } catch (err: any) {
+        setToast({ message: err.message || "Failed to sync imported trips with the database.", type: 'error' });
+      }
     };
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
@@ -825,28 +837,36 @@ export default function TripsPage() {
       truckStatus: 'IN_TRANSIT'
     };
 
-    setTrips(prev => [newTrip, ...prev]);
-    setLoadingRecords(prev => [newLoadingRecord, ...prev]);
-
     if (typeof window !== 'undefined') {
       const existingTrips = JSON.parse(window.localStorage.getItem(ASSIGNED_TRIPS_KEY) || '[]') as Trip[];
-      saveSyncedValue(ASSIGNED_TRIPS_KEY, [newTrip, ...existingTrips]);
+      const nextTrips = [newTrip, ...existingTrips];
 
       const existingLoading = JSON.parse(window.localStorage.getItem(LOADING_RECORDS_KEY) || '[]') as LoadingRecord[];
-      saveSyncedValue(LOADING_RECORDS_KEY, [newLoadingRecord, ...existingLoading]);
+      const nextLoading = [newLoadingRecord, ...existingLoading];
 
-      setPurchaseOrders(prev =>
-        prev.map(po =>
-          po.id === poId
-            ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
-            : po
-        )
-      );
+      try {
+        await saveSyncedValue(ASSIGNED_TRIPS_KEY, nextTrips);
+        await saveSyncedValue(LOADING_RECORDS_KEY, nextLoading);
 
-      upsertTruckStatusOverride(selectedTruck.id, 'IN_TRANSIT');
+        setTrips(nextTrips);
+        setLoadingRecords(nextLoading);
+
+        setPurchaseOrders(prev =>
+          prev.map(po =>
+            po.id === poId
+              ? { ...po, allocatedQuantityTons: Number(po.allocatedQuantityTons) + requestedQty }
+              : po
+          )
+        );
+
+        upsertTruckStatusOverride(selectedTruck.id, 'IN_TRANSIT');
+        setToast({ message: "Trip created and database synced successfully.", type: 'success' });
+        setModalOpen(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to sync new trip with the database.");
+        return;
+      }
     }
-
-    setModalOpen(false);
 
     // Call API (failsafe)
     const payload = {
@@ -1561,6 +1581,35 @@ export default function TripsPage() {
               <CheckCircle className="h-3.5 w-3.5" /> SECURE DECRYPTED TICKET
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl backdrop-blur-md animate-slide-up max-w-sm ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-blue-500/20 bg-blue-50/95 text-blue-950'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          ) : toast.type === 'error' ? (
+            <X className="h-5 w-5 text-red-600 shrink-0" />
+          ) : (
+            <Database className="h-5 w-5 text-blue-600 shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold font-sans">
+              {toast.title || (toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status')}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
     </div>

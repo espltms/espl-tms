@@ -219,66 +219,66 @@ export async function POST(req: NextRequest) {
         .filter(item => item && item.plateNumber)
         .map(item => item.plateNumber.toUpperCase().trim());
 
-      await prisma.$transaction(async (tx) => {
-        // 1. Upsert all trucks in the payload
-        for (const item of payload) {
-          if (!item.plateNumber) continue;
-          const plate = item.plateNumber.toUpperCase().trim();
+      // 1. Upsert all trucks in parallel to avoid interactive transaction timeouts on PgBouncer
+      const upsertPromises = payload.map(item => {
+        if (!item.plateNumber) return Promise.resolve();
+        const plate = item.plateNumber.toUpperCase().trim();
 
-          await tx.truck.upsert({
-            where: { plateNumber: plate },
-            update: {
-              fleetCategory: item.fleetCategory || 'OWNED_FLEET',
-              vendor: item.vendor || null,
-              subVendor: item.subVendor || null,
-              type: item.vehicleType || 'Tipper',
-              wheeler: item.wheeler || null,
-              rcNo: item.rcNo || null,
-              fitnessValidityFrom: item.fitnessValidityFrom || null,
-              fitnessValidityTo: item.fitnessValidityTo || null,
-              insuranceValidityUpto: item.insuranceValidityUpto || null,
-              pucValidity: item.pucValidity || null,
-              driverName: item.driverName || null,
-              driverDL: item.driverDL || null,
-              dlValidityTill: item.dlValidityTill || null,
-              driverMobile: item.driverMobile || null,
-            },
-            create: {
-              plateNumber: plate,
-              model: 'Generic Model',
-              capacityTons: 40.0,
-              type: item.vehicleType || 'Tipper',
-              fleetCategory: item.fleetCategory || 'OWNED_FLEET',
-              status: 'AVAILABLE',
-              health: 100,
-              vendor: item.vendor || null,
-              subVendor: item.subVendor || null,
-              wheeler: item.wheeler || null,
-              rcNo: item.rcNo || null,
-              fitnessValidityFrom: item.fitnessValidityFrom || null,
-              fitnessValidityTo: item.fitnessValidityTo || null,
-              insuranceValidityUpto: item.insuranceValidityUpto || null,
-              pucValidity: item.pucValidity || null,
-              driverName: item.driverName || null,
-              driverDL: item.driverDL || null,
-              dlValidityTill: item.dlValidityTill || null,
-              driverMobile: item.driverMobile || null,
-            },
-          });
-        }
-
-        // 2. Delete any trucks not in active payload list (excluding trucks with associated trips)
-        try {
-          await tx.truck.deleteMany({
-            where: {
-              plateNumber: { notIn: platesInPayload },
-              trips: { none: {} },
-            },
-          });
-        } catch (e) {
-          console.warn('Omitted trucks deletion skipped for referenced records:', e);
-        }
+        return prisma.truck.upsert({
+          where: { plateNumber: plate },
+          update: {
+            fleetCategory: item.fleetCategory || 'OWNED_FLEET',
+            vendor: item.vendor || null,
+            subVendor: item.subVendor || null,
+            type: item.vehicleType || 'Tipper',
+            wheeler: item.wheeler || null,
+            rcNo: item.rcNo || null,
+            fitnessValidityFrom: item.fitnessValidityFrom || null,
+            fitnessValidityTo: item.fitnessValidityTo || null,
+            insuranceValidityUpto: item.insuranceValidityUpto || null,
+            pucValidity: item.pucValidity || null,
+            driverName: item.driverName || null,
+            driverDL: item.driverDL || null,
+            dlValidityTill: item.dlValidityTill || null,
+            driverMobile: item.driverMobile || null,
+          },
+          create: {
+            plateNumber: plate,
+            model: 'Generic Model',
+            capacityTons: 40.0,
+            type: item.vehicleType || 'Tipper',
+            fleetCategory: item.fleetCategory || 'OWNED_FLEET',
+            status: 'AVAILABLE',
+            health: 100,
+            vendor: item.vendor || null,
+            subVendor: item.subVendor || null,
+            wheeler: item.wheeler || null,
+            rcNo: item.rcNo || null,
+            fitnessValidityFrom: item.fitnessValidityFrom || null,
+            fitnessValidityTo: item.fitnessValidityTo || null,
+            insuranceValidityUpto: item.insuranceValidityUpto || null,
+            pucValidity: item.pucValidity || null,
+            driverName: item.driverName || null,
+            driverDL: item.driverDL || null,
+            dlValidityTill: item.dlValidityTill || null,
+            driverMobile: item.driverMobile || null,
+          },
+        });
       });
+
+      await Promise.all(upsertPromises);
+
+      // 2. Delete any trucks not in active payload list (excluding trucks with associated trips)
+      try {
+        await prisma.truck.deleteMany({
+          where: {
+            plateNumber: { notIn: platesInPayload },
+            trips: { none: {} },
+          },
+        });
+      } catch (e) {
+        console.warn('Omitted trucks deletion skipped for referenced records:', e);
+      }
 
       return NextResponse.json({ record: { recordKey, payload } });
     } catch (err: any) {
@@ -297,136 +297,171 @@ export async function POST(req: NextRequest) {
         .filter(item => item && item.tripNumber)
         .map(item => item.tripNumber.toUpperCase().trim());
 
-      await prisma.$transaction(async (tx) => {
-        for (const item of payload) {
-          if (!item.tripNumber) continue;
-          const tripNo = item.tripNumber.toUpperCase().trim();
+      // 1. Extract and deduplicate Purchase Orders, Drivers, and Trucks from payload
+      const uniquePos = new Map<string, { poNumber: string; clientName?: string; commodity?: string }>();
+      const uniqueDrivers = new Map<string, { fullName: string; phone?: string }>();
+      const uniqueTrucks = new Map<string, { plateNumber: string; model?: string }>();
 
-          // 1. Resolve Purchase Order
-          let dbPoId = '';
-          if (item.purchaseOrder && item.purchaseOrder.poNumber) {
-            const po = await tx.purchaseOrder.findUnique({
-              where: { poNumber: item.purchaseOrder.poNumber },
+      for (const item of payload) {
+        if (item.purchaseOrder && item.purchaseOrder.poNumber) {
+          const poNo = item.purchaseOrder.poNumber.toUpperCase().trim();
+          if (!uniquePos.has(poNo)) {
+            uniquePos.set(poNo, {
+              poNumber: poNo,
+              clientName: item.purchaseOrder.clientName,
+              commodity: item.purchaseOrder.commodity,
             });
-            if (po) {
-              dbPoId = po.id;
-            } else {
-              const newPo = await tx.purchaseOrder.create({
-                data: {
-                  poNumber: item.purchaseOrder.poNumber,
-                  clientName: item.purchaseOrder.clientName || 'Generic Client',
-                  commodity: item.purchaseOrder.commodity || 'Fly Ash',
-                  totalQuantityTons: 10000.0,
-                  ratePerTon: 300.0,
-                  status: 'ACTIVE',
-                },
-              });
-              dbPoId = newPo.id;
-            }
           }
-
-          // 2. Resolve Driver
-          let dbDriverId = '';
-          if (item.driver && item.driver.fullName) {
-            const driver = await tx.driver.findFirst({
-              where: { fullName: item.driver.fullName },
+        }
+        if (item.driver && item.driver.fullName) {
+          const name = item.driver.fullName.trim();
+          if (!uniqueDrivers.has(name)) {
+            uniqueDrivers.set(name, {
+              fullName: name,
+              phone: item.driver.phone,
             });
-            if (driver) {
-              dbDriverId = driver.id;
-            } else {
-              const newDriver = await tx.driver.create({
-                data: {
-                  fullName: item.driver.fullName,
-                  licenseNumber: `DL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                  phone: item.driver.phone || `+9199999${Math.floor(10000 + Math.random() * 90000)}`,
-                  status: 'AVAILABLE',
-                },
-              });
-              dbDriverId = newDriver.id;
-            }
           }
-
-          // 3. Resolve Truck
-          let dbTruckId = '';
-          let dbTruckVendor = '';
-          let dbTruckType = '';
-          if (item.truck && item.truck.plateNumber) {
-            const plate = item.truck.plateNumber.toUpperCase().trim();
-            const truck = await tx.truck.findUnique({
-              where: { plateNumber: plate },
+        }
+        if (item.truck && item.truck.plateNumber) {
+          const plate = item.truck.plateNumber.toUpperCase().trim();
+          if (!uniqueTrucks.has(plate)) {
+            uniqueTrucks.set(plate, {
+              plateNumber: plate,
+              model: item.truck.model,
             });
-            if (truck) {
-              dbTruckId = truck.id;
-              dbTruckVendor = truck.vendor || '';
-              dbTruckType = truck.type || '';
-            } else {
-              const newTruck = await tx.truck.create({
-                data: {
-                  plateNumber: plate,
-                  model: item.truck.model || 'Generic Model',
-                  capacityTons: 40.0,
-                  type: 'Tipper',
-                  status: 'AVAILABLE',
-                },
-              });
-              dbTruckId = newTruck.id;
-              dbTruckVendor = newTruck.vendor || '';
-              dbTruckType = newTruck.type || '';
-            }
           }
+        }
+      }
 
-          if (!dbPoId || !dbDriverId || !dbTruckId) {
-            continue;
-          }
-
-          const resolvedVendorName = dbTruckVendor 
-            ? normalizeVendorName(dbTruckVendor) 
-            : (item.vendorName ? normalizeVendorName(item.vendorName) : null);
-          const resolvedVehicleType = dbTruckType || item.vehicleType || null;
-
-          // 4. Upsert Trip
-          await tx.trip.upsert({
-            where: { tripNumber: tripNo },
-            update: {
-              purchaseOrderId: dbPoId,
-              driverId: dbDriverId,
-              truckId: dbTruckId,
-              source: item.source || 'Lanjigarh',
-              destination: item.destination || 'Paramanandpur',
-              distanceKm: item.distanceKm || 0,
-              estimatedQuantityTons: item.estimatedQuantityTons || 0,
-              actualLoadedTons: item.actualLoadedTons || null,
-              actualDeliveredTons: item.actualDeliveredTons || null,
-              status: item.status || 'SCHEDULED',
-              scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
-              actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
-              actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
-              vendorName: resolvedVendorName,
-              vehicleType: resolvedVehicleType,
-            },
+      // 2. Resolve/Upsert Purchase Orders in parallel
+      const poLookup = new Map<string, string>(); // poNumber -> id
+      await Promise.all(
+        Array.from(uniquePos.values()).map(async (po) => {
+          const dbPo = await prisma.purchaseOrder.upsert({
+            where: { poNumber: po.poNumber },
+            update: {},
             create: {
-              tripNumber: tripNo,
-              purchaseOrderId: dbPoId,
-              driverId: dbDriverId,
-              truckId: dbTruckId,
-              source: item.source || 'Lanjigarh',
-              destination: item.destination || 'Paramanandpur',
-              distanceKm: item.distanceKm || 0,
-              estimatedQuantityTons: item.estimatedQuantityTons || 0,
-              actualLoadedTons: item.actualLoadedTons || null,
-              actualDeliveredTons: item.actualDeliveredTons || null,
-              status: item.status || 'SCHEDULED',
-              scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
-              actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
-              actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
-              vendorName: resolvedVendorName,
-              vehicleType: resolvedVehicleType,
+              poNumber: po.poNumber,
+              clientName: po.clientName || 'Generic Client',
+              commodity: po.commodity || 'Fly Ash',
+              totalQuantityTons: 10000.0,
+              ratePerTon: 300.0,
+              status: 'ACTIVE',
             },
           });
+          poLookup.set(po.poNumber, dbPo.id);
+        })
+      );
+
+      // 3. Resolve/Create Drivers in parallel
+      const driverLookup = new Map<string, string>(); // fullName -> id
+      await Promise.all(
+        Array.from(uniqueDrivers.values()).map(async (driver) => {
+          let dbDriver = await prisma.driver.findFirst({
+            where: { fullName: driver.fullName },
+          });
+          if (!dbDriver) {
+            dbDriver = await prisma.driver.create({
+              data: {
+                fullName: driver.fullName,
+                licenseNumber: `DL-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
+                phone: driver.phone || `+9199999${Math.floor(10000 + Math.random() * 90000)}`,
+                status: 'AVAILABLE',
+              },
+            });
+          }
+          driverLookup.set(driver.fullName, dbDriver.id);
+        })
+      );
+
+      // 4. Resolve/Upsert Trucks in parallel
+      const truckLookup = new Map<string, { id: string; vendor: string; type: string }>(); // plateNumber -> info
+      await Promise.all(
+        Array.from(uniqueTrucks.values()).map(async (truck) => {
+          const dbTruck = await prisma.truck.upsert({
+            where: { plateNumber: truck.plateNumber },
+            update: {},
+            create: {
+              plateNumber: truck.plateNumber,
+              model: truck.model || 'Generic Model',
+              capacityTons: 40.0,
+              type: 'Tipper',
+              status: 'AVAILABLE',
+            },
+          });
+          truckLookup.set(truck.plateNumber, {
+            id: dbTruck.id,
+            vendor: dbTruck.vendor || '',
+            type: dbTruck.type || '',
+          });
+        })
+      );
+
+      // 5. Upsert Trips in parallel using resolved lookups
+      const tripPromises = payload.map(async (item) => {
+        if (!item.tripNumber) return;
+        const tripNo = item.tripNumber.toUpperCase().trim();
+
+        const poNo = item.purchaseOrder?.poNumber?.toUpperCase().trim();
+        const driverName = item.driver?.fullName?.trim();
+        const truckPlate = item.truck?.plateNumber?.toUpperCase().trim();
+
+        const dbPoId = poNo ? poLookup.get(poNo) : null;
+        const dbDriverId = driverName ? driverLookup.get(driverName) : null;
+        const truckInfo = truckPlate ? truckLookup.get(truckPlate) : null;
+
+        if (!dbPoId || !dbDriverId || !truckInfo) {
+          return;
         }
 
+        const resolvedVendorName = truckInfo.vendor
+          ? normalizeVendorName(truckInfo.vendor)
+          : item.vendorName
+            ? normalizeVendorName(item.vendorName)
+            : null;
+        const resolvedVehicleType = truckInfo.type || item.vehicleType || null;
 
+        await prisma.trip.upsert({
+          where: { tripNumber: tripNo },
+          update: {
+            purchaseOrderId: dbPoId,
+            driverId: dbDriverId,
+            truckId: truckInfo.id,
+            source: item.source || 'Lanjigarh',
+            destination: item.destination || 'Paramanandpur',
+            distanceKm: item.distanceKm || 0,
+            estimatedQuantityTons: item.estimatedQuantityTons || 0,
+            actualLoadedTons: item.actualLoadedTons || null,
+            actualDeliveredTons: item.actualDeliveredTons || null,
+            status: item.status || 'SCHEDULED',
+            scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
+            actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
+            actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+            vendorName: resolvedVendorName,
+            vehicleType: resolvedVehicleType,
+          },
+          create: {
+            tripNumber: tripNo,
+            purchaseOrderId: dbPoId,
+            driverId: dbDriverId,
+            truckId: truckInfo.id,
+            source: item.source || 'Lanjigarh',
+            destination: item.destination || 'Paramanandpur',
+            distanceKm: item.distanceKm || 0,
+            estimatedQuantityTons: item.estimatedQuantityTons || 0,
+            actualLoadedTons: item.actualLoadedTons || null,
+            actualDeliveredTons: item.actualDeliveredTons || null,
+            status: item.status || 'SCHEDULED',
+            scheduledStartDate: new Date(item.scheduledStartDate || Date.now()),
+            actualStartDate: item.actualStartDate ? new Date(item.actualStartDate) : null,
+            actualEndDate: item.actualEndDate ? new Date(item.actualEndDate) : null,
+            vendorName: resolvedVendorName,
+            vehicleType: resolvedVehicleType,
+          },
+        });
       });
+
+      await Promise.all(tripPromises);
 
       return NextResponse.json({ record: { recordKey, payload } });
     } catch (err: any) {

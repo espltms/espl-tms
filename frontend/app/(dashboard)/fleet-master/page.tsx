@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Database, Plus, X, ArrowRight, Trash2, Search } from 'lucide-react';
+import { Database, Plus, X, ArrowRight, Trash2, Search, CheckCircle2 } from 'lucide-react';
 import { fetchSyncedValue, saveSyncedValue, readLocalValue } from '@/lib/syncedStorage';
 import { useAuthStore } from '@/store/auth.store';
 import { normalizeVendorName } from '@/lib/operationalStatus';
@@ -253,6 +253,15 @@ export default function FleetMasterPage() {
   const ownedCount = filteredRecords.filter(r => r.fleetCategory === 'OWNED_FLEET').length;
   const attachedCount = filteredRecords.filter(r => r.fleetCategory === 'ATTACHED_FLEET').length;
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; title?: string } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   /* ── Load from synced storage ── */
   useEffect(() => {
     const local = readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []);
@@ -262,15 +271,22 @@ export default function FleetMasterPage() {
       const sanitized = sanitizeFleetRecords(synced);
       setRecords(sanitized);
       if (JSON.stringify(synced) !== JSON.stringify(sanitized)) {
-        saveSyncedValue(FLEET_MASTER_KEY, sanitized);
+        saveSyncedValue(FLEET_MASTER_KEY, sanitized).catch(() => {});
       }
     });
   }, []);
 
   /* ── Persist helper ── */
-  const persistRecords = (next: FleetMasterRecord[]) => {
+  const persistRecords = async (next: FleetMasterRecord[], successMessage?: string) => {
     const sanitized = sanitizeFleetRecords(next);
-    saveSyncedValue(FLEET_MASTER_KEY, sanitized);
+    try {
+      await saveSyncedValue(FLEET_MASTER_KEY, sanitized);
+      setToast({ message: successMessage || "Changes saved successfully.", type: 'success' });
+      return true;
+    } catch (err: any) {
+      setToast({ message: err.message || "Failed to sync changes with the database.", type: 'error' });
+      return false;
+    }
   };
 
   /* ── Excel import listener ── */
@@ -328,40 +344,41 @@ export default function FleetMasterPage() {
 
       if (importedRecords.length === 0) return;
 
-      setRecords(prev => {
-        const next = [...prev];
-        importedRecords.forEach(ir => {
-          const cleanPlate = (p: string) => p.toUpperCase().replace(/[^A-Z0-9]/g, '');
-          const idx = next.findIndex(r => cleanPlate(r.plateNumber) === cleanPlate(ir.plateNumber));
-          if (idx >= 0) {
-            const merged = { ...next[idx] };
-            Object.keys(ir).forEach(key => {
-              const val = ir[key as keyof FleetMasterRecord];
-              if (val !== undefined && val !== '-' && val !== '') {
-                (merged as any)[key] = val;
-              }
-            });
-            // Ensure the category remains correctly resolved based on vendor name even after merging
-            const finalVendor = merged.vendor || '';
-            merged.fleetCategory = normalizeVendorName(finalVendor) === 'Eastern Stevedores' ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
-            next[idx] = merged;
-          } else {
-            next.push(ir);
-          }
-        });
-        const sanitized = sanitizeFleetRecords(next);
-        saveSyncedValue(FLEET_MASTER_KEY, sanitized);
-        return sanitized;
+      const next = [...records];
+      importedRecords.forEach(ir => {
+        const cleanPlate = (p: string) => p.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const idx = next.findIndex(r => cleanPlate(r.plateNumber) === cleanPlate(ir.plateNumber));
+        if (idx >= 0) {
+          const merged = { ...next[idx] };
+          Object.keys(ir).forEach(key => {
+            const val = ir[key as keyof FleetMasterRecord];
+            if (val !== undefined && val !== '-' && val !== '') {
+              (merged as any)[key] = val;
+            }
+          });
+          // Ensure the category remains correctly resolved based on vendor name even after merging
+          const finalVendor = merged.vendor || '';
+          merged.fleetCategory = normalizeVendorName(finalVendor) === 'Eastern Stevedores' ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
+          next[idx] = merged;
+        } else {
+          next.push(ir);
+        }
       });
-      setCurrentPage(1);
+      const sanitized = sanitizeFleetRecords(next);
+      persistRecords(sanitized, `Successfully imported ${importedRecords.length} vehicles.`).then(ok => {
+        if (ok) {
+          setRecords(sanitized);
+          setCurrentPage(1);
+        }
+      });
     };
 
     window.addEventListener('tms:excel-imported', handleExcelImport);
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
-  }, []);
+  }, [records]);
 
   /* ── Add record handler ── */
-  const handleAddRecord = (e: React.FormEvent) => {
+  const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const isOwned = normalizeVendorName(form.vendor) === 'Eastern Stevedores';
@@ -387,18 +404,22 @@ export default function FleetMasterPage() {
     };
 
     const next = [newRecord, ...records];
-    setRecords(next);
-    persistRecords(next);
-    setForm(emptyForm);
-    setModalOpen(false);
+    const ok = await persistRecords(next, "Vehicle added successfully.");
+    if (ok) {
+      setRecords(next);
+      setForm(emptyForm);
+      setModalOpen(false);
+    }
   };
 
   /* ── Delete handler ── */
-  const deleteRecords = (ids: string[]) => {
+  const deleteRecords = async (ids: string[]) => {
     const next = records.filter(r => !ids.includes(r.id));
-    setRecords(next);
-    persistRecords(next);
-    setSelectedIds(prev => prev.filter(id => !ids.includes(id)));
+    const ok = await persistRecords(next, "Selected vehicles deleted successfully.");
+    if (ok) {
+      setRecords(next);
+      setSelectedIds(prev => prev.filter(id => !ids.includes(id)));
+    }
   };
 
   return (
@@ -751,6 +772,35 @@ export default function FleetMasterPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl backdrop-blur-md animate-slide-up max-w-sm ${
+          toast.type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 text-emerald-950' :
+          toast.type === 'error' ? 'border-red-500/20 bg-red-50/95 text-red-950' :
+          'border-blue-500/20 bg-blue-50/95 text-blue-950'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          ) : toast.type === 'error' ? (
+            <X className="h-5 w-5 text-red-600 shrink-0" />
+          ) : (
+            <Database className="h-5 w-5 text-blue-600 shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold font-sans">
+              {toast.title || (toast.type === 'success' ? 'Succeeded' : toast.type === 'error' ? 'Failed' : 'Status')}
+            </h4>
+            <p className="text-[10px] opacity-90 mt-0.5 whitespace-pre-wrap">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
