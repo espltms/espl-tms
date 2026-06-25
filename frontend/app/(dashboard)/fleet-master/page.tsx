@@ -260,11 +260,31 @@ export default function FleetMasterPage() {
     const local = readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []);
     setRecords(sanitizeFleetRecords(local));
 
-    fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then((synced) => {
-      const sanitized = sanitizeFleetRecords(synced);
-      setRecords(sanitized);
-      if (JSON.stringify(synced) !== JSON.stringify(sanitized)) {
-        saveSyncedValue(FLEET_MASTER_KEY, sanitized).catch(() => {});
+    fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then(async (synced) => {
+      const sanitizedSynced = sanitizeFleetRecords(synced);
+      
+      // Identify records present in local storage but missing in the database
+      const localOnly = local.filter(l => 
+        !sanitizedSynced.some(s => s.plateNumber.toUpperCase().trim() === l.plateNumber.toUpperCase().trim())
+      );
+
+      if (localOnly.length > 0) {
+        const merged = [...sanitizedSynced, ...localOnly];
+        setRecords(merged);
+        try {
+          await saveSyncedValue(FLEET_MASTER_KEY, merged);
+          setToast({ 
+            message: `Successfully migrated ${localOnly.length} local-only vehicles to the database.`, 
+            type: 'success' 
+          });
+        } catch (err: any) {
+          setToast({ 
+            message: `Found ${localOnly.length} unsynced local vehicles. Sync failed: ${err.message}`, 
+            type: 'error' 
+          });
+        }
+      } else {
+        setRecords(sanitizedSynced);
       }
     });
   }, []);

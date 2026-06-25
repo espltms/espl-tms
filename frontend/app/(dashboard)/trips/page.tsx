@@ -380,15 +380,49 @@ export default function TripsPage() {
     }
 
     // 2. Background Database sync
-    fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then((syncedTrips) => {
-      setTrips((currentTrips) => [
-        ...syncedTrips,
-        ...currentTrips.filter(trip => !syncedTrips.some(syncedTrip => syncedTrip.id === trip.id)),
-      ]);
+    fetchSyncedValue<Trip[]>(ASSIGNED_TRIPS_KEY, []).then(async (syncedTrips) => {
+      const local = readLocalValue<Trip[]>(ASSIGNED_TRIPS_KEY, []);
+      const localOnly = local.filter(l => 
+        !syncedTrips.some(s => s.tripNumber.toUpperCase().trim() === l.tripNumber.toUpperCase().trim())
+      );
+
+      if (localOnly.length > 0) {
+        const merged = [...syncedTrips, ...localOnly];
+        setTrips(merged);
+        try {
+          await saveSyncedValue(ASSIGNED_TRIPS_KEY, merged);
+          setToast({ 
+            message: `Successfully migrated ${localOnly.length} local-only trips to the database.`, 
+            type: 'success' 
+          });
+        } catch (e: any) {
+          setToast({ 
+            message: `Found ${localOnly.length} unsynced trips. Sync failed: ${e.message}`, 
+            type: 'error' 
+          });
+        }
+      } else {
+        setTrips(syncedTrips);
+      }
     });
 
-    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then((syncedRecords) => {
-      setLoadingRecords(syncedRecords);
+    fetchSyncedValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []).then(async (syncedRecords) => {
+      const local = readLocalValue<LoadingRecord[]>(LOADING_RECORDS_KEY, []);
+      const localOnly = local.filter(l => 
+        !syncedRecords.some(s => s.challanNo.toUpperCase().trim() === l.challanNo.toUpperCase().trim())
+      );
+
+      if (localOnly.length > 0) {
+        const merged = [...syncedRecords, ...localOnly];
+        setLoadingRecords(merged);
+        try {
+          await saveSyncedValue(LOADING_RECORDS_KEY, merged);
+        } catch (e: any) {
+          console.error("Failed to migrate local loading records to database:", e);
+        }
+      } else {
+        setLoadingRecords(syncedRecords);
+      }
     });
 
     fetchSyncedValue<any[]>('tms_fleet_master', []).then((loadedRecords) => {
