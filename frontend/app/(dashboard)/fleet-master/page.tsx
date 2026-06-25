@@ -211,14 +211,7 @@ const emptyForm = {
 };
 
 const sanitizeFleetRecords = (recordsList: FleetMasterRecord[]): FleetMasterRecord[] => {
-  return recordsList.map(r => {
-    const isOwned = normalizeVendorName(r.vendor || '') === 'Eastern Stevedores';
-    const expectedCategory = isOwned ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
-    if (r.fleetCategory !== expectedCategory) {
-      return { ...r, fleetCategory: expectedCategory as FleetCategory };
-    }
-    return r;
-  });
+  return recordsList;
 };
 
 export default function FleetMasterPage() {
@@ -318,9 +311,18 @@ export default function FleetMasterPage() {
         const dlValidityTill = parseDateToDDMMYYYY(getCellValue(detail.import.headers, row, ['dl validity till', 'dl validity', 'dl expiry', 'license expiry']));
         const driverMobile = getCellValue(detail.import.headers, row, ['mob no of the driver', 'mob no', 'mobile', 'mobile no', 'phone', 'driver phone', 'driver mobile', 'contact']);
 
-        const resolvedCategory: FleetCategory = vendor === 'Eastern Stevedores'
-          ? 'OWNED_FLEET'
-          : 'ATTACHED_FLEET';
+        const categoryVal = getCellValue(detail.import.headers, row, ['fleet category', 'fleet_category', 'category']).toLowerCase();
+        let resolvedCategory: FleetCategory = 'ATTACHED_FLEET';
+        if (categoryVal.includes('owned') || categoryVal.includes('company')) {
+          resolvedCategory = 'OWNED_FLEET';
+        } else if (categoryVal.includes('attached') || categoryVal.includes('vendor')) {
+          resolvedCategory = 'ATTACHED_FLEET';
+        } else {
+          // Fallback to the vendor check if category column is missing or empty
+          resolvedCategory = normalizeVendorName(vendor) === 'Eastern Stevedores'
+            ? 'OWNED_FLEET'
+            : 'ATTACHED_FLEET';
+        }
 
         return {
           id: `fm-import-${Date.now()}-${index}`,
@@ -356,9 +358,6 @@ export default function FleetMasterPage() {
               (merged as any)[key] = val;
             }
           });
-          // Ensure the category remains correctly resolved based on vendor name even after merging
-          const finalVendor = merged.vendor || '';
-          merged.fleetCategory = normalizeVendorName(finalVendor) === 'Eastern Stevedores' ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
           next[idx] = merged;
         } else {
           next.push(ir);
@@ -381,13 +380,10 @@ export default function FleetMasterPage() {
   const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const isOwned = normalizeVendorName(form.vendor) === 'Eastern Stevedores';
-    const resolvedCategory: FleetCategory = isOwned ? 'OWNED_FLEET' : 'ATTACHED_FLEET';
-
     const newRecord: FleetMasterRecord = {
       id: `fm-local-${Date.now()}`,
       plateNumber: form.plateNumber.toUpperCase(),
-      fleetCategory: resolvedCategory,
+      fleetCategory: form.fleetCategory,
       vendor: normalizeVendorName(form.vendor) || '-',
       subVendor: form.subVendor || '-',
       vehicleType: form.vehicleType,
