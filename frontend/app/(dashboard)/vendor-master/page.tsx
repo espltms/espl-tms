@@ -71,15 +71,35 @@ export default function VendorMasterPage() {
   // Load records from synced storage
   useEffect(() => {
     // 1. Instant local load
-    setRecords(readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []));
-    setProfiles(readLocalValue<VendorProfile[]>(VENDOR_PROFILES_KEY, []));
+    const localFM = readLocalValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []);
+    const localVen = readLocalValue<VendorProfile[]>(VENDOR_PROFILES_KEY, []);
+    setRecords(localFM);
+    setProfiles(localVen);
 
     // 2. Background Database sync
     fetchSyncedValue<FleetMasterRecord[]>(FLEET_MASTER_KEY, []).then((synced) => {
-      setRecords(synced);
+      const localOnly = localFM.filter(l => 
+        !synced.some(s => s.plateNumber.toUpperCase().trim() === l.plateNumber.toUpperCase().trim())
+      );
+      if (localOnly.length > 0) {
+        const merged = [...synced, ...localOnly];
+        setRecords(merged);
+        saveSyncedValue(FLEET_MASTER_KEY, merged).catch(console.error);
+      } else {
+        setRecords(synced);
+      }
     });
     fetchSyncedValue<VendorProfile[]>(VENDOR_PROFILES_KEY, []).then((synced) => {
-      setProfiles(synced);
+      const localOnly = localVen.filter(l => 
+        !synced.some(s => s.name.toUpperCase().trim() === l.name.toUpperCase().trim())
+      );
+      if (localOnly.length > 0) {
+        const merged = [...synced, ...localOnly];
+        setProfiles(merged);
+        saveSyncedValue(VENDOR_PROFILES_KEY, merged).catch(console.error);
+      } else {
+        setProfiles(synced);
+      }
     });
   }, []);
 

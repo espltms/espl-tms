@@ -79,7 +79,16 @@ export default function HRPage() {
 
     // 2. Background Database sync
     fetchSyncedValue<Employee[]>(MANUAL_EMPLOYEES_KEY, []).then((manualEmployees) => {
-      setEmployees([...manualEmployees, ...getEmployees()]);
+      const localOnly = cachedManual.filter(l => 
+        !manualEmployees.some(m => m.id === l.id || (m.name === l.name && m.email === l.email))
+      );
+      if (localOnly.length > 0) {
+        const merged = [...manualEmployees, ...localOnly];
+        setEmployees([...merged, ...getEmployees()]);
+        saveSyncedValue(MANUAL_EMPLOYEES_KEY, merged).catch(console.error);
+      } else {
+        setEmployees([...manualEmployees, ...getEmployees()]);
+      }
     });
   }, []);
 

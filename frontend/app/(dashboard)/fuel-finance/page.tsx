@@ -79,8 +79,11 @@ export default function FuelFinancesPage() {
 
   useEffect(() => {
     // 1. Instant local load
-    setEntries(readLocalValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []));
-    setAssignedTrips(readLocalValue<any[]>('tms_assigned_trips', []));
+    const cachedEntries = readLocalValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []);
+    setEntries(cachedEntries);
+    
+    const cachedAssignedTrips = readLocalValue<any[]>('tms_assigned_trips', []);
+    setAssignedTrips(cachedAssignedTrips);
 
     const cachedFleetMaster = readLocalValue<any[]>('tms_fleet_master', []);
     const cachedLocalTrucks = readLocalValue<TruckData[]>('tms_local_trucks', []);
@@ -109,7 +112,21 @@ export default function FuelFinancesPage() {
           if (index >= 0) {
             merged[index] = { ...merged[index], ...lt };
           } else {
-            merged.push(lt);
+            merged.push({
+              id: lt.id || `local-${lt.plateNumber}`,
+              plateNumber: lt.plateNumber,
+              model: lt.model || 'Tipper',
+              type: lt.type || 'Tipper',
+              fleetCategory: lt.fleetCategory || 'OWNED_FLEET',
+              capacity: '25 Tons',
+              fuelCard: lt.fuelCard || '-',
+              health: lt.health || 100,
+              status: (lt.status || 'AVAILABLE') as any,
+              vendor: normalizeVendorName(lt.vendor || 'Eastern Stevedores'),
+              subVendor: lt.subVendor || '-',
+              wheeler: lt.wheeler || '12 Wheeler',
+              assignedDriverName: lt.assignedDriverName || '-',
+            });
           }
         });
         fleetTrucks.forEach(ft => {
@@ -129,7 +146,19 @@ export default function FuelFinancesPage() {
     }
 
     // 2. Background Database sync
-    fetchSyncedValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []).then(setEntries);
+    fetchSyncedValue<FuelFinanceEntry[]>(FUEL_FINANCES_KEY, []).then((synced) => {
+      const localOnly = cachedEntries.filter(l => 
+        !synced.some(s => s.id === l.id)
+      );
+      if (localOnly.length > 0) {
+        const merged = [...synced, ...localOnly];
+        setEntries(merged);
+        saveSyncedValue(FUEL_FINANCES_KEY, merged).catch(console.error);
+      } else {
+        setEntries(synced);
+      }
+    });
+
     fetchSyncedValue<any[]>('tms_assigned_trips', []).then(setAssignedTrips);
 
     Promise.all([

@@ -146,30 +146,44 @@ export default function DriversPage() {
   const persistDriversState = (allDrivers: Driver[]) => {
     const defaultIds = new Set((tmsData.drivers || []).map((d: any) => d.id));
     const localDrivers = allDrivers.filter(d => !defaultIds.has(d.id));
-    saveSyncedValue('tms_local_drivers', localDrivers);
+    saveSyncedValue('tms_local_drivers', localDrivers).catch(console.error);
   };
 
   /* ── Load from synced storage ── */
   useEffect(() => {
     // 1. Instant local load
-    const initialDrivers = getDrivers().map(mapDriverDataToDriver);
-    setDrivers(initialDrivers);
+    const local = readLocalValue<any[]>('tms_local_drivers', []);
+    
+    const isRegionalAdmin = () => {
+      if (typeof window === 'undefined') return false;
+      try {
+        const u = JSON.parse(window.localStorage.getItem('tms_user') || 'null');
+        return u?.role === 'REGION_ADMIN';
+      } catch {
+        return false;
+      }
+    };
+    
+    const defaultDrivers = isRegionalAdmin() ? [] : (tmsData.drivers || []);
+    const localCombined = [...local, ...defaultDrivers].map(mapDriverDataToDriver);
+    setDrivers(localCombined);
 
     // 2. Background Database sync
     fetchSyncedValue<any[]>('tms_local_drivers', []).then((syncedLocalDrivers) => {
-      const isRegionalAdmin = () => {
-        if (typeof window === 'undefined') return false;
-        try {
-          const u = JSON.parse(window.localStorage.getItem('tms_user') || 'null');
-          return u?.role === 'REGION_ADMIN';
-        } catch {
-          return false;
-        }
-      };
-      
-      const defaultDrivers = isRegionalAdmin() ? [] : (tmsData.drivers || []);
-      const combined = [...syncedLocalDrivers, ...defaultDrivers].map(mapDriverDataToDriver);
-      setDrivers(combined);
+      // Find drivers in local storage that are missing in synced database value
+      const localOnly = local.filter(l => 
+        !syncedLocalDrivers.some(s => (s.license || s.licenseNumber) === (l.license || l.licenseNumber) || s.fullName === l.fullName)
+      );
+
+      if (localOnly.length > 0) {
+        const merged = [...syncedLocalDrivers, ...localOnly];
+        const combined = [...merged, ...defaultDrivers].map(mapDriverDataToDriver);
+        setDrivers(combined);
+        saveSyncedValue('tms_local_drivers', merged).catch(console.error);
+      } else {
+        const combined = [...syncedLocalDrivers, ...defaultDrivers].map(mapDriverDataToDriver);
+        setDrivers(combined);
+      }
     });
   }, []);
 
