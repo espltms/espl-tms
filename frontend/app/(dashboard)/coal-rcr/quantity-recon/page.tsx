@@ -5,17 +5,17 @@ import {
   GitCompare, 
   Search, 
   RefreshCw, 
-  Calendar,
   X
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
-import { DOMasterRecord, RREntryRecord } from '../types';
+import { DOMasterRecord, RREntryRecord, QualityTrackingRecord } from '../types';
 import { readLocalValue } from '@/lib/syncedStorage';
 import CentralExcelImport from '@/components/CentralExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
+const QUALITY_TRACKING_KEY = 'tms_coal_quality_tracking';
 const ITEMS_PER_PAGE = 15;
 
 type ImportedSheet = {
@@ -24,6 +24,22 @@ type ImportedSheet = {
   importedAt: string;
   headers: string[];
   rows: string[][];
+};
+
+const isDOExpired = (endDateStr: string | null | undefined): boolean => {
+  if (!endDateStr) return false;
+  const clean = endDateStr.trim();
+  const parts = clean.split('-');
+  if (parts.length === 3) {
+    let d = new Date();
+    if (parts[0].length === 4) { // YYYY-MM-DD
+      d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 23, 59, 59);
+    } else if (parts[2].length === 4) { // DD-MM-YYYY
+      d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]), 23, 59, 59);
+    }
+    return d < new Date();
+  }
+  return new Date(endDateStr) < new Date();
 };
 
 const parseDateToYYYYMMDD = (val: unknown): string => {
@@ -96,6 +112,7 @@ export default function QuantityReconciliationPage() {
   const { user } = useAuthStore();
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
   const [rrRecords, setRrRecords] = useState<RREntryRecord[]>([]);
+  const [qualityRecords, setQualityRecords] = useState<QualityTrackingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOcp, setSelectedOcp] = useState<string>('All');
@@ -109,29 +126,35 @@ export default function QuantityReconciliationPage() {
       const token = localStorage.getItem('tms_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const [doRes, rrRes] = await Promise.all([
+      const [doRes, rrRes, qualityRes] = await Promise.all([
         fetch('/api/coal-rcr/do-master', { headers }),
-        fetch('/api/coal-rcr/rr-entry', { headers })
+        fetch('/api/coal-rcr/rr-entry', { headers }),
+        fetch('/api/coal-rcr/quality-tracking', { headers })
       ]);
 
-      if (doRes.ok && rrRes.ok) {
+      if (doRes.ok && rrRes.ok && qualityRes.ok) {
         const doData = await doRes.json();
         const rrData = await rrRes.json();
+        const qualityData = await qualityRes.json();
 
-        if (doData.success && rrData.success) {
+        if (doData.success && rrData.success && qualityData.success) {
           setDoRecords(doData.data || []);
           setRrRecords(rrData.data || []);
+          setQualityRecords(qualityData.data || []);
           localStorage.setItem(DO_MASTER_KEY, JSON.stringify(doData.data || []));
           localStorage.setItem(RR_ENTRY_KEY, JSON.stringify(rrData.data || []));
+          localStorage.setItem(QUALITY_TRACKING_KEY, JSON.stringify(qualityData.data || []));
         }
       } else {
         setDoRecords(readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []));
         setRrRecords(readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []));
+        setQualityRecords(readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []));
       }
     } catch (e) {
       console.error("Error fetching reconciliation data:", e);
       setDoRecords(readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []));
       setRrRecords(readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []));
+      setQualityRecords(readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []));
     } finally {
       setLoading(false);
     }
@@ -140,8 +163,10 @@ export default function QuantityReconciliationPage() {
   useEffect(() => {
     const cachedDOs = readLocalValue<DOMasterRecord[]>(DO_MASTER_KEY, []);
     const cachedRRs = readLocalValue<RREntryRecord[]>(RR_ENTRY_KEY, []);
+    const cachedQuality = readLocalValue<QualityTrackingRecord[]>(QUALITY_TRACKING_KEY, []);
     if (cachedDOs.length > 0) setDoRecords(cachedDOs);
     if (cachedRRs.length > 0) setRrRecords(cachedRRs);
+    if (cachedQuality.length > 0) setQualityRecords(cachedQuality);
     fetchData(cachedDOs.length === 0);
   }, []);
 
@@ -159,7 +184,7 @@ export default function QuantityReconciliationPage() {
       const detail = (event as CustomEvent<{ sectionName: string; import: ImportedSheet }>).detail;
       if (!detail) return;
 
-      if (detail.sectionName === 'DO Master') {
+      if (detail.sectionName === 'Before Completed') {
         setLoading(true);
         const token = localStorage.getItem('tms_token');
         const rows = detail.import.rows;
@@ -209,8 +234,6 @@ export default function QuantityReconciliationPage() {
             status = 'Completed';
           } else if (sLower === 'expired' || sLower === 'cancelled') {
             status = 'Cancelled';
-          } else if (sLower === 'open' || sLower === 'active') {
-            status = 'Active';
           }
 
           let mode: DOMasterRecord['mode'] = 'RCR';
@@ -222,7 +245,6 @@ export default function QuantityReconciliationPage() {
             doNo,
             month: month || null,
             auctionDate: auctionDate || null,
-            mines: mines || null,
             doQty,
             coalType,
             startDate: startDate || null,
@@ -231,7 +253,8 @@ export default function QuantityReconciliationPage() {
             permitValidDate: permitValidDate || null,
             status,
             customer: customer || null,
-            mode
+            mode,
+            mines: mines || null
           });
         });
 
@@ -279,8 +302,9 @@ export default function QuantityReconciliationPage() {
         }
         setLoading(false);
         fetchData();
+      }
 
-      } else if (detail.sectionName === 'RR Entry') {
+      if (detail.sectionName === 'After Completed') {
         setLoading(true);
         const token = localStorage.getItem('tms_token');
         const rows = detail.import.rows;
@@ -288,143 +312,46 @@ export default function QuantityReconciliationPage() {
         let skippedCount = 0;
 
         rows.forEach((row) => {
-          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no']).toUpperCase().trim();
-          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'railway receipt']).toUpperCase().trim();
-          let siding = getCellValue(detail.import.headers, row, ['siding', 'siding name', 'source siding', 'source_siding']).trim();
-          const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date']);
-          const invoiceDateStr = getCellValue(detail.import.headers, row, ['invoice date', 'invoice_date']);
-          const receiptDateStr = getCellValue(detail.import.headers, row, ['receipt date', 'receipt_date']);
-          const loadingDateStr = getCellValue(detail.import.headers, row, ['loading date', 'loading_date']);
-          const fromVal = getCellValue(detail.import.headers, row, ['from', 'loading point', 'from_station']);
-          const toVal = getCellValue(detail.import.headers, row, ['to', 'destination', 'to_station']);
-          const ocpVal = getCellValue(detail.import.headers, row, ['ocp', 'mine', 'mine name', 'ocp name', 'ocp / mine']);
-          const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual quantity', 'actual quantity', 'rr_act_qty', 'rr actual qty']);
-          const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable weight', 'chargeable weight', 'rr_ch_qty', 'rr chargeable qty']);
-          const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll quantity', 'vll', 'vll_qty', 'vll in-motion qty']);
-          const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn quantity', 'grn', 'grn_qty']);
-          const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalized qty', 'normalised_qty']);
-          const noOfWagonsStr = getCellValue(detail.import.headers, row, ['no of wagons', 'wagons', 'wagon count', 'no of wagon']);
-          const udRemarkVal = getCellValue(detail.import.headers, row, ['ud remark', 'ud remarks', 'remark']);
+          const rrNo = getCellValue(detail.import.headers, row, ['rr no', 'rr number', 'rr_no', 'rr_number', 'railway receipt no', 'railway receipt number']).toUpperCase().trim();
+          const doNo = getCellValue(detail.import.headers, row, ['do no', 'do number', 'do_no', 'do_number', 'delivery order no', 'delivery order number']).toUpperCase().trim();
+          const siding = getCellValue(detail.import.headers, row, ['siding', 'source siding', 'siding name']).trim();
+          const rrActQtyStr = getCellValue(detail.import.headers, row, ['rr act qty', 'rr actual qty', 'actual weight', 'rr weight', 'act qty', 'rr_act_qty', 'actual qty']);
+          const rrChQtyStr = getCellValue(detail.import.headers, row, ['rr ch qty', 'rr chargeable qty', 'chargeable weight', 'ch qty', 'rr_ch_qty', 'chargeable qty']);
+          const vllQtyStr = getCellValue(detail.import.headers, row, ['vll qty', 'vll_qty', 'vll weight']);
+          const grnQtyStr = getCellValue(detail.import.headers, row, ['grn qty', 'grn_qty', 'grn weight', 'grn normalised qty']);
+          const normalisedQtyStr = getCellValue(detail.import.headers, row, ['normalised qty', 'normalised_qty', 'normalised weight']);
+          const rrDateStr = getCellValue(detail.import.headers, row, ['rr date', 'rr_date', 'receipt date']);
+          const ocp = getCellValue(detail.import.headers, row, ['ocp', 'mines', 'mine']).trim();
 
-          // New fields
-          const fnrNo = getCellValue(detail.import.headers, row, ['fnr no', 'fnr_no', 'fnr number', 'fnr', 'fnr_number']).trim();
-          const inMotionQtyStr = getCellValue(detail.import.headers, row, ['in motion qty', 'in_motion_qty', 'in motion weight', 'in-motion qty', 'in motion']);
-          const esplTInvNo = getCellValue(detail.import.headers, row, ['espl t inv no', 'espl (t) inv no', 'espl t invoice no', 'espl(t)invno', 'espl (t) inv no.']).trim();
-          const esplHInvNo = getCellValue(detail.import.headers, row, ['espl h inv no', 'espl (h) inv no', 'espl h invoice no', 'espl(h)invno', 'espl (h) inv no.']).trim();
-          const invDateStr = getCellValue(detail.import.headers, row, ['date', 'inv date', 'invoice date', 'inv_date']);
-          const tInvAmtStr = getCellValue(detail.import.headers, row, ['t inv amt', 't_inv_amt', 't inv amount', 't invoice amount', 'tinvamt']);
-          const hInvAmtStr = getCellValue(detail.import.headers, row, ['h inv amt', 'h_inv_amt', 'h inv amount', 'h invoice amount', 'hinvamt']);
-
-          // Quality fields
-          const tmStr = getCellValue(detail.import.headers, row, ['tm', 'tm%', 'total moisture']);
-          const imStr = getCellValue(detail.import.headers, row, ['im', 'im%', 'inherent moisture']);
-          const vmStr = getCellValue(detail.import.headers, row, ['vm', 'vm%', 'volatile matter']);
-          const ashStr = getCellValue(detail.import.headers, row, ['ash', 'ash%', 'ash content']);
-          const fcStr = getCellValue(detail.import.headers, row, ['fc', 'fc%', 'fixed carbon']);
-          const gcvAdbStr = getCellValue(detail.import.headers, row, ['gcv adb', 'gcv_adb', 'gcv adb Basis']);
-          const gcvArbStr = getCellValue(detail.import.headers, row, ['gcv arb', 'gcv_arb']);
-          const qualityPenaltyStr = getCellValue(detail.import.headers, row, ['quality penalty', 'penalty', 'quality_penalty']);
-
-          // Deduction fields
-          const pol1Str = getCellValue(detail.import.headers, row, ['pol1', 'pol1/a', 'pol1a', 'pol 1']);
-          const pol2Str = getCellValue(detail.import.headers, row, ['pol2', 'pol 2']);
-          const enhcStr = getCellValue(detail.import.headers, row, ['enhc']);
-          const dclaStr = getCellValue(detail.import.headers, row, ['dcla']);
-          const faucStr = getCellValue(detail.import.headers, row, ['fauc']);
-          const deadFreightStr = getCellValue(detail.import.headers, row, ['dead freight', 'dead_freight']);
-          const dcStr = getCellValue(detail.import.headers, row, ['dc', 'demurrage']);
-          const shortageStr = getCellValue(detail.import.headers, row, ['shortage']);
-          const qualitySlippageStr = getCellValue(detail.import.headers, row, ['quality slippage', 'quality_slippage']);
-          const railwayLeakageStr = getCellValue(detail.import.headers, row, ['railway leakage', 'railway_leakage']);
-          const mrExclGstStr = getCellValue(detail.import.headers, row, ['mr excl gst', 'mr_excl_gst']);
-          const finalDeductionStr = getCellValue(detail.import.headers, row, ['final deduction', 'final_deduction', 'total deduction']);
-
-          if (!doNo || !rrNo || !grnQtyStr) {
+          if (!rrNo || !doNo) {
             skippedCount++;
             return;
           }
 
+          const rrActQty = parseFloat(rrActQtyStr) || 0;
+          const rrChQty = parseFloat(rrChQtyStr) || 0;
+          const vllQty = parseFloat(vllQtyStr) || 0;
+          const grnQty = parseFloat(grnQtyStr) || 0;
+          const normalisedQty = parseFloat(normalisedQtyStr) || 0;
           const rrDate = parseDateToYYYYMMDD(rrDateStr);
-          const invoiceDate = parseDateToYYYYMMDD(invoiceDateStr);
-          const receiptDate = parseDateToYYYYMMDD(receiptDateStr);
-          const loadingDate = parseDateToYYYYMMDD(loadingDateStr);
-          const invDate = parseDateToYYYYMMDD(invDateStr);
-
-          // Find siding from DO Master if siding is empty or MVAA
-          if ((!siding || siding.toUpperCase() === 'MVAA') && doRecords) {
-            const matchedDO = doRecords.find(d => d.doNo === doNo);
-            if (matchedDO && matchedDO.siding) {
-              siding = matchedDO.siding;
-            }
-          }
 
           recordsToImport.push({
-            doNo,
-            siding: siding || 'MVAA',
             rrNo,
+            doNo,
+            siding: siding || '—',
+            rrActQty,
+            rrChQty,
+            vllQty,
+            grnQty,
+            normalisedQty,
             rrDate: rrDate || null,
-            invoiceDate: invoiceDate || null,
-            receiptDate: receiptDate || null,
-            loadingDate: loadingDate || null,
-            from: fromVal || null,
-            to: toVal || null,
-            ocp: ocpVal || null,
-            rrActQty: parseFloat(rrActQtyStr) || 0,
-            rrChQty: parseFloat(rrChQtyStr) || 0,
-            vllQty: parseFloat(vllQtyStr) || 0,
-            grnQty: parseFloat(grnQtyStr) || 0,
-            normalisedQty: parseFloat(normalisedQtyStr) || parseFloat(grnQtyStr) || 0,
-            noOfWagons: noOfWagonsStr ? parseInt(noOfWagonsStr) || null : null,
-            udRemark: udRemarkVal || null,
-            fnrNo: fnrNo || null,
-            inMotionQty: inMotionQtyStr ? parseFloat(inMotionQtyStr) : null,
-            esplTInvNo: esplTInvNo || null,
-            esplHInvNo: esplHInvNo || null,
-            invDate: invDate || null,
-            tInvAmt: tInvAmtStr ? parseFloat(tInvAmtStr) : null,
-            hInvAmt: hInvAmtStr ? parseFloat(hInvAmtStr) : null,
-            quality: {
-              tm: parseFloat(tmStr) || 0,
-              im: parseFloat(imStr) || 0,
-              ash: parseFloat(ashStr) || 0,
-              vm: parseFloat(vmStr) || 0,
-              fc: parseFloat(fcStr) || 0,
-              gcvAdb: parseFloat(gcvAdbStr) || 0,
-              gcvArb: parseFloat(gcvArbStr) || 0,
-              qualityPenalty: parseFloat(qualityPenaltyStr) || 0,
-            },
-            deductions: {
-              pol1: parseFloat(pol1Str) || 0,
-              pol2: parseFloat(pol2Str) || 0,
-              enhc: parseFloat(enhcStr) || 0,
-              dcla: parseFloat(dclaStr) || 0,
-              fauc: parseFloat(faucStr) || 0,
-              deadFreight: parseFloat(deadFreightStr) || 0,
-              punitive: parseFloat(getCellValue(detail.import.headers, row, ['punitive', 'punitive charges'])) || 0,
-              dc: parseFloat(dcStr) || 0,
-              shortage: parseFloat(shortageStr) || 0,
-              qualitySlippage: parseFloat(qualitySlippageStr) || 0,
-              railwayLeakage: parseFloat(railwayLeakageStr) || 0,
-              mrExclGst: parseFloat(mrExclGstStr) || 0,
-              finalDeduction: parseFloat(finalDeductionStr) || 
-                ((parseFloat(pol1Str) || 0) +
-                 (parseFloat(pol2Str) || 0) +
-                 (parseFloat(enhcStr) || 0) +
-                 (parseFloat(dclaStr) || 0) +
-                 (parseFloat(faucStr) || 0) +
-                 (parseFloat(deadFreightStr) || 0) +
-                 (parseFloat(dcStr) || 0) +
-                 (parseFloat(shortageStr) || 0) +
-                 (parseFloat(qualitySlippageStr) || 0) +
-                 (parseFloat(railwayLeakageStr) || 0)),
-              remarks: getCellValue(detail.import.headers, row, ['remarks', 'deduction remarks', 'deduction remark'])
-            }
+            ocp: ocp || null
           });
         });
 
         if (recordsToImport.length === 0) {
           setToast({
-            message: `Excel Import failed: No valid records found in the sheet.`,
+            message: `Excel Import failed: No valid RR records found.`,
             type: 'error',
             title: 'Import Failed'
           });
@@ -448,7 +375,7 @@ export default function QuantityReconciliationPage() {
             const duplicatesCount = recordsToImport.length - importedCount;
 
             setToast({
-              message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates skipped. ${skippedCount} invalid rows skipped.`,
+              message: `Excel Import completed: ${importedCount} records imported successfully. ${duplicatesCount} duplicates updated/skipped. ${skippedCount} invalid rows skipped.`,
               type: duplicatesCount > 0 || skippedCount > 0 ? 'info' : 'success',
               title: 'Import Result'
             });
@@ -473,9 +400,19 @@ export default function QuantityReconciliationPage() {
     return () => window.removeEventListener('tms:excel-imported', handleExcelImport);
   }, [doRecords, rrRecords]);
 
+  // Aggregate quantity and quality metrics DO-wise
   const doSummaryList = useMemo(() => {
+    // 1. Map quality records by RR No for quick lookups
+    const qualityMap = new Map<string, QualityTrackingRecord>();
+    qualityRecords.forEach(q => {
+      if (q.rrNo) {
+        qualityMap.set(q.rrNo.toUpperCase().trim(), q);
+      }
+    });
+
     return doRecords.map(doRec => {
-      const linkedRRs = rrRecords.filter(rr => rr.doNo === doRec.doNo);
+      const doNoUpper = doRec.doNo.toUpperCase().trim();
+      const linkedRRs = rrRecords.filter(rr => rr.doNo.toUpperCase().trim() === doNoUpper);
       
       const totalLiftedQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.rrActQty) || 0), 0);
       const totalGrnQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.grnQty) || 0), 0);
@@ -483,13 +420,48 @@ export default function QuantityReconciliationPage() {
       const sumChQty = linkedRRs.reduce((sum, rr) => sum + (Number(rr.rrChQty) || 0), 0);
       
       const doQty = Number(doRec.doQty) || 0;
-      const balanceQty = doQty - totalLiftedQty;
+      
+      const isExpiredOrCompleted = doRec.status === 'Completed' || doRec.status === 'Cancelled' || isDOExpired(doRec.endDate);
+      const remaining = Math.max(0, doQty - totalLiftedQty);
+
+      const balanceQty = isExpiredOrCompleted ? 0 : remaining;
+      const lapseQty = isExpiredOrCompleted ? remaining : 0;
+
       const tolerancePercent = Number(doRec.tolerance) || 0;
       const toleranceQty = doQty * (tolerancePercent / 100);
-      const balanceExclTolerance = balanceQty - toleranceQty;
+      const balanceExclTolerance = Math.max(0, balanceQty - toleranceQty);
 
       const destination = linkedRRs[0]?.to || '—';
       const ocp = doRec.mines || linkedRRs[0]?.ocp || '—';
+
+      // Weighted quality parameters variables
+      let tmSum = 0, imSum = 0, ashSum = 0, vmSum = 0, fcSum = 0, gcvAdbSum = 0, gcvArbSum = 0;
+      let totalQualityWeight = 0;
+      let qualityCount = 0;
+
+      linkedRRs.forEach(rr => {
+        const rrWeight = Number(rr.rrActQty) || 0;
+        const rrNoUpper = rr.rrNo.toUpperCase().trim();
+        const quality = qualityMap.get(rrNoUpper);
+
+        if (quality) {
+          qualityCount++;
+          // We use rrActQty as the weight for weighted averages
+          const weight = rrWeight || 1;
+          totalQualityWeight += weight;
+
+          tmSum += (Number(quality.tm) || 0) * weight;
+          imSum += (Number(quality.im) || 0) * weight;
+          ashSum += (Number(quality.ash) || 0) * weight;
+          vmSum += (Number(quality.vm) || 0) * weight;
+          fcSum += (Number(quality.fc) || 0) * weight;
+          gcvAdbSum += (Number(quality.gcvAdb) || 0) * weight;
+          gcvArbSum += (Number(quality.gcvArb) || 0) * weight;
+        }
+      });
+
+      const hasWeight = totalQualityWeight > 0;
+      const divisor = hasWeight ? totalQualityWeight : 1;
 
       return {
         ...doRec,
@@ -499,15 +471,24 @@ export default function QuantityReconciliationPage() {
         totalInMotionQty,
         sumChQty,
         balanceQty,
+        lapseQty,
         tolerancePercent,
         toleranceQty,
         balanceExclTolerance,
         destination,
         ocp,
-        rrCount: linkedRRs.length
+        rrCount: linkedRRs.length,
+        tm: hasWeight ? (tmSum / divisor) : 0,
+        im: hasWeight ? (imSum / divisor) : 0,
+        ash: hasWeight ? (ashSum / divisor) : 0,
+        vm: hasWeight ? (vmSum / divisor) : 0,
+        fc: hasWeight ? (fcSum / divisor) : 0,
+        gcvAdb: hasWeight ? (gcvAdbSum / divisor) : 0,
+        gcvArb: hasWeight ? (gcvArbSum / divisor) : 0,
+        qualityCount
       };
     });
-  }, [doRecords, rrRecords]);
+  }, [doRecords, rrRecords, qualityRecords]);
 
   const stats = useMemo(() => {
     let totalDOQty = 0, totalLiftedQty = 0, totalInMotionQty = 0, totalGrnQty = 0;
@@ -522,9 +503,10 @@ export default function QuantityReconciliationPage() {
 
   const uniqueOCPs = useMemo(() => {
     const list = new Set<string>();
+    doRecords.forEach(d => { if (d.mines) list.add(d.mines.trim()); });
     rrRecords.forEach(r => { if (r.ocp) list.add(r.ocp.trim()); });
     return Array.from(list).sort();
-  }, [rrRecords]);
+  }, [doRecords, rrRecords]);
 
   const filteredDOs = useMemo(() => {
     return doSummaryList.filter(d => {
@@ -544,10 +526,26 @@ export default function QuantityReconciliationPage() {
 
   return (
     <div className="space-y-8 animate-fade-in text-slate-700">
+      {/* Toast Alert */}
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-50 rounded-2xl border p-4 shadow-xl flex items-start gap-3 w-96 transition-all ${
+          toast.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        }`}>
+          <div className="flex-1">
+            <h4 className="text-xs font-black uppercase tracking-wider">{toast.title || 'Notification'}</h4>
+            <p className="text-[11px] font-semibold mt-1 opacity-90">{toast.message}</p>
+          </div>
+          <button onClick={() => setToast(null)} className="p-0.5 hover:bg-slate-200/50 rounded-full transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Header Title */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quantity Reconciliation</h2>
-          <p className="text-xs text-slate-500 mt-1">Reconcile weight differences and track DO-wise balance status including tolerance limits.</p>
+          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quantity & Quality Reconciliation</h2>
+          <p className="text-xs text-slate-500 mt-1">Unified DO reconciliation showing delivery quantities alongside average quality tracking analysis.</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
           <button
@@ -560,6 +558,7 @@ export default function QuantityReconciliationPage() {
         </div>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
         {[
           { label: 'Total Allocated DO Qty', val: stats.totalDOQty, color: 'text-slate-800' },
@@ -577,6 +576,7 @@ export default function QuantityReconciliationPage() {
         ))}
       </div>
 
+      {/* Filter panel */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
           <GitCompare className="h-4.5 w-4.5 text-blue-600" /> Reconciliation Filters
@@ -603,6 +603,7 @@ export default function QuantityReconciliationPage() {
         </div>
       </div>
 
+      {/* Section 1: Before Completed */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -614,41 +615,49 @@ export default function QuantityReconciliationPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+          <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
-                <th className="px-5 py-4 w-12 text-center">SL.</th>
-                <th className="px-5 py-4">DO Number</th>
-                <th className="px-5 py-4">OCP</th>
-                <th className="px-5 py-4">Source Siding</th>
-                <th className="px-5 py-4">Destination</th>
-                <th className="px-5 py-4 text-right">DO Qty</th>
-                <th className="px-5 py-4 text-right">Lifted Qty</th>
-                <th className="px-5 py-4 text-right">Balance Qty</th>
-                <th className="px-5 py-4 text-center">Status</th>
+                <th className="px-4 py-3.5 w-12 text-center">SL.</th>
+                <th className="px-4 py-3.5">DO NO</th>
+                <th className="px-4 py-3.5">OCP</th>
+                <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">TM (%)</th>
+                <th className="px-4 py-3.5 text-right">IM (%)</th>
+                <th className="px-4 py-3.5 text-right">ASH (%)</th>
+                <th className="px-4 py-3.5 text-right">VM (%)</th>
+                <th className="px-4 py-3.5 text-right">FC (%)</th>
+                <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
+                <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
-                <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
+                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
               ) : beforeCompletedList.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-bold">No active or cancelled DO records found.</td></tr>
+                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No active or cancelled DO records found.</td></tr>
               ) : (
                 beforeCompletedList.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
-                    <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-600">{item.ocp}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-700">{item.siding}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-600">{item.destination}</td>
-                    <td className="px-5 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toFixed(2)}</td>
-                    <td className="px-5 py-4 font-mono text-right font-semibold text-slate-700">{item.balanceQty.toFixed(2)}</td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${item.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                        {item.status}
-                      </span>
-                    </td>
+                    <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
+                    <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
+                    <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
                   </tr>
                 ))
               )}
@@ -657,6 +666,7 @@ export default function QuantityReconciliationPage() {
         </div>
       </div>
 
+      {/* Section 2: After Completed */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -668,63 +678,51 @@ export default function QuantityReconciliationPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[1500px]">
+          <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
-                <th className="px-5 py-4 w-12 text-center">SL.</th>
-                <th className="px-5 py-4">DO Number</th>
-                <th className="px-5 py-4">OCP</th>
-                <th className="px-5 py-4">Source Siding</th>
-                <th className="px-5 py-4">Destination</th>
-                <th className="px-5 py-4 text-right">DO Qty</th>
-                <th className="px-5 py-4 text-right">Lifted Qty</th>
-                <th className="px-5 py-4 text-right">Lapse Qty</th>
-                <th className="px-5 py-4 text-center">Tolerance</th>
-                <th className="px-5 py-4 text-right">Deliverable Qty</th>
-                <th className="px-5 py-4 text-right">Chargable</th>
-                <th className="px-5 py-4 text-right">RR Actual</th>
-                <th className="px-5 py-4 text-right">In Motion</th>
-                <th className="px-5 py-4 text-right">GRN</th>
-                <th className="px-5 py-4 text-right">Difference</th>
-                <th className="px-5 py-4 text-center">Status</th>
+                <th className="px-4 py-3.5 w-12 text-center">SL.</th>
+                <th className="px-4 py-3.5">DO NO</th>
+                <th className="px-4 py-3.5">OCP</th>
+                <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
+                <th className="px-4 py-3.5 text-right">TM (%)</th>
+                <th className="px-4 py-3.5 text-right">IM (%)</th>
+                <th className="px-4 py-3.5 text-right">ASH (%)</th>
+                <th className="px-4 py-3.5 text-right">VM (%)</th>
+                <th className="px-4 py-3.5 text-right">FC (%)</th>
+                <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
+                <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {loading ? (
-                <tr><td colSpan={16} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
+                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
               ) : afterCompletedList.length === 0 ? (
-                <tr><td colSpan={16} className="px-6 py-12 text-center text-slate-400 font-bold">No completed DO records found.</td></tr>
+                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No completed DO records found.</td></tr>
               ) : (
-                afterCompletedList.map((item, idx) => {
-                  const deliverableQty = item.totalLiftedQty * 0.997;
-                  const difference = item.totalGrnQty - deliverableQty;
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-5 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
-                      <td className="px-5 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-600">{item.ocp}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-700">{item.siding}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-600">{item.destination}</td>
-                      <td className="px-5 py-4 font-mono text-right text-slate-700">{item.doQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-blue-600">{item.totalLiftedQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-orange-600">{item.balanceQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-center font-semibold text-slate-500">{item.tolerancePercent}%</td>
-                      <td className="px-5 py-4 font-mono text-right text-slate-700">{deliverableQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-slate-600">{item.sumChQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-slate-600">{item.totalLiftedQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-slate-600">{item.totalInMotionQty.toFixed(2)}</td>
-                      <td className="px-5 py-4 font-mono text-right text-emerald-700 font-semibold">{item.totalGrnQty.toFixed(2)}</td>
-                      <td className={`px-5 py-4 font-mono text-right font-bold ${difference < 0 ? 'text-red-500' : 'text-emerald-700'}`}>
-                        {difference.toFixed(2)}
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
+                afterCompletedList.map((item, idx) => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
+                    <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
+                    <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
+                    <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
