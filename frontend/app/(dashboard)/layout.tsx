@@ -53,7 +53,9 @@ const navigationDivisions = [
       { label: 'DO Master', path: '/coal-rcr/do-master', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'DO Lifting', path: '/coal-rcr/do-lifting', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'RR Entry', path: '/coal-rcr/rr-entry?tab=entry', icon: ClipboardList, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
-
+      { label: 'Quantity Report', path: '/coal-rcr/quantity-report', icon: FileText, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'Quality Report', path: '/coal-rcr/quality-report', icon: Activity, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
+      { label: 'DO reco', path: '/coal-rcr/quantity-recon', icon: GitCompare, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
       { label: 'Summary Dashboard', path: '/coal-rcr/summary-dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'SYS_ADMIN'] },
     ]
   },
