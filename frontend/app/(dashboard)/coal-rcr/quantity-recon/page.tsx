@@ -5,13 +5,27 @@ import {
   GitCompare, 
   Search, 
   RefreshCw, 
-  X
+  X,
+  AreaChart as ChartIcon,
+  Table as TableIcon
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { DOMasterRecord, RREntryRecord, QualityTrackingRecord } from '../types';
 import { readLocalValue } from '@/lib/syncedStorage';
 import CentralExcelImport from '@/components/CentralExcelImport';
 import SectionExcelExport from '@/components/SectionExcelExport';
+
+// Recharts components imports
+import { 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend 
+} from 'recharts';
 
 const DO_MASTER_KEY = 'tms_coal_do_master';
 const RR_ENTRY_KEY = 'tms_coal_rr_entry';
@@ -108,6 +122,39 @@ const parseDateToYYYYMMDD = (val: unknown): string => {
   return str;
 };
 
+const parseMonthToOrder = (monthStr: string | null | undefined): number => {
+  if (!monthStr) return 999999;
+  const cleaned = monthStr.trim().toLowerCase();
+  
+  // Find year
+  const yearMatch = cleaned.match(/\b(20\d{2}|\d{2})\b/);
+  let year = new Date().getFullYear();
+  if (yearMatch) {
+    const yStr = yearMatch[1];
+    year = yStr.length === 2 ? 2000 + Number(yStr) : Number(yStr);
+  }
+
+  // Find month index
+  const months = [
+    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+    'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+  ];
+  let monthIdx = 0;
+  for (let i = 0; i < 12; i++) {
+    if (cleaned.includes(months[i])) {
+      monthIdx = i;
+      break;
+    }
+  }
+  return year * 12 + monthIdx;
+};
+
+const formatMonthLabel = (monthStr: string | null | undefined): string => {
+  if (!monthStr) return 'Unknown';
+  return monthStr.trim()
+    .replace(/\b[a-z]/g, letter => letter.toUpperCase());
+};
+
 export default function QuantityReconciliationPage() {
   const { user } = useAuthStore();
   const [doRecords, setDoRecords] = useState<DOMasterRecord[]>([]);
@@ -116,7 +163,13 @@ export default function QuantityReconciliationPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOcp, setSelectedOcp] = useState<string>('All');
+  const [activeTab, setActiveTab] = useState<'reco' | 'graphs'>('reco');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; title?: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchData = async (showLoadingSpinner = true) => {
     if (showLoadingSpinner) {
@@ -402,7 +455,6 @@ export default function QuantityReconciliationPage() {
 
   // Aggregate quantity and quality metrics DO-wise
   const doSummaryList = useMemo(() => {
-    // 1. Map quality records by RR No for quick lookups
     const qualityMap = new Map<string, QualityTrackingRecord>();
     qualityRecords.forEach(q => {
       if (q.rrNo) {
@@ -446,7 +498,6 @@ export default function QuantityReconciliationPage() {
 
         if (quality) {
           qualityCount++;
-          // We use rrActQty as the weight for weighted averages
           const weight = rrWeight || 1;
           totalQualityWeight += weight;
 
@@ -490,6 +541,99 @@ export default function QuantityReconciliationPage() {
     });
   }, [doRecords, rrRecords, qualityRecords]);
 
+  // Aggregate weighted average GCV metrics grouped by OCP and Month for graphs
+  const graphDataMap = useMemo(() => {
+    const qualityMap = new Map<string, QualityTrackingRecord>();
+    qualityRecords.forEach(q => {
+      if (q.rrNo) qualityMap.set(q.rrNo.toUpperCase().trim(), q);
+    });
+
+    const doInfoMap = new Map<string, { month: string; mines: string }>();
+    doRecords.forEach(d => {
+      doInfoMap.set(d.doNo.toUpperCase().trim(), {
+        month: d.month || 'Other',
+        mines: d.mines || 'Other'
+      });
+    });
+
+    // Grouping structure: Map<OcpName, Map<MonthLabel, { sumAdb: number, sumArb: number, weight: number }>>
+    const ocpMonthMap = new Map<string, Map<string, { sumAdb: number; sumArb: number; totalWeight: number }>>();
+    const overallMonthMap = new Map<string, { sumAdb: number; sumArb: number; totalWeight: number }>();
+
+    rrRecords.forEach(rr => {
+      const rrNoUpper = rr.rrNo.toUpperCase().trim();
+      const quality = qualityMap.get(rrNoUpper);
+      if (!quality) return;
+
+      const doNoUpper = rr.doNo.toUpperCase().trim();
+      const doInfo = doInfoMap.get(doNoUpper);
+      
+      const month = doInfo?.month || (rr.invoiceDate ? new Date(rr.invoiceDate!).toLocaleString('default', { month: 'long', year: 'numeric' }) : 'Other');
+      const ocp = doInfo?.mines || rr.ocp || 'Other';
+      const weight = Number(rr.rrActQty) || 1;
+
+      const adb = Number(quality.gcvAdb) || 0;
+      const arb = Number(quality.gcvArb) || 0;
+
+      // Group by OCP
+      if (!ocpMonthMap.has(ocp)) {
+        ocpMonthMap.set(ocp, new Map());
+      }
+      const monthMap = ocpMonthMap.get(ocp)!;
+      if (!monthMap.has(month)) {
+        monthMap.set(month, { sumAdb: 0, sumArb: 0, totalWeight: 0 });
+      }
+      const stats = monthMap.get(month)!;
+      stats.sumAdb += adb * weight;
+      stats.sumArb += arb * weight;
+      stats.totalWeight += weight;
+
+      // Group overall combined
+      if (!overallMonthMap.has(month)) {
+        overallMonthMap.set(month, { sumAdb: 0, sumArb: 0, totalWeight: 0 });
+      }
+      const overallStats = overallMonthMap.get(month)!;
+      overallStats.sumAdb += adb * weight;
+      overallStats.sumArb += arb * weight;
+      overallStats.totalWeight += weight;
+    });
+
+    const ocpCharts: Record<string, { month: string; monthOrder: number; gcvAdb: number; gcvArb: number }[]> = {};
+
+    ocpMonthMap.forEach((monthMap, ocp) => {
+      const dataPoints: { month: string; monthOrder: number; gcvAdb: number; gcvArb: number }[] = [];
+      monthMap.forEach((stats, month) => {
+        const divisor = stats.totalWeight || 1;
+        dataPoints.push({
+          month: formatMonthLabel(month),
+          monthOrder: parseMonthToOrder(month),
+          gcvAdb: Math.round(stats.sumAdb / divisor),
+          gcvArb: Math.round(stats.sumArb / divisor)
+        });
+      });
+      dataPoints.sort((a, b) => a.monthOrder - b.monthOrder);
+      ocpCharts[ocp] = dataPoints;
+    });
+
+    const overallDataPoints: { month: string; monthOrder: number; gcvAdb: number; gcvArb: number }[] = [];
+    overallMonthMap.forEach((stats, month) => {
+      const divisor = stats.totalWeight || 1;
+      overallDataPoints.push({
+        month: formatMonthLabel(month),
+        monthOrder: parseMonthToOrder(month),
+        gcvAdb: Math.round(stats.sumAdb / divisor),
+        gcvArb: Math.round(stats.sumArb / divisor)
+      });
+    });
+    overallDataPoints.sort((a, b) => a.monthOrder - b.monthOrder);
+    ocpCharts['Overall Combined'] = overallDataPoints;
+
+    return {
+      ocps: Array.from(ocpMonthMap.keys()).sort(),
+      charts: ocpCharts
+    };
+  }, [doRecords, rrRecords, qualityRecords]);
+
   const stats = useMemo(() => {
     let totalDOQty = 0, totalLiftedQty = 0, totalInMotionQty = 0, totalGrnQty = 0;
     doSummaryList.forEach(item => {
@@ -524,8 +668,25 @@ export default function QuantityReconciliationPage() {
   const beforeCompletedList = useMemo(() => filteredDOs.filter(d => d.status !== 'Completed'), [filteredDOs]);
   const afterCompletedList = useMemo(() => filteredDOs.filter(d => d.status === 'Completed'), [filteredDOs]);
 
+  // Recharts Custom Tooltip
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-lg font-sans">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+          {payload.map((pld: any, index: number) => (
+            <p key={index} className="text-xs font-bold mt-1.5" style={{ color: pld.color }}>
+              {pld.name}: {pld.value.toLocaleString()} <span className="text-[9px] text-slate-400 font-medium">kcal/kg</span>
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="space-y-8 animate-fade-in text-slate-700">
+    <div className="space-y-6 animate-fade-in text-slate-700 p-6">
       {/* Toast Alert */}
       {toast && (
         <div className={`fixed bottom-5 right-5 z-50 rounded-2xl border p-4 shadow-xl flex items-start gap-3 w-96 transition-all ${
@@ -544,190 +705,354 @@ export default function QuantityReconciliationPage() {
       {/* Header Title */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 font-sans tracking-tight">Quantity & Quality Reconciliation</h2>
-          <p className="text-xs text-slate-500 mt-1">Unified DO reconciliation showing delivery quantities alongside average quality tracking analysis.</p>
+          <h1 className="text-xl font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <GitCompare className="h-6 w-6 text-blue-600" /> DO Reconciliation
+          </h1>
+          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">
+            Reconcile weight differences and track DO-wise balance status alongside quality audits
+          </p>
         </div>
-        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
           <button
             onClick={() => fetchData()}
             disabled={loading}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 font-sans transition-all active:scale-[0.98] shadow-sm disabled:opacity-60 shrink-0"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh Data
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-        {[
-          { label: 'Total Allocated DO Qty', val: stats.totalDOQty, color: 'text-slate-800' },
-          { label: 'Total Lifted (Actual)', val: stats.totalLiftedQty, color: 'text-blue-600' },
-          { label: 'Total GRN Received', val: stats.totalGrnQty, color: 'text-emerald-700' },
-          { label: 'Weight Diff (IM vs Act)', val: stats.weightDifference, color: stats.weightDifference >= 0 ? 'text-emerald-600' : 'text-red-600' }
-        ].map((s, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</span>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className={`text-2xl font-extrabold ${s.color}`}>{s.val.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
-              <span className="text-[10px] text-slate-400">MT</span>
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-slate-200 mt-2">
+        <button
+          onClick={() => setActiveTab('reco')}
+          className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'reco'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          <TableIcon className="h-4 w-4" />
+          Do Reco
+        </button>
+        <button
+          onClick={() => setActiveTab('graphs')}
+          className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'graphs'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          <ChartIcon className="h-4 w-4" />
+          Graphs
+        </button>
+      </div>
+
+      {activeTab === 'reco' ? (
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            {[
+              { label: 'Total Allocated DO Qty', val: stats.totalDOQty, color: 'text-slate-800' },
+              { label: 'Total Lifted (Actual)', val: stats.totalLiftedQty, color: 'text-blue-600' },
+              { label: 'Total GRN Received', val: stats.totalGrnQty, color: 'text-emerald-700' },
+              { label: 'Weight Diff (IM vs Act)', val: stats.weightDifference, color: stats.weightDifference >= 0 ? 'text-emerald-600' : 'text-red-600' }
+            ].map((s, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</span>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className={`text-2xl font-extrabold ${s.color}`}>{s.val.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                  <span className="text-[10px] text-slate-400">MT</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Filter panel */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <GitCompare className="h-4.5 w-4.5 text-blue-600" /> Reconciliation Filters
+            </h3>
+            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search DO, siding, mine..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none"
+                />
+              </div>
+              <select
+                value={selectedOcp}
+                onChange={(e) => setSelectedOcp(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none cursor-pointer"
+              >
+                <option value="All">All OCPs</option>
+                {uniqueOCPs.map(ocp => <option key={ocp} value={ocp}>{ocp}</option>)}
+              </select>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Filter panel */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-          <GitCompare className="h-4.5 w-4.5 text-blue-600" /> Reconciliation Filters
-        </h3>
-        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search DO, siding, mine..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none"
-            />
-          </div>
-          <select
-            value={selectedOcp}
-            onChange={(e) => setSelectedOcp(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none cursor-pointer"
-          >
-            <option value="All">All OCPs</option>
-            {uniqueOCPs.map(ocp => <option key={ocp} value={ocp}>{ocp}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Section 1: Before Completed */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 1) Before Completed
-          </h3>
-          <div className="flex items-center gap-2">
-            {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
-            <SectionExcelExport sectionName="Before Completed" />
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
-                <th className="px-4 py-3.5 w-12 text-center">SL.</th>
-                <th className="px-4 py-3.5">DO NO</th>
-                <th className="px-4 py-3.5">OCP</th>
-                <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">TM (%)</th>
-                <th className="px-4 py-3.5 text-right">IM (%)</th>
-                <th className="px-4 py-3.5 text-right">ASH (%)</th>
-                <th className="px-4 py-3.5 text-right">VM (%)</th>
-                <th className="px-4 py-3.5 text-right">FC (%)</th>
-                <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
-                <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-600">
-              {loading ? (
-                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
-              ) : beforeCompletedList.length === 0 ? (
-                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No active or cancelled DO records found.</td></tr>
-              ) : (
-                beforeCompletedList.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
-                    <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
-                    <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
+          {/* Section 1: Before Completed */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 1) Before Completed
+              </h3>
+              <div className="flex items-center gap-2">
+                {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
+                <SectionExcelExport sectionName="Before Completed" />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-4 py-3.5 w-12 text-center">SL.</th>
+                    <th className="px-4 py-3.5">DO NO</th>
+                    <th className="px-4 py-3.5">OCP</th>
+                    <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">TM (%)</th>
+                    <th className="px-4 py-3.5 text-right">IM (%)</th>
+                    <th className="px-4 py-3.5 text-right">ASH (%)</th>
+                    <th className="px-4 py-3.5 text-right">VM (%)</th>
+                    <th className="px-4 py-3.5 text-right">FC (%)</th>
+                    <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
+                    <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600">
+                  {loading ? (
+                    <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
+                  ) : beforeCompletedList.length === 0 ? (
+                    <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No active or cancelled DO records found.</td></tr>
+                  ) : (
+                    beforeCompletedList.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
+                        <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
+                        <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
+                        <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      {/* Section 2: After Completed */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 2) After Completed
-          </h3>
-          <div className="flex items-center gap-2">
-            {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
-            <SectionExcelExport sectionName="After Completed" />
+          {/* Section 2: After Completed */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <GitCompare className="h-4.5 w-4.5 text-blue-600" /> 2) After Completed
+              </h3>
+              <div className="flex items-center gap-2">
+                {user?.role?.endsWith('_ADMIN') && <CentralExcelImport onImportSuccess={fetchData} />}
+                <SectionExcelExport sectionName="After Completed" />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
+                    <th className="px-4 py-3.5 w-12 text-center">SL.</th>
+                    <th className="px-4 py-3.5">DO NO</th>
+                    <th className="px-4 py-3.5">OCP</th>
+                    <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
+                    <th className="px-4 py-3.5 text-right">TM (%)</th>
+                    <th className="px-4 py-3.5 text-right">IM (%)</th>
+                    <th className="px-4 py-3.5 text-right">ASH (%)</th>
+                    <th className="px-4 py-3.5 text-right">VM (%)</th>
+                    <th className="px-4 py-3.5 text-right">FC (%)</th>
+                    <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
+                    <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600">
+                  {loading ? (
+                    <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
+                  ) : afterCompletedList.length === 0 ? (
+                    <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No completed DO records found.</td></tr>
+                  ) : (
+                    afterCompletedList.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
+                        <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
+                        <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
+                        <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
+                        <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[11px] border-collapse min-w-[1400px]">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/20">
-                <th className="px-4 py-3.5 w-12 text-center">SL.</th>
-                <th className="px-4 py-3.5">DO NO</th>
-                <th className="px-4 py-3.5">OCP</th>
-                <th className="px-4 py-3.5 text-right">DO QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">LIFTED QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">BALANCE QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">LAPSE QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">GRN QTY (MT)</th>
-                <th className="px-4 py-3.5 text-right">TM (%)</th>
-                <th className="px-4 py-3.5 text-right">IM (%)</th>
-                <th className="px-4 py-3.5 text-right">ASH (%)</th>
-                <th className="px-4 py-3.5 text-right">VM (%)</th>
-                <th className="px-4 py-3.5 text-right">FC (%)</th>
-                <th className="px-4 py-3.5 text-right">GCV ADB (kcal)</th>
-                <th className="px-4 py-3.5 text-right">GCV ARB (kcal)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-600">
-              {loading ? (
-                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-semibold">Fetching DO reconciliation details...</td></tr>
-              ) : afterCompletedList.length === 0 ? (
-                <tr><td colSpan={15} className="px-6 py-12 text-center text-slate-400 font-bold">No completed DO records found.</td></tr>
-              ) : (
-                afterCompletedList.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-4 font-bold text-slate-400 text-center">{idx + 1}</td>
-                    <td className="px-4 py-4 font-mono font-extrabold text-slate-800 uppercase">{item.doNo}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-600">{item.ocp}</td>
-                    <td className="px-4 py-4 font-mono text-right font-bold text-slate-800">{item.doQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalLiftedQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-emerald-600">{item.balanceQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-rose-600">{item.lapseQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right font-semibold text-blue-600">{item.totalGrnQty.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.tm.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.im.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-700">{item.qualityCount > 0 ? item.ash.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.vm.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-slate-500">{item.qualityCount > 0 ? item.fc.toFixed(2) : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-emerald-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvAdb).toLocaleString() : '-'}</td>
-                    <td className="px-4 py-4 font-mono text-right text-rose-600 font-bold">{item.qualityCount > 0 ? Math.round(item.gcvArb).toLocaleString() : '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      ) : (
+        <div className="space-y-8">
+          {/* Combined Graphs */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-6">
+              <ChartIcon className="h-4.5 w-4.5 text-blue-600" /> Overall Combined GCV Trend (All OCPs)
+            </h3>
+            {mounted && graphDataMap.charts['Overall Combined']?.length > 0 ? (
+              <div className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={graphDataMap.charts['Overall Combined']}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="month" 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} 
+                    />
+                    <YAxis 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }}
+                      domain={['auto', 'auto']}
+                      label={{ value: 'GCV (kcal/kg)', angle: -90, position: 'insideLeft', offset: 0, style: { fontSize: 10, fontWeight: 700, fill: '#475569' } }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend 
+                      verticalAlign="top" 
+                      height={36} 
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: 11, fontWeight: 700, color: '#334155' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="gcvAdb" 
+                      name="GCV ADB" 
+                      stroke="#10b981" 
+                      strokeWidth={3} 
+                      dot={{ r: 4, strokeWidth: 2 }} 
+                      activeDot={{ r: 6 }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="gcvArb" 
+                      name="GCV ARB" 
+                      stroke="#ef4444" 
+                      strokeWidth={3} 
+                      dot={{ r: 4, strokeWidth: 2 }} 
+                      activeDot={{ r: 6 }} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-slate-400 font-semibold text-xs bg-slate-50 rounded-xl">
+                No quality audit data available to plot GCV trend.
+              </div>
+            )}
+          </div>
+
+          {/* Individual OCP Graphs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {graphDataMap.ocps.map(ocp => {
+              const chartData = graphDataMap.charts[ocp] || [];
+              return (
+                <div key={ocp} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-5">
+                    <ChartIcon className="h-4 w-4 text-blue-500" /> {ocp} GCV Trend
+                  </h4>
+                  {mounted && chartData.length > 0 ? (
+                    <div className="h-[280px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis 
+                            dataKey="month" 
+                            tickLine={false} 
+                            axisLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 600, fill: '#64748b' }} 
+                          />
+                          <YAxis 
+                            tickLine={false} 
+                            axisLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 600, fill: '#64748b' }}
+                            domain={['auto', 'auto']}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend 
+                            verticalAlign="top" 
+                            height={30} 
+                            iconType="circle"
+                            iconSize={6}
+                            wrapperStyle={{ fontSize: 10, fontWeight: 700 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="gcvAdb" 
+                            name="GCV ADB" 
+                            stroke="#3b82f6" 
+                            strokeWidth={2.5} 
+                            dot={{ r: 3 }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="gcvArb" 
+                            name="GCV ARB" 
+                            stroke="#ef4444" 
+                            strokeWidth={2.5} 
+                            dot={{ r: 3 }} 
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-[220px] flex items-center justify-center text-slate-400 font-semibold text-xs bg-slate-50 rounded-xl">
+                      No quality audit data available for {ocp}.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
